@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1760836655446,
+      "tag": "0000_worried_post",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1760836707468,
+      "tag": "0001_material_gargoyle",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1760840626166,
+      "tag": "0002_adorable_sister_grimm",
+      "breakpoints": true
+    }
+  ]
+}
