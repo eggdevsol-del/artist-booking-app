@@ -10,8 +10,7 @@ export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
 
-  // TEMPORARY: Authentication disabled - no automatic redirect
-  // Users can click "Get Started" to enter the app
+  // TEMPORARY: Authentication disabled - no automatic redirects
 
   if (loading) {
     return (
@@ -104,7 +103,7 @@ export default function Home() {
             </Card>
           </div>
 
-          {/* Login Button - TEMPORARY: Direct access */}
+          {/* Login Button - TEMPORARY: Direct access without authentication */}
           <div className="space-y-3">
             <Button
               size="lg"

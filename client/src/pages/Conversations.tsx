@@ -29,11 +29,12 @@ export default function Conversations() {
     },
   });
 
-  useEffect(() => {
-    if (!loading && !user) {
-      setLocation("/");
-    }
-  }, [user, loading, setLocation]);
+  // TEMPORARY: Authentication disabled - no redirect
+  // useEffect(() => {
+  //   if (!loading && !user) {
+  //     setLocation("/");
+  //   }
+  // }, [user, loading, setLocation]);
 
   // Handle artist referral link
   useEffect(() => {

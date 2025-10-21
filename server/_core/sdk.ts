@@ -259,6 +259,7 @@ class SDKServer {
   async authenticateRequest(req: Request): Promise<User> {
     // TEMPORARY: Authentication disabled - return mock user
     const mockUserId = "demo_user_001";
+    const signedInAt = new Date();
     let user = await db.getUser(mockUserId);
 
     // Create mock user if doesn't exist
@@ -268,20 +269,16 @@ class SDKServer {
         name: "Demo User",
         email: "demo@example.com",
         loginMethod: "demo",
-        role: "artist", // Default to artist role
-        lastSignedIn: new Date(),
+        role: "artist",
+        hasCompletedOnboarding: true,
+        lastSignedIn: signedInAt,
       });
       user = await db.getUser(mockUserId);
     }
 
     if (!user) {
-      throw ForbiddenError("User not found");
+      throw ForbiddenError("Failed to create demo user");
     }
-
-    await db.upsertUser({
-      id: user.id,
-      lastSignedIn: signedInAt,
-    });
 
     return user;
   }
