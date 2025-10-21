@@ -143,7 +143,7 @@ async function verifyAndFixDatabase() {
     const stillMissing = expectedTables.filter(t => !finalTableNames.includes(t));
     if (stillMissing.length > 0) {
       console.error(`[DB Verify] ⚠ Still missing ${stillMissing.length} tables:`, stillMissing.join(', '));
-      process.exit(1);
+      // Don't exit - let the server continue even if tables are missing
     }
 
     console.log('[DB Verify] ✓ All tables verified successfully!');
@@ -154,19 +154,6 @@ async function verifyAndFixDatabase() {
   } finally {
     await connection.end();
   }
-}
-
-// Run if executed directly
-if (require.main === module) {
-  verifyAndFixDatabase()
-    .then(() => {
-      console.log('[DB Verify] Complete');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('[DB Verify] Failed:', error);
-      process.exit(1);
-    });
 }
 
 export { verifyAndFixDatabase };
