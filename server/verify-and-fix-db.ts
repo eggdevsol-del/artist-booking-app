@@ -45,7 +45,10 @@ async function verifyAndFixDatabase() {
     
     if (missingTables.length === 0) {
       console.log('[DB Verify] ✓ All tables exist!');
-      return;
+      console.log('[DB Verify] Checking for pending migrations...');
+      // Don't return - continue to run migrations in case there are column updates
+    } else {
+      console.log(`[DB Verify] Missing tables: ${missingTables.join(', ')}`);
     }
 
     console.log(`[DB Verify] ⚠ Missing ${missingTables.length} tables:`, missingTables.join(', '));
