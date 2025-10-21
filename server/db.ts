@@ -180,8 +180,15 @@ export async function createUser(user: InsertUser) {
     return undefined;
   }
 
-  await db.insert(users).values(user);
-  return getUser(user.id!);
+  try {
+    console.log("[Database] Creating user:", { id: user.id, email: user.email, name: user.name });
+    await db.insert(users).values(user);
+    console.log("[Database] User created successfully:", user.id);
+    return getUser(user.id!);
+  } catch (error) {
+    console.error("[Database] Error creating user:", error);
+    throw error;
+  }
 }
 
 export async function updateUserLastSignedIn(userId: string) {
