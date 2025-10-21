@@ -8,7 +8,13 @@ import {
   generateMagicLinkToken,
   verifyMagicLinkToken,
 } from "./auth-new";
-import { db } from "../db";
+import {
+  getUserByEmail,
+  createUser,
+  updateUserLastSignedIn,
+  getUserById,
+  updateUserPassword,
+} from "../db";
 import { randomBytes } from "crypto";
 
 /**
@@ -31,7 +37,7 @@ export const authRouter = router({
       const { email, password, name, role = "client" } = input;
 
       // Check if user already exists
-      const existingUser = await db.getUserByEmail(email);
+      const existingUser = await getUserByEmail(email);
       if (existingUser) {
         throw new TRPCError({
           code: "CONFLICT",
@@ -46,7 +52,7 @@ export const authRouter = router({
       const userId = `user_${randomBytes(16).toString("hex")}`;
 
       // Create user
-      const user = await db.createUser({
+      const user = await createUser({
         id: userId,
         email,
         password: hashedPassword,
@@ -92,7 +98,7 @@ export const authRouter = router({
       const { email, password } = input;
 
       // Get user by email
-      const user = await db.getUserByEmail(email);
+      const user = await getUserByEmail(email);
       if (!user) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
@@ -118,7 +124,7 @@ export const authRouter = router({
       }
 
       // Update last signed in
-      await db.updateUserLastSignedIn(user.id);
+      await updateUserLastSignedIn(user.id);
 
       // Generate JWT token
       const token = generateToken({ id: user.id, email: user.email });
@@ -148,7 +154,7 @@ export const authRouter = router({
       const { email } = input;
 
       // Check if user exists
-      const user = await db.getUserByEmail(email);
+      const user = await getUserByEmail(email);
       if (!user) {
         // Don't reveal if user exists or not
         return {
@@ -204,7 +210,7 @@ export const authRouter = router({
       }
 
       // Update last signed in
-      await db.updateUserLastSignedIn(user.id);
+      await updateUserLastSignedIn(user.id);
 
       // Generate JWT token
       const authToken = generateToken({ id: user.id, email: user.email });
@@ -271,7 +277,7 @@ export const authRouter = router({
       }
 
       // Get full user data
-      const fullUser = await db.getUserById(user.id);
+      const fullUser = await getUserById(user.id);
       if (!fullUser || !fullUser.password) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -292,7 +298,7 @@ export const authRouter = router({
       const hashedPassword = await hashPassword(newPassword);
 
       // Update password
-      await db.updateUserPassword(user.id, hashedPassword);
+      await updateUserPassword(user.id, hashedPassword);
 
       return { success: true };
     }),
@@ -310,7 +316,7 @@ export const authRouter = router({
       const { email } = input;
 
       // Check if user exists
-      const user = await db.getUserByEmail(email);
+      const user = await getUserByEmail(email);
       if (!user) {
         // Don't reveal if user exists or not
         return {
@@ -369,7 +375,7 @@ export const authRouter = router({
       const hashedPassword = await hashPassword(newPassword);
 
       // Update password
-      await db.updateUserPassword(user.id, hashedPassword);
+      await updateUserPassword(user.id, hashedPassword);
 
       return { success: true };
     }),
