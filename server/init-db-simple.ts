@@ -41,13 +41,13 @@ export async function initializeDatabase() {
     console.log('[DB Init] Database is empty, creating tables...');
 
     // Find the drizzle migration directory
-    // In production (dist), look for drizzle folder at project root
+    // In production (dist), drizzle folder is copied to dist/drizzle
     // In development, it's at ../drizzle relative to server
     let drizzlePath = path.join(__dirname, '..', 'drizzle');
     
-    // If running from dist folder, go up one more level
+    // If running from dist folder, drizzle is in dist/drizzle
     if (__dirname.includes('/dist')) {
-      drizzlePath = path.join(__dirname, '..', '..', 'drizzle');
+      drizzlePath = path.join(__dirname, 'drizzle');
     }
     
     console.log(`[DB Init] Looking for migrations in: ${drizzlePath}`);
