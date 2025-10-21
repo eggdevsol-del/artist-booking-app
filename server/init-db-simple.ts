@@ -129,16 +129,6 @@ export async function initializeDatabase() {
   }
 }
 
-// When run directly (not imported), execute initialization
-if (import.meta.url === `file://${process.argv[1]}`) {
-  initializeDatabase()
-    .then(() => {
-      console.log('[DB Init] Standalone execution complete');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('[DB Init] Standalone execution failed:', error);
-      process.exit(1);
-    });
-}
+// Standalone execution removed - this file is only imported by the server
+// The initializeDatabase() function is called from server/_core/index.ts
 
