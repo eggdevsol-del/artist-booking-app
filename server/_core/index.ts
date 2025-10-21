@@ -7,7 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { initializeDatabase } from "../init-db-simple";
+import { verifyAndFixDatabase } from "../verify-and-fix-db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -31,7 +31,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   // Initialize database tables if they don't exist
   try {
-    await initializeDatabase();
+    await verifyAndFixDatabase();
   } catch (error) {
     console.error('[Server] Database initialization failed:', error);
     // Continue anyway - the app might work in read-only mode or with existing tables
