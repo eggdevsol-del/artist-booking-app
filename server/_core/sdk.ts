@@ -257,7 +257,40 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<User> {
-    // TEMPORARY: Authentication disabled - return mock user
+    // Check for JWT token in Authorization header
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.substring(7);
+      try {
+        // Use JWT verification from auth-new module
+        const { verifyToken } = await import("./auth-new");
+        const payload = verifyToken(token);
+        if (payload) {
+          const user = await db.getUserById(payload.userId);
+          if (user) {
+            return user;
+          }
+        }
+      } catch (error) {
+        console.warn("[Auth] JWT verification failed:", error);
+      }
+    }
+
+    // Check for session cookie (legacy OAuth)
+    const cookies = this.parseCookies(req.headers.cookie);
+    const sessionCookie = cookies.get(COOKIE_NAME);
+    
+    if (sessionCookie) {
+      const session = await this.verifySession(sessionCookie);
+      if (session) {
+        const user = await db.getUser(session.openId);
+        if (user) {
+          return user;
+        }
+      }
+    }
+
+    // FALLBACK: Demo mode - return mock user if no authentication
     const mockUserId = "demo_user_001";
     const signedInAt = new Date();
     let user = await db.getUser(mockUserId);

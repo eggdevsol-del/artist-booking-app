@@ -18,6 +18,7 @@ export const users = mysqlTable("users", {
   id: varchar("id", { length: 64 }).primaryKey(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
+  password: varchar("password", { length: 255 }), // Hashed password for email/password auth
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: varchar("role", { length: 20 })
     .default("client")

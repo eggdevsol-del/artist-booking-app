@@ -20,11 +20,15 @@ import WorkHours from "./pages/WorkHours";
 import QuickActionsManagement from "./pages/QuickActionsManagement";
 import CompleteProfile from "./pages/CompleteProfile";
 import Clients from "./pages/Clients";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
       <Route path="/role-selection" component={RoleSelection} />
       <Route path="/conversations" component={Conversations} />
       <Route path="/chat/:id" component={Chat} />
@@ -47,7 +51,7 @@ function Router() {
 function App() {
   return (
       <ThemeProvider
-        defaultTheme="light"
+        defaultTheme="dark"
         switchable
       >
         <TooltipProvider>

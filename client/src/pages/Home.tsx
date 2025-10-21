@@ -103,18 +103,23 @@ export default function Home() {
             </Card>
           </div>
 
-          {/* Login Button - TEMPORARY: Direct access without authentication */}
+          {/* Authentication Buttons */}
           <div className="space-y-3">
             <Button
               size="lg"
               className="w-full h-14 text-lg font-semibold shadow-lg"
-              onClick={() => window.location.href = "/conversations"}
+              onClick={() => setLocation("/login")}
             >
-              Get Started
+              Sign In
             </Button>
-            <p className="text-center text-sm text-muted-foreground">
-              No login required - demo mode
-            </p>
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full h-14 text-lg font-semibold shadow-lg"
+              onClick={() => setLocation("/signup")}
+            >
+              Create Account
+            </Button>
           </div>
         </div>
       </main>

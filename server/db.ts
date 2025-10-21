@@ -158,6 +158,46 @@ export async function updateUserProfile(
   return getUser(userId);
 }
 
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get user by email: database not available");
+    return undefined;
+  }
+
+  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getUserById(id: string) {
+  return getUser(id);
+}
+
+export async function createUser(user: InsertUser) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot create user: database not available");
+    return undefined;
+  }
+
+  await db.insert(users).values(user);
+  return getUser(user.id!);
+}
+
+export async function updateUserLastSignedIn(userId: string) {
+  const db = await getDb();
+  if (!db) return;
+
+  await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, userId));
+}
+
+export async function updateUserPassword(userId: string, hashedPassword: string) {
+  const db = await getDb();
+  if (!db) return;
+
+  await db.update(users).set({ password: hashedPassword }).where(eq(users.id, userId));
+}
+
 // ============================================================================
 // Artist Settings operations
 // ============================================================================

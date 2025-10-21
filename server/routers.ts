@@ -6,6 +6,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import * as db from "./db";
 import { uploadRouter } from "./uploadRouter";
+import { authRouter } from "./_core/auth-router";
 import { notifyNewMessage, notifyAppointmentConfirmed } from "./_core/pushNotification";
 
 // Custom procedure for artist-only operations
@@ -101,6 +102,7 @@ export const appRouter = router({
   }),
 
   auth: router({
+    ...authRouter._def.procedures,
     me: publicProcedure.query((opts) => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);

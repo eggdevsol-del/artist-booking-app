@@ -45,9 +45,10 @@ export default function Consultations() {
     },
   });
 
+  // Redirect to login if not authenticated
   useEffect(() => {
     if (!loading && !user) {
-      setLocation("/");
+      setLocation("/login");
     }
   }, [loading, user, setLocation]);
 

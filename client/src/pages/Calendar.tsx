@@ -109,12 +109,12 @@ export default function Calendar() {
     },
   });
 
-  // TEMPORARY: Authentication disabled - no redirect
-  // useEffect(() => {
-  //   if (!loading && !user) {
-  //     setLocation("/");
-  //   }
-  // }, [user, loading, setLocation]);
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      setLocation("/login");
+    }
+  }, [user, loading, setLocation]);
 
   const resetForm = () => {
     setAppointmentForm({
