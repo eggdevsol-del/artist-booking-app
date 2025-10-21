@@ -10,27 +10,11 @@ export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
 
+  // TEMPORARY: Skip authentication, go directly to conversations
   useEffect(() => {
-    if (isAuthenticated && user) {
-      // If user hasn't completed onboarding, redirect to role selection
-      if (!user.hasCompletedOnboarding) {
-        setLocation("/role-selection");
-      } else {
-        // Check if there's a referral code in URL
-        const params = new URLSearchParams(window.location.search);
-        const refArtistId = params.get('ref');
-        
-        if (refArtistId && user.role === 'client') {
-          // Auto-create conversation with the referred artist
-          // This will be handled by the conversations page
-          setLocation(`/conversations?ref=${refArtistId}`);
-        } else {
-          // Otherwise redirect to conversations
-          setLocation("/conversations");
-        }
-      }
-    }
-  }, [isAuthenticated, user, setLocation]);
+    // Always redirect to conversations (authentication disabled)
+    setLocation("/conversations");
+  }, [setLocation]);
 
   if (loading) {
     return (
@@ -123,17 +107,17 @@ export default function Home() {
             </Card>
           </div>
 
-          {/* Login Button */}
+          {/* Login Button - TEMPORARY: Direct access */}
           <div className="space-y-3">
             <Button
               size="lg"
               className="w-full h-14 text-lg font-semibold shadow-lg"
-              onClick={() => (window.location.href = getLoginUrl())}
+              onClick={() => setLocation("/conversations")}
             >
               Get Started
             </Button>
             <p className="text-center text-sm text-muted-foreground">
-              Sign in to access your account
+              No login required - demo mode
             </p>
           </div>
         </div>

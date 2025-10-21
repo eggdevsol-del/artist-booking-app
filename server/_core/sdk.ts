@@ -257,35 +257,21 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<User> {
-    // Regular authentication flow
-    const cookies = this.parseCookies(req.headers.cookie);
-    const sessionCookie = cookies.get(COOKIE_NAME);
-    const session = await this.verifySession(sessionCookie);
+    // TEMPORARY: Authentication disabled - return mock user
+    const mockUserId = "demo_user_001";
+    let user = await db.getUser(mockUserId);
 
-    if (!session) {
-      throw ForbiddenError("Invalid session cookie");
-    }
-
-    const sessionUserId = session.openId;
-    const signedInAt = new Date();
-    let user = await db.getUser(sessionUserId);
-
-    // If user not in DB, sync from OAuth server automatically
+    // Create mock user if doesn't exist
     if (!user) {
-      try {
-        const userInfo = await this.getUserInfoWithJwt(sessionCookie ?? "");
-        await db.upsertUser({
-          id: userInfo.openId,
-          name: userInfo.name || null,
-          email: userInfo.email ?? null,
-          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-          lastSignedIn: signedInAt,
-        });
-        user = await db.getUser(userInfo.openId);
-      } catch (error) {
-        console.error("[Auth] Failed to sync user from OAuth:", error);
-        throw ForbiddenError("Failed to sync user info");
-      }
+      await db.upsertUser({
+        id: mockUserId,
+        name: "Demo User",
+        email: "demo@example.com",
+        loginMethod: "demo",
+        role: "artist", // Default to artist role
+        lastSignedIn: new Date(),
+      });
+      user = await db.getUser(mockUserId);
     }
 
     if (!user) {
