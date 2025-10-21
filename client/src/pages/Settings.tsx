@@ -83,10 +83,10 @@ export default function Settings() {
 
   // Redirect to login if not authenticated
   // useEffect(() => {
-    if (!loading && !user) {
-      setLocation("/login");
-    }
-  }, [user, loading, setLocation]);
+  //   if (!loading && !user) {
+  //     setLocation("/login");
+  //   }
+  // }, [user, loading, setLocation]);
 
   useEffect(() => {
     if (user) {
