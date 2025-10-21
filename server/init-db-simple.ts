@@ -70,24 +70,40 @@ export async function initializeDatabase() {
       const filePath = path.join(drizzlePath, file);
       const sql = fs.readFileSync(filePath, 'utf-8');
       
-      // Split by semicolons and execute each statement
+      // Split by Drizzle's statement breakpoint marker or semicolons
+      // Drizzle uses "--> statement-breakpoint" to separate statements
       const statements = sql
-        .split(';')
-        .map(s => s.trim())
-        .filter(s => s.length > 0 && !s.startsWith('--'));
+        .split(/-->[\s]*statement-breakpoint/gi)
+        .map(block => {
+          // Each block might have multiple statements separated by semicolons
+          return block
+            .split(';')
+            .map(s => s.trim())
+            .filter(s => s.length > 0 && !s.startsWith('--'));
+        })
+        .flat()
+        .filter(s => s.length > 0);
 
-      for (const statement of statements) {
+      console.log(`[DB Init] Executing ${statements.length} statements from ${file}...`);
+
+      for (let i = 0; i < statements.length; i++) {
+        const statement = statements[i];
         if (statement.length > 0) {
           try {
             await connection.query(statement);
           } catch (error: any) {
-            // Ignore errors for constraints that might already exist
-            if (error.code === 'ER_DUP_KEYNAME' || error.code === 'ER_FK_DUP_NAME') {
-              console.log(`[DB Init] Skipping duplicate constraint in ${file}`);
+            // Ignore errors for constraints or tables that might already exist
+            if (error.code === 'ER_DUP_KEYNAME' || 
+                error.code === 'ER_FK_DUP_NAME' ||
+                error.code === 'ER_TABLE_EXISTS_ERROR' ||
+                error.code === 'ER_DUP_FIELDNAME') {
+              console.log(`[DB Init] Skipping duplicate/existing item in ${file} (${i + 1}/${statements.length})`);
               continue;
             }
-            console.error(`[DB Init] Error in ${file}:`, error.message);
-            console.error('Statement:', statement.substring(0, 100) + '...');
+            
+            // Log the error but continue with other statements
+            console.error(`[DB Init] Error in ${file} statement ${i + 1}:`, error.message);
+            console.error('Statement:', statement.substring(0, 150) + '...');
             // Don't throw - continue with other statements
           }
         }
