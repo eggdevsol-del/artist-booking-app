@@ -81,11 +81,12 @@ export default function Settings() {
     enabled: !!user && (user.role === "artist" || user.role === "admin"),
   });
 
-  useEffect(() => {
-    if (!loading && !user) {
-      setLocation("/");
-    }
-  }, [user, loading, setLocation]);
+  // TEMPORARY: Authentication disabled - no redirect
+  // useEffect(() => {
+  //   if (!loading && !user) {
+  //     setLocation("/");
+  //   }
+  // }, [user, loading, setLocation]);
 
   useEffect(() => {
     if (user) {
