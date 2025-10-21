@@ -10,11 +10,8 @@ export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
 
-  // TEMPORARY: Skip authentication, go directly to conversations
-  useEffect(() => {
-    // Always redirect to conversations (authentication disabled)
-    setLocation("/conversations");
-  }, [setLocation]);
+  // TEMPORARY: Authentication disabled - no automatic redirect
+  // Users can click "Get Started" to enter the app
 
   if (loading) {
     return (
