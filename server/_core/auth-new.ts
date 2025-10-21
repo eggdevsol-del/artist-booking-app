@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import { db } from "../db";
+import { getUserById } from "../db";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 const JWT_EXPIRES_IN = "7d"; // Token expires in 7 days
@@ -100,7 +100,7 @@ export async function authenticateRequest(
     }
 
     // Get user from database
-    const user = await db.getUserById(payload.userId);
+    const user = await getUserById(payload.userId);
     if (!user) {
       res.status(401).json({ error: "User not found" });
       return;
@@ -136,7 +136,7 @@ export async function optionalAuth(
     if (token) {
       const payload = verifyToken(token);
       if (payload) {
-        const user = await db.getUserById(payload.userId);
+        const user = await getUserById(payload.userId);
         if (user) {
           (req as any).user = {
             id: user.id,
