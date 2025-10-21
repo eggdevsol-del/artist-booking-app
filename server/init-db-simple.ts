@@ -7,8 +7,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
- * Simple database initialization script
- * Runs the complete schema SQL file to set up all tables
+ * Database initialization script using Drizzle migration files
+ * Runs all migration SQL files to set up tables
  */
 export async function initializeDatabase() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -40,38 +40,56 @@ export async function initializeDatabase() {
 
     console.log('[DB Init] Database is empty, creating tables...');
 
-    // Read the complete schema file
-    const schemaPath = path.join(__dirname, 'migrations', 'complete-schema.sql');
+    // Find the drizzle migration directory
+    // In production (dist), look for drizzle folder at project root
+    // In development, it's at ../drizzle relative to server
+    let drizzlePath = path.join(__dirname, '..', 'drizzle');
     
-    if (!fs.existsSync(schemaPath)) {
-      console.error(`[DB Init] Schema file not found: ${schemaPath}`);
+    // If running from dist folder, go up one more level
+    if (__dirname.includes('/dist')) {
+      drizzlePath = path.join(__dirname, '..', '..', 'drizzle');
+    }
+    
+    console.log(`[DB Init] Looking for migrations in: ${drizzlePath}`);
+    
+    if (!fs.existsSync(drizzlePath)) {
+      console.error(`[DB Init] Drizzle migrations directory not found: ${drizzlePath}`);
       return;
     }
 
-    const sql = fs.readFileSync(schemaPath, 'utf-8');
+    // Get all .sql migration files and sort them
+    const migrationFiles = fs.readdirSync(drizzlePath)
+      .filter(f => f.endsWith('.sql'))
+      .sort();
     
-    // Split by semicolons and execute each statement
-    const statements = sql
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
+    console.log(`[DB Init] Found ${migrationFiles.length} migration files`);
 
-    console.log(`[DB Init] Executing ${statements.length} SQL statements...`);
+    // Execute each migration file
+    for (const file of migrationFiles) {
+      console.log(`[DB Init] Running migration: ${file}`);
+      const filePath = path.join(drizzlePath, file);
+      const sql = fs.readFileSync(filePath, 'utf-8');
+      
+      // Split by semicolons and execute each statement
+      const statements = sql
+        .split(';')
+        .map(s => s.trim())
+        .filter(s => s.length > 0 && !s.startsWith('--'));
 
-    for (let i = 0; i < statements.length; i++) {
-      const statement = statements[i];
-      if (statement.length > 0) {
-        try {
-          await connection.query(statement);
-        } catch (error: any) {
-          // Ignore errors for constraints that might already exist
-          if (error.code === 'ER_DUP_KEYNAME' || error.code === 'ER_FK_DUP_NAME') {
-            console.log(`[DB Init] Skipping duplicate constraint (${i + 1}/${statements.length})`);
-            continue;
+      for (const statement of statements) {
+        if (statement.length > 0) {
+          try {
+            await connection.query(statement);
+          } catch (error: any) {
+            // Ignore errors for constraints that might already exist
+            if (error.code === 'ER_DUP_KEYNAME' || error.code === 'ER_FK_DUP_NAME') {
+              console.log(`[DB Init] Skipping duplicate constraint in ${file}`);
+              continue;
+            }
+            console.error(`[DB Init] Error in ${file}:`, error.message);
+            console.error('Statement:', statement.substring(0, 100) + '...');
+            // Don't throw - continue with other statements
           }
-          console.error(`[DB Init] Error in statement ${i + 1}:`, error.message);
-          console.error('Statement:', statement.substring(0, 100) + '...');
-          // Don't throw - continue with other statements
         }
       }
     }
@@ -91,6 +109,7 @@ export async function initializeDatabase() {
     if (connection) {
       await connection.end();
     }
+    console.log('[DB Init] Database initialization complete');
   }
 }
 
@@ -98,11 +117,11 @@ export async function initializeDatabase() {
 if (import.meta.url === `file://${process.argv[1]}`) {
   initializeDatabase()
     .then(() => {
-      console.log('[DB Init] Database initialization complete');
+      console.log('[DB Init] Standalone execution complete');
       process.exit(0);
     })
     .catch((error) => {
-      console.error('[DB Init] Database initialization failed:', error);
+      console.error('[DB Init] Standalone execution failed:', error);
       process.exit(1);
     });
 }
