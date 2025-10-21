@@ -109,7 +109,7 @@ export default function Home() {
             <Button
               size="lg"
               className="w-full h-14 text-lg font-semibold shadow-lg"
-              onClick={() => setLocation("/conversations")}
+              onClick={() => window.location.href = "/conversations"}
             >
               Get Started
             </Button>
