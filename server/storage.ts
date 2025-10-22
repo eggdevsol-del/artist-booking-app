@@ -1,70 +1,36 @@
-// Preconfigured storage helpers for Manus WebDev templates
-// Uses the Biz-provided storage proxy (Authorization: Bearer <token>)
+// Database-backed storage for images and files
+// Stores files as base64 in MySQL database
 
-import { ENV } from './_core/env';
+import { getDb } from './db';
+import { sql } from 'drizzle-orm';
 
-type StorageConfig = { baseUrl: string; apiKey: string };
-
-function getStorageConfig(): StorageConfig {
-  const baseUrl = ENV.forgeApiUrl;
-  const apiKey = ENV.forgeApiKey;
-
-  if (!baseUrl || !apiKey) {
-    throw new Error(
-      "Storage proxy credentials missing: set BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY"
-    );
-  }
-
-  return { baseUrl: baseUrl.replace(/\/+$/, ""), apiKey };
+// Initialize storage table
+async function ensureStorageTable() {
+  const db = await getDb();
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS file_storage (
+      file_key VARCHAR(255) PRIMARY KEY,
+      file_data LONGTEXT NOT NULL,
+      mime_type VARCHAR(100) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 }
 
-function buildUploadUrl(baseUrl: string, relKey: string): URL {
-  const url = new URL("v1/storage/upload", ensureTrailingSlash(baseUrl));
-  url.searchParams.set("path", normalizeKey(relKey));
-  return url;
-}
-
-async function buildDownloadUrl(
-  baseUrl: string,
-  relKey: string,
-  apiKey: string
-): Promise<string> {
-  const downloadApiUrl = new URL(
-    "v1/storage/downloadUrl",
-    ensureTrailingSlash(baseUrl)
-  );
-  downloadApiUrl.searchParams.set("path", normalizeKey(relKey));
-  const response = await fetch(downloadApiUrl, {
-    method: "GET",
-    headers: buildAuthHeaders(apiKey),
-  });
-  return (await response.json()).url;
-}
-
-function ensureTrailingSlash(value: string): string {
-  return value.endsWith("/") ? value : `${value}/`;
-}
-
-function normalizeKey(relKey: string): string {
-  return relKey.replace(/^\/+/, "");
-}
-
-function toFormData(
-  data: Buffer | Uint8Array | string,
-  contentType: string,
-  fileName: string
-): FormData {
-  const blob =
-    typeof data === "string"
-      ? new Blob([data], { type: contentType })
-      : new Blob([data as any], { type: contentType });
-  const form = new FormData();
-  form.append("file", blob, fileName || "file");
-  return form;
-}
-
-function buildAuthHeaders(apiKey: string): HeadersInit {
-  return { Authorization: `Bearer ${apiKey}` };
+function getMimeType(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  const mimeTypes: Record<string, string> = {
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'svg': 'image/svg+xml',
+    'pdf': 'application/pdf',
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+  };
+  return mimeTypes[ext || ''] || 'application/octet-stream';
 }
 
 export async function storagePut(
@@ -72,23 +38,25 @@ export async function storagePut(
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
-  const { baseUrl, apiKey } = getStorageConfig();
-  const key = normalizeKey(relKey);
-  const uploadUrl = buildUploadUrl(baseUrl, key);
-  const formData = toFormData(data, contentType, key.split("/").pop() ?? key);
-  const response = await fetch(uploadUrl, {
-    method: "POST",
-    headers: buildAuthHeaders(apiKey),
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const message = await response.text().catch(() => response.statusText);
-    throw new Error(
-      `Storage upload failed (${response.status} ${response.statusText}): ${message}`
-    );
-  }
-  const url = (await response.json()).url;
+  await ensureStorageTable();
+  
+  const key = relKey.replace(/^\/+/, '');
+  const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+  const base64Data = buffer.toString('base64');
+  const mimeType = contentType || getMimeType(key);
+  
+  // Insert or update the file
+  const db = await getDb();
+  await db.execute(sql`
+    INSERT INTO file_storage (file_key, file_data, mime_type)
+    VALUES (${key}, ${base64Data}, ${mimeType})
+    ON DUPLICATE KEY UPDATE 
+      file_data = ${base64Data},
+      mime_type = ${mimeType},
+      created_at = CURRENT_TIMESTAMP
+  `);
+  
+  const url = `/api/files/${encodeURIComponent(key)}`;
   return { key, url };
 }
 
@@ -96,10 +64,25 @@ export async function storageGet(
   relKey: string,
   _expiresIn = 300
 ): Promise<{ key: string; url: string; }> {
-  const { baseUrl, apiKey } = getStorageConfig();
-  const key = normalizeKey(relKey);
+  const key = relKey.replace(/^\/+/, '');
+  const url = `/api/files/${encodeURIComponent(key)}`;
+  return { key, url };
+}
+
+// Helper function to retrieve file data from database
+export async function storageGetData(key: string): Promise<{ data: Buffer; mimeType: string } | null> {
+  const db = await getDb();
+  const result: any = await db.execute(sql`
+    SELECT file_data, mime_type FROM file_storage WHERE file_key = ${key}
+  `);
+  
+  if (!result || !result[0] || !result[0].file_data) {
+    return null;
+  }
+  
   return {
-    key,
-    url: await buildDownloadUrl(baseUrl, key, apiKey),
+    data: Buffer.from(result[0].file_data as string, 'base64'),
+    mimeType: result[0].mime_type as string
   };
 }
+

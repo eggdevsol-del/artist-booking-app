@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { verifyAndFixDatabase } from "../verify-and-fix-db";
+import { storageGetData } from "../storage";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -44,6 +45,25 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  
+  // File serving endpoint
+  app.get("/api/files/:key", async (req, res) => {
+    try {
+      const key = decodeURIComponent(req.params.key);
+      const file = await storageGetData(key);
+      
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      
+      res.setHeader("Content-Type", file.mimeType);
+      res.setHeader("Cache-Control", "public, max-age=31536000");
+      res.send(file.data);
+    } catch (error) {
+      console.error("[File Serving] Error:", error);
+      res.status(500).json({ error: "Failed to retrieve file" });
+    }
+  });
   // tRPC API
   app.use(
     "/api/trpc",
