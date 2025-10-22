@@ -86,14 +86,50 @@ export default function Chat() {
     }
   }, [artistSettings]);
 
+  const utils = trpc.useUtils();
+
   const sendMessageMutation = trpc.messages.send.useMutation({
-    onSuccess: () => {
-      setMessageText("");
-      refetchMessages();
-      scrollToBottom();
+    onMutate: async (newMessage) => {
+      // Cancel any outgoing refetches
+      await utils.messages.list.cancel({ conversationId });
+
+      // Snapshot the previous value
+      const previousMessages = utils.messages.list.getData({ conversationId });
+
+      // Optimistically update to the new value
+      const optimisticMessage = {
+        id: Date.now(), // Temporary ID
+        conversationId: newMessage.conversationId,
+        senderId: user?.id || '',
+        content: newMessage.content,
+        messageType: newMessage.messageType,
+        metadata: newMessage.metadata || null,
+        readBy: null,
+        createdAt: new Date(),
+      };
+
+      utils.messages.list.setData(
+        { conversationId },
+        (old) => old ? [...old, optimisticMessage] : [optimisticMessage]
+      );
+
+      // Return a context object with the snapshotted value
+      return { previousMessages };
     },
-    onError: (error: any) => {
+    onError: (error: any, newMessage, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousMessages) {
+        utils.messages.list.setData({ conversationId }, context.previousMessages);
+      }
       toast.error("Failed to send message: " + error.message);
+    },
+    onSuccess: async () => {
+      setMessageText("");
+      // Invalidate and refetch to get the real message from server
+      await utils.messages.list.invalidate({ conversationId });
+    },
+    onSettled: () => {
+      scrollToBottom();
     },
   });
 
