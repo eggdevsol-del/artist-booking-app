@@ -80,13 +80,29 @@ export async function storageGetData(key: string): Promise<{ data: Buffer; mimeT
     SELECT file_data, mime_type FROM file_storage WHERE file_key = ${key}
   `);
   
-  if (!result || !result[0] || !result[0].file_data) {
+  console.log('[Storage] Get data for key:', key);
+  console.log('[Storage] Result structure:', result ? Object.keys(result) : 'null');
+  
+  // Drizzle returns an array where result[0] is the rows array
+  const rows = Array.isArray(result) && result.length > 0 ? result[0] : null;
+  console.log('[Storage] Rows:', rows ? (Array.isArray(rows) ? `Array with ${rows.length} items` : 'Not an array') : 'null');
+  
+  if (!rows || !Array.isArray(rows) || rows.length === 0) {
+    console.log('[Storage] No data found for key:', key);
+    return null;
+  }
+  
+  const row = rows[0];
+  console.log('[Storage] Row data found:', row ? 'yes' : 'no');
+  
+  if (!row || !row.file_data) {
+    console.log('[Storage] No file_data in row');
     return null;
   }
   
   return {
-    data: Buffer.from(result[0].file_data as string, 'base64'),
-    mimeType: result[0].mime_type as string
+    data: Buffer.from(row.file_data as string, 'base64'),
+    mimeType: row.mime_type as string
   };
 }
 

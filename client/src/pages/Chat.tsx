@@ -163,6 +163,7 @@ export default function Chat() {
 
   const uploadImageMutation = trpc.upload.uploadImage.useMutation({
     onSuccess: (data) => {
+      console.log('[Upload] Image uploaded successfully:', data);
       // Send the image URL as a message
       sendMessageMutation.mutate({
         conversationId,
@@ -170,8 +171,10 @@ export default function Chat() {
         messageType: "image",
       });
       setUploadingImage(false);
+      toast.success("Image uploaded successfully");
     },
     onError: (error: any) => {
+      console.error('[Upload] Upload failed:', error);
       toast.error("Failed to upload image: " + error.message);
       setUploadingImage(false);
     },
@@ -207,6 +210,12 @@ export default function Chat() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    console.log('[Upload] File selected:', {
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
+
     // Check file type
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
@@ -226,6 +235,7 @@ export default function Chat() {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const base64Data = e.target?.result as string;
+      console.log('[Upload] File read complete, base64 length:', base64Data.length);
       
       uploadImageMutation.mutate({
         fileName: file.name,
@@ -234,6 +244,7 @@ export default function Chat() {
       });
     };
     reader.onerror = () => {
+      console.error('[Upload] FileReader error');
       toast.error("Failed to read image file");
       setUploadingImage(false);
     };

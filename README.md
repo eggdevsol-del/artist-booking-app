@@ -1,6 +1,6 @@
-# Artist Booking App
+# VEIL
 
-A full-stack Progressive Web App (PWA) for artists to manage client bookings, appointments, and communications.
+A full-stack Progressive Web App (PWA) for artists to manage client bookings, appointments, and communications. VEIL provides a seamless platform for artists to connect with clients, schedule appointments, and manage their business.
 
 ## Features
 

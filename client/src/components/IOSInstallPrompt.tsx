@@ -68,7 +68,7 @@ export default function IOSInstallPrompt() {
           </Button>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Smartphone className="h-5 w-5 text-primary" />
-            Install Artist Booking App
+            Install VEIL
           </CardTitle>
           <CardDescription>
             Add this app to your iPhone home screen for the best experience
