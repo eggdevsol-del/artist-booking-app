@@ -12,7 +12,8 @@
     "test": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
     "db:init": "tsx server/init-db.ts",
-    "db:verify": "tsx server/verify-and-fix-db.ts"
+    "db:verify": "tsx server/verify-and-fix-db.ts",
+    "db:migrate-storage": "tsx server/run-file-storage-migration.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",
