@@ -3,12 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { Calendar, ChevronRight, MessageCircle, Settings, User } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
 export default function Conversations() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
+  const [viewedConsultations, setViewedConsultations] = useState<Set<number>>(() => {
+    const stored = localStorage.getItem('viewedConsultations');
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  });
   const { data: conversations, isLoading, refetch } = trpc.conversations.list.useQuery(undefined, {
     enabled: !!user,
     refetchInterval: 10000, // Refresh every 10 seconds
@@ -90,6 +94,12 @@ export default function Conversations() {
                   key={consult.id}
                   className="p-4 cursor-pointer hover:bg-accent/5 transition-colors border-l-4 border-l-primary"
                   onClick={async () => {
+                    // Mark consultation as viewed
+                    const newViewed = new Set(viewedConsultations);
+                    newViewed.add(consult.id);
+                    setViewedConsultations(newViewed);
+                    localStorage.setItem('viewedConsultations', JSON.stringify(Array.from(newViewed)));
+                    
                     // Create or get conversation with this client
                     const result = await createConversationMutation.mutateAsync({
                       clientId: consult.clientId,
@@ -103,9 +113,11 @@ export default function Conversations() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
-                          New Request
-                        </span>
+                        {!viewedConsultations.has(consult.id) && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
+                            New Request
+                          </span>
+                        )}
                       </div>
                       <h3 className="font-semibold text-foreground mb-1">{consult.subject}</h3>
                       <p className="text-sm text-muted-foreground line-clamp-2">{consult.description}</p>
