@@ -341,6 +341,29 @@ export async function getMessages(conversationId: number, limit = 100) {
     .limit(limit);
 }
 
+export async function getMessageById(messageId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(messages)
+    .where(eq(messages.id, messageId))
+    .limit(1);
+
+  return result[0];
+}
+
+export async function updateMessageMetadata(messageId: number, metadata: string) {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(messages)
+    .set({ metadata })
+    .where(eq(messages.id, messageId));
+}
+
 export async function getUnreadMessageCount(conversationId: number, userId: string) {
   const db = await getDb();
   if (!db) return 0;

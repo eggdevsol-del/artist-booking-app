@@ -395,6 +395,49 @@ export const appRouter = router({
 
         return message;
       }),
+    updateMetadata: protectedProcedure
+      .input(
+        z.object({
+          messageId: z.number(),
+          metadata: z.string(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        // Get the message to verify ownership
+        const message = await db.getMessageById(input.messageId);
+        
+        if (!message) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Message not found",
+          });
+        }
+        
+        // Verify user is part of the conversation
+        const conversation = await db.getConversationById(message.conversationId);
+        
+        if (!conversation) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Conversation not found",
+          });
+        }
+        
+        if (
+          conversation.artistId !== ctx.user.id &&
+          conversation.clientId !== ctx.user.id
+        ) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Not authorized to update this message",
+          });
+        }
+        
+        // Update the message metadata
+        await db.updateMessageMetadata(input.messageId, input.metadata);
+        
+        return { success: true };
+      }),
   }),
 
   appointments: router({

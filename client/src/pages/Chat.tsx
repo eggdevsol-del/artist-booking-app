@@ -97,6 +97,15 @@ export default function Chat() {
     },
   });
 
+  const updateMessageMetadataMutation = trpc.messages.updateMetadata.useMutation({
+    onSuccess: () => {
+      refetchMessages();
+    },
+    onError: (error: any) => {
+      toast.error("Failed to update message: " + error.message);
+    },
+  });
+
   const createAppointmentMutation = trpc.appointments.create.useMutation({
     onSuccess: () => {
       toast.success("Appointment created");
@@ -495,37 +504,58 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                       }
                       return null;
                     })()}
-                    {isAppointmentRequest && (
-                      <Button
-                        size="sm"
-                        className="mt-3 w-full"
-                        onClick={() => {
-                          // Parse dates from message content
-                          const dateRegex = /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), (\w+ \d+, \d{4})/g;
-                          const matches = Array.from(message.content.matchAll(dateRegex));
-                          const dates = matches.map(match => match[0]);
-                          
-                          if (dates.length > 0) {
-                            // Parse service metadata if available
-                            let serviceData: any = {};
-                            if (message.metadata) {
-                              try {
-                                serviceData = JSON.parse(message.metadata);
-                              } catch (e) {
-                                console.error('Failed to parse metadata:', e);
-                              }
-                            }
+                    {isAppointmentRequest && (() => {
+                      // Check if dates have already been accepted
+                      let isAccepted = false;
+                      if (message.metadata) {
+                        try {
+                          const metadata = JSON.parse(message.metadata);
+                          isAccepted = metadata.accepted === true;
+                        } catch (e) {
+                          console.error('Failed to parse metadata:', e);
+                        }
+                      }
+                      
+                      if (isAccepted) {
+                        return (
+                          <div className="mt-3 w-full px-3 py-2 bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg text-sm font-medium text-center">
+                            ✓ Dates Accepted
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <Button
+                          size="sm"
+                          className="mt-3 w-full"
+                          onClick={() => {
+                            // Parse dates from message content
+                            const dateRegex = /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), (\w+ \d+, \d{4})/g;
+                            const matches = Array.from(message.content.matchAll(dateRegex));
+                            const dates = matches.map(match => match[0]);
                             
-                            setAvailableDates(dates);
-                            setSelectedDatesForConfirm(dates); // Pre-select all dates
-                            setCurrentMessageMetadata(serviceData);
-                            setShowDateSelection(true);
-                          }
-                        }}
-                      >
-                        Accept Dates
-                      </Button>
-                    )}
+                            if (dates.length > 0) {
+                              // Parse service metadata if available
+                              let serviceData: any = {};
+                              if (message.metadata) {
+                                try {
+                                  serviceData = JSON.parse(message.metadata);
+                                } catch (e) {
+                                  console.error('Failed to parse metadata:', e);
+                                }
+                              }
+                              
+                              setAvailableDates(dates);
+                              setSelectedDatesForConfirm(dates); // Pre-select all dates
+                              setCurrentMessageMetadata({ ...serviceData, messageId: message.id });
+                              setShowDateSelection(true);
+                            }
+                          }}
+                        >
+                          Accept Dates
+                        </Button>
+                      );
+                    })()}
                   </div>
                 </div>
               );
@@ -906,7 +936,7 @@ Once transfer is complete, please send a screenshot of remittance here in this m
               </Button>
               <Button
                 className="flex-1"
-                onClick={() => {
+                onClick={async () => {
                   if (selectedDatesForConfirm.length > 0 && conversation) {
                     const serviceData = currentMessageMetadata || {};
                     
@@ -929,6 +959,25 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                         price: serviceData.price,
                       });
                     });
+                    
+                    // Mark the original message as accepted
+                    if (serviceData.messageId) {
+                      try {
+                        // Update the metadata to include accepted flag
+                        const updatedMetadata = {
+                          ...serviceData,
+                          accepted: true,
+                        };
+                        delete updatedMetadata.messageId; // Remove messageId from stored metadata
+                        
+                        await updateMessageMetadataMutation.mutateAsync({
+                          messageId: serviceData.messageId,
+                          metadata: JSON.stringify(updatedMetadata),
+                        });
+                      } catch (error) {
+                        console.error('Failed to mark message as accepted:', error);
+                      }
+                    }
                     
                     // Calculate total deposit
                     const depositPerAppointment = serviceData.depositAmount || 0;
