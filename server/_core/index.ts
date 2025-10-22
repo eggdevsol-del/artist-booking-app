@@ -46,10 +46,11 @@ async function startServer() {
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   
-  // File serving endpoint
-  app.get("/api/files/:key", async (req, res) => {
+  // File serving endpoint - handle full paths with subdirectories
+  app.get("/api/files/*", async (req, res) => {
     try {
-      const key = decodeURIComponent(req.params.key);
+      // Get the full path after /api/files/
+      const key = req.params[0];
       const file = await storageGetData(key);
       
       if (!file) {

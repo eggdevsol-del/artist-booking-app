@@ -56,7 +56,7 @@ export async function storagePut(
       created_at = CURRENT_TIMESTAMP
   `);
   
-  const url = `/api/files/${encodeURIComponent(key)}`;
+  const url = `/api/files/${key}`;
   return { key, url };
 }
 
@@ -65,7 +65,7 @@ export async function storageGet(
   _expiresIn = 300
 ): Promise<{ key: string; url: string; }> {
   const key = relKey.replace(/^\/+/, '');
-  const url = `/api/files/${encodeURIComponent(key)}`;
+  const url = `/api/files/${key}`;
   return { key, url };
 }
 
