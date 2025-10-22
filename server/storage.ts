@@ -38,7 +38,9 @@ export async function storagePut(
   data: Buffer | Uint8Array | string,
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
+  console.log('[Storage] Starting upload:', { relKey, dataLength: data.length, contentType });
   await ensureStorageTable();
+  console.log('[Storage] Storage table ensured');
   
   const key = relKey.replace(/^\/+/, '');
   const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
@@ -46,6 +48,7 @@ export async function storagePut(
   const mimeType = contentType || getMimeType(key);
   
   // Insert or update the file
+  console.log('[Storage] Preparing to insert:', { key, base64Length: base64Data.length, mimeType });
   const db = await getDb();
   await db.execute(sql`
     INSERT INTO file_storage (file_key, file_data, mime_type)
@@ -57,6 +60,7 @@ export async function storagePut(
   `);
   
   const url = `/api/files/${key}`;
+  console.log('[Storage] Upload successful:', { key, url });
   return { key, url };
 }
 
