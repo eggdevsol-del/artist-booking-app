@@ -89,16 +89,28 @@ export const clientContentRouter = router({
         });
       }
 
-      await db.execute(sql`
-        INSERT INTO client_content (
-          client_id, artist_id, file_key, file_name, file_type, 
-          mime_type, file_size, title, description
-        ) VALUES (
-          ${input.clientId}, ${ctx.user.id}, ${result.key}, ${input.fileName},
-          ${input.fileType}, ${input.contentType}, ${fileSize},
-          ${input.title || null}, ${input.description || null}
-        )
-      `);
+      // Use raw mysql2 for insert to avoid Drizzle sql template issues
+      const mysql = await import('mysql2/promise');
+      const connection = await mysql.createConnection(process.env.DATABASE_URL!);
+      
+      try {
+        await connection.execute(
+          'INSERT INTO client_content (client_id, artist_id, file_key, file_name, file_type, mime_type, file_size, title, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [
+            input.clientId,
+            ctx.user.id,
+            result.key,
+            input.fileName,
+            input.fileType,
+            input.contentType,
+            fileSize,
+            input.title || null,
+            input.description || null
+          ]
+        );
+      } finally {
+        await connection.end();
+      }
 
       console.log("[ClientContent] Upload successful");
 
@@ -141,10 +153,18 @@ export const clientContentRouter = router({
         });
       }
 
-      // Delete from database
-      await db.execute(sql`
-        DELETE FROM client_content WHERE id = ${input}
-      `);
+      // Delete from database using raw mysql2
+      const mysql = await import('mysql2/promise');
+      const connection = await mysql.createConnection(process.env.DATABASE_URL!);
+      
+      try {
+        await connection.execute(
+          'DELETE FROM client_content WHERE id = ?',
+          [input]
+        );
+      } finally {
+        await connection.end();
+      }
 
       return { success: true };
     }),
@@ -188,19 +208,26 @@ export const clientContentRouter = router({
         });
       }
 
-      if (input.id) {
-        // Update existing note
-        await db.execute(sql`
-          UPDATE client_notes 
-          SET note = ${input.note}, updated_at = CURRENT_TIMESTAMP
-          WHERE id = ${input.id} AND artist_id = ${ctx.user.id}
-        `);
-      } else {
-        // Create new note
-        await db.execute(sql`
-          INSERT INTO client_notes (client_id, artist_id, note)
-          VALUES (${input.clientId}, ${ctx.user.id}, ${input.note})
-        `);
+      // Use raw mysql2 for insert/update to avoid Drizzle sql template issues
+      const mysql = await import('mysql2/promise');
+      const connection = await mysql.createConnection(process.env.DATABASE_URL!);
+      
+      try {
+        if (input.id) {
+          // Update existing note
+          await connection.execute(
+            'UPDATE client_notes SET note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND artist_id = ?',
+            [input.note, input.id, ctx.user.id]
+          );
+        } else {
+          // Create new note
+          await connection.execute(
+            'INSERT INTO client_notes (client_id, artist_id, note) VALUES (?, ?, ?)',
+            [input.clientId, ctx.user.id, input.note]
+          );
+        }
+      } finally {
+        await connection.end();
       }
 
       return { success: true };
@@ -218,10 +245,18 @@ export const clientContentRouter = router({
         });
       }
 
-      await db.execute(sql`
-        DELETE FROM client_notes 
-        WHERE id = ${input} AND artist_id = ${ctx.user.id}
-      `);
+      // Use raw mysql2 for delete to avoid Drizzle sql template issues
+      const mysql = await import('mysql2/promise');
+      const connection = await mysql.createConnection(process.env.DATABASE_URL!);
+      
+      try {
+        await connection.execute(
+          'DELETE FROM client_notes WHERE id = ? AND artist_id = ?',
+          [input, ctx.user.id]
+        );
+      } finally {
+        await connection.end();
+      }
 
       return { success: true };
     }),
@@ -251,10 +286,18 @@ export const clientContentRouter = router({
         });
       }
 
-      // Delete user (cascade will handle related records)
-      await db.execute(sql`
-        DELETE FROM users WHERE id = ${input}
-      `);
+      // Delete user (cascade will handle related records) using raw mysql2
+      const mysql = await import('mysql2/promise');
+      const connection = await mysql.createConnection(process.env.DATABASE_URL!);
+      
+      try {
+        await connection.execute(
+          'DELETE FROM users WHERE id = ?',
+          [input]
+        );
+      } finally {
+        await connection.end();
+      }
 
       return { success: true };
     }),
