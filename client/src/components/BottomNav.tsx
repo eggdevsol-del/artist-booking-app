@@ -4,11 +4,16 @@ import { MessageCircle, Calendar, Settings, Image as ImageIcon } from "lucide-re
 import { useLocation } from "wouter";
 
 export default function BottomNav() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [location, setLocation] = useLocation();
 
   // Don't show on auth pages
   if (location === "/login" || location === "/signup" || location === "/role-selection" || location === "/complete-profile" || location === "/" || location === "/404") {
+    return null;
+  }
+
+  // Don't show while loading to prevent errors
+  if (loading || !user) {
     return null;
   }
 
