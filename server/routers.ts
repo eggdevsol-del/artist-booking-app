@@ -7,6 +7,7 @@ import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import * as db from "./db";
 import { uploadRouter } from "./uploadRouter";
 import { authRouter } from "./_core/auth-router";
+import { clientContentRouter } from "./clientContentRouter";
 import { notifyNewMessage, notifyAppointmentConfirmed } from "./_core/pushNotification";
 
 // Custom procedure for artist-only operations
@@ -857,6 +858,7 @@ export const appRouter = router({
   }),
 
   upload: uploadRouter,
+  clientContent: clientContentRouter,
 });
 
 export type AppRouter = typeof appRouter;

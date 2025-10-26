@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 import { compressChatImage } from "@/lib/imageCompression";
+import ClientProfileModal from "@/components/ClientProfileModal";
 
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
@@ -451,11 +452,12 @@ Once transfer is complete, please send a screenshot of remittance here in this m
             <h1 className="font-semibold">{otherUserName}</h1>
             <p className="text-xs text-muted-foreground">Online</p>
           </div>
-          {isArtist && (
+          {isArtist && conversation?.otherUser && (
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowClientInfo(true)}
+              title="View client profile"
             >
               <User className="w-5 h-5" />
             </Button>
@@ -704,45 +706,21 @@ Once transfer is complete, please send a screenshot of remittance here in this m
         </div>
       </div>
 
-      {/* Client Info Dialog */}
-      <Dialog open={showClientInfo} onOpenChange={setShowClientInfo}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Client Information</DialogTitle>
-            <DialogDescription>Contact details and booking information</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <User className="w-5 h-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">Full Name</p>
-                <p className="text-sm text-muted-foreground">{otherUserId}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Mail className="w-5 h-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">Email</p>
-                <p className="text-sm text-muted-foreground">client@example.com</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Phone className="w-5 h-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">Phone</p>
-                <p className="text-sm text-muted-foreground">+1 234 567 8900</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Cake className="w-5 h-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">Birthday</p>
-                <p className="text-sm text-muted-foreground">January 1, 1990</p>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Client Profile Modal */}
+      {isArtist && conversation?.otherUser && (
+        <ClientProfileModal
+          clientId={conversation.otherUser.id}
+          clientName={conversation.otherUser.name || "Unknown"}
+          clientPhone={conversation.otherUser.phone}
+          clientEmail={conversation.otherUser.email}
+          clientBio={conversation.otherUser.bio}
+          isOpen={showClientInfo}
+          onClose={() => setShowClientInfo(false)}
+          onClientDeleted={() => {
+            setLocation("/conversations");
+          }}
+        />
+      )}
 
       {/* Service Selection Dialog */}
       <Dialog open={showServiceSelection} onOpenChange={setShowServiceSelection}>
