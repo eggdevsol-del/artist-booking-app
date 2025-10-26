@@ -2,7 +2,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { Calendar, ChevronRight, MessageCircle, Settings, User, Image as ImageIcon } from "lucide-react";
+import { ChevronRight, User } from "lucide-react";
+import BottomNav from "@/components/BottomNav";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
@@ -204,48 +205,7 @@ export default function Conversations() {
         )}
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="mobile-bottom-nav">
-        <div className="flex items-center justify-around px-4 py-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex-col h-auto py-2 gap-1 text-primary"
-          >
-            <MessageCircle className="w-6 h-6" />
-            <span className="text-xs font-medium">Messages</span>
-          </Button>
-          {user?.role === "client" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-col h-auto py-2 gap-1"
-              onClick={() => setLocation("/content")}
-            >
-              <ImageIcon className="w-6 h-6" />
-              <span className="text-xs font-medium">Content</span>
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex-col h-auto py-2 gap-1"
-            onClick={() => setLocation("/calendar")}
-          >
-            <Calendar className="w-6 h-6" />
-            <span className="text-xs font-medium">Calendar</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex-col h-auto py-2 gap-1"
-            onClick={() => setLocation("/settings")}
-          >
-            <Settings className="w-6 h-6" />
-            <span className="text-xs font-medium">Settings</span>
-          </Button>
-        </div>
-      </nav>
+      <BottomNav />
     </div>
   );
 }

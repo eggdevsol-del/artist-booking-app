@@ -11,6 +11,7 @@ import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 import { compressChatImage } from "@/lib/imageCompression";
 import ClientProfileModal from "@/components/ClientProfileModal";
+import BottomNav from "@/components/BottomNav";
 
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
@@ -1042,6 +1043,8 @@ Once transfer is complete, please send a screenshot of remittance here in this m
           </div>
         </DialogContent>
       </Dialog>
+      
+      <BottomNav />
     </div>
   );
 }

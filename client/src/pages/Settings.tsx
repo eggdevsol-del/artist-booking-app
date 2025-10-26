@@ -13,18 +13,17 @@ import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
 import {
   Bell,
-  Calendar,
   ChevronRight,
   Clock,
   LogOut,
   MapPin,
-  MessageCircle,
   Moon,
   Settings as SettingsIcon,
   Sun,
   User,
   Zap,
 } from "lucide-react";
+import BottomNav from "@/components/BottomNav";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -411,37 +410,7 @@ export default function Settings() {
           </Card>
         </main>
 
-        {/* Bottom Navigation */}
-        <nav className="mobile-bottom-nav">
-          <div className="flex items-center justify-around px-4 py-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-col h-auto py-2 gap-1"
-              onClick={() => setLocation("/conversations")}
-            >
-              <MessageCircle className="w-6 h-6" />
-              <span className="text-xs font-medium">Messages</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-col h-auto py-2 gap-1"
-              onClick={() => setLocation("/calendar")}
-            >
-              <Calendar className="w-6 h-6" />
-              <span className="text-xs font-medium">Calendar</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-col h-auto py-2 gap-1 text-primary"
-            >
-              <SettingsIcon className="w-6 h-6" />
-              <span className="text-xs font-medium">Settings</span>
-            </Button>
-          </div>
-        </nav>
+        <BottomNav />
       </div>
     );
   }

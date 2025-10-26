@@ -11,10 +11,9 @@ import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
-  MessageCircle,
   Plus,
-  Settings,
 } from "lucide-react";
+import BottomNav from "@/components/BottomNav";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -662,29 +661,7 @@ export default function Calendar() {
         </DialogContent>
       </Dialog>
 
-      {/* Bottom Navigation */}
-      <nav className="mobile-nav grid grid-cols-3">
-        <button
-          onClick={() => setLocation("/conversations")}
-          className="flex flex-col items-center justify-center py-3 tap-target"
-        >
-          <MessageCircle className="w-6 h-6 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground mt-1">Messages</span>
-        </button>
-        <button className="flex flex-col items-center justify-center py-3 tap-target">
-          <CalendarIcon className="w-6 h-6 text-primary" />
-          <span className="text-xs text-primary font-semibold mt-1">
-            Calendar
-          </span>
-        </button>
-        <button
-          onClick={() => setLocation("/settings")}
-          className="flex flex-col items-center justify-center py-3 tap-target"
-        >
-          <Settings className="w-6 h-6 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground mt-1">Settings</span>
-        </button>
-      </nav>
+      <BottomNav />
     </div>
   );
 }

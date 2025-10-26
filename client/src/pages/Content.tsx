@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { Download, Image as ImageIcon, Video, FileText } from "lucide-react";
 import { toast } from "sonner";
+import BottomNav from "@/components/BottomNav";
 
 export default function Content() {
   const { user, loading } = useAuth();
@@ -112,6 +113,8 @@ export default function Content() {
             </div>
           )}
         </main>
+        
+        <BottomNav />
       </div>
     </DashboardLayout>
   );
