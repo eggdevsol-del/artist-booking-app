@@ -75,17 +75,18 @@ export async function storageGet(
 
 // Helper function to retrieve file data from database
 export async function storageGetData(key: string): Promise<{ data: Buffer; mimeType: string } | null> {
+  console.log('[Storage] Get data for key:', key);
+  
   const db = await getDb();
   const result: any = await db.execute(sql`
     SELECT file_data, mime_type FROM file_storage WHERE file_key = ${key}
   `);
   
-  console.log('[Storage] Get data for key:', key);
-  console.log('[Storage] Result structure:', result ? Object.keys(result) : 'null');
+  // mysql2 execute() returns [rows, fields]
+  // Drizzle's db.execute() also returns [rows, fields] format
+  const rows = result[0];
   
-  // Drizzle returns an array where result[0] is the rows array
-  const rows = Array.isArray(result) && result.length > 0 ? result[0] : null;
-  console.log('[Storage] Rows:', rows ? (Array.isArray(rows) ? `Array with ${rows.length} items` : 'Not an array') : 'null');
+  console.log('[Storage] Rows found:', Array.isArray(rows) ? rows.length : 0);
   
   if (!rows || !Array.isArray(rows) || rows.length === 0) {
     console.log('[Storage] No data found for key:', key);
@@ -93,12 +94,14 @@ export async function storageGetData(key: string): Promise<{ data: Buffer; mimeT
   }
   
   const row = rows[0];
-  console.log('[Storage] Row data found:', row ? 'yes' : 'no');
+  console.log('[Storage] Row data:', { hasFileData: !!row.file_data, hasMimeType: !!row.mime_type });
   
   if (!row || !row.file_data) {
     console.log('[Storage] No file_data in row');
     return null;
   }
+  
+  console.log('[Storage] Successfully retrieved file, mime type:', row.mime_type);
   
   return {
     data: Buffer.from(row.file_data as string, 'base64'),
