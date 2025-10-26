@@ -9,6 +9,7 @@ import { ArrowLeft, Calendar as CalendarIcon, Send, User, Phone, Mail, Cake, Cre
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
+import { compressChatImage } from "@/lib/imageCompression";
 
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
@@ -222,33 +223,30 @@ export default function Chat() {
       return;
     }
 
-    // Check file size (max 10MB)
+    // Check file size (max 10MB before compression)
     if (file.size > 10 * 1024 * 1024) {
       toast.error("Image size must be less than 10MB");
       return;
     }
 
     setUploadingImage(true);
-    toast.info("Uploading image...");
+    toast.info("Compressing and uploading image...");
 
-    // Convert to base64
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64Data = e.target?.result as string;
-      console.log('[Upload] File read complete, base64 length:', base64Data.length);
+    try {
+      // Compress image to 1200x1200 max
+      const compressedBase64 = await compressChatImage(file);
+      console.log('[Upload] Image compressed, base64 length:', compressedBase64.length);
       
       uploadImageMutation.mutate({
         fileName: file.name,
-        fileData: base64Data,
+        fileData: compressedBase64,
         contentType: file.type,
       });
-    };
-    reader.onerror = () => {
-      console.error('[Upload] FileReader error');
-      toast.error("Failed to read image file");
+    } catch (error) {
+      console.error('[Upload] Compression error:', error);
+      toast.error("Failed to process image");
       setUploadingImage(false);
-    };
-    reader.readAsDataURL(file);
+    }
 
     // Reset input
     if (fileInputRef.current) {

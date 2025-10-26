@@ -28,6 +28,7 @@ import {
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { compressAvatar } from "@/lib/imageCompression";
 
 type SettingsSection = "main" | "profile" | "work-hours" | "quick-actions" | "notifications" | "business";
 
@@ -121,9 +122,29 @@ export default function Settings() {
     });
   };
 
+  const uploadImageMutation = trpc.upload.uploadImage.useMutation({
+    onSuccess: (data) => {
+      console.log('[Avatar] Upload successful:', data);
+      setProfileAvatar(data.url);
+      toast.success('Profile picture uploaded');
+      setUploadingAvatar(false);
+    },
+    onError: (error: any) => {
+      console.error('[Avatar] Upload failed:', error);
+      toast.error('Failed to upload image: ' + error.message);
+      setUploadingAvatar(false);
+    },
+  });
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    console.log('[Avatar] File selected:', {
+      name: file.name,
+      type: file.type,
+      size: file.size
+    });
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
@@ -131,32 +152,30 @@ export default function Settings() {
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image must be less than 5MB');
+    // Validate file size (max 10MB before compression)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image must be less than 10MB');
       return;
     }
 
     setUploadingAvatar(true);
+    toast.info('Compressing and uploading image...');
+
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      // Compress image to 400x400 max
+      const compressedBase64 = await compressAvatar(file);
+      console.log('[Avatar] Image compressed, base64 length:', compressedBase64.length);
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
+      // Upload using tRPC
+      uploadImageMutation.mutate({
+        fileName: file.name,
+        fileData: compressedBase64,
+        contentType: file.type,
       });
-
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const data = await response.json();
-      setProfileAvatar(data.url);
-      toast.success('Profile picture uploaded');
     } catch (error) {
-      toast.error('Failed to upload image');
-      console.error('Upload error:', error);
+      console.error('[Avatar] Compression error:', error);
+      toast.error('Failed to process image');
+      setUploadingAvatar(false);
     } finally {
       setUploadingAvatar(false);
     }
@@ -474,7 +493,7 @@ export default function Settings() {
                     >
                       {uploadingAvatar ? 'Uploading...' : 'Upload Photo'}
                     </Button>
-                    <p className="text-xs text-muted-foreground mt-1">Max 5MB, JPG or PNG</p>
+                    <p className="text-xs text-muted-foreground mt-1">Max 10MB, auto-compressed</p>
                   </div>
                 </div>
               </div>
