@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { verifyAndFixDatabase } from "../verify-and-fix-db";
 import { storageGetData } from "../storage";
+import { runStartupMigrations } from "../startup-migrations.js";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -33,9 +34,18 @@ async function startServer() {
   // Initialize database tables if they don't exist
   try {
     await verifyAndFixDatabase();
+    console.log('[Server] Database verification completed');
   } catch (error) {
     console.error('[Server] Database initialization failed:', error);
     // Continue anyway - the app might work in read-only mode or with existing tables
+  }
+
+  // Run startup migrations
+  try {
+    await runStartupMigrations();
+    console.log('[Server] Startup migrations completed');
+  } catch (error) {
+    console.error('[Server] Startup migrations failed:', error);
   }
 
   const app = express();
