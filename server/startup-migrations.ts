@@ -1,11 +1,12 @@
 import { readFileSync } from "fs";
-import { join, dirname } from "path";
+import { join } from "path";
 import { fileURLToPath } from "url";
 import mysql from "mysql2/promise";
 import { ENV } from "./_core/env";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// In production (bundled), __dirname will be dist/
+// In development, it will be server/
+const __dirname = process.cwd();
 
 async function runStartupMigrations() {
   console.log("🔄 Running startup migrations...");
@@ -21,10 +22,26 @@ async function runStartupMigrations() {
     if (Array.isArray(tables) && tables.length === 0) {
       console.log("📝 Creating client_notes table...");
       
-      const migrationSQL = readFileSync(
-        join(__dirname, "migrations", "create-client-notes.sql"),
-        "utf-8"
-      );
+      // Try multiple paths to handle both dev and production
+      let migrationSQL;
+      try {
+        migrationSQL = readFileSync(
+          join(__dirname, "dist", "migrations", "create-client-notes.sql"),
+          "utf-8"
+        );
+      } catch {
+        try {
+          migrationSQL = readFileSync(
+            join(__dirname, "migrations", "create-client-notes.sql"),
+            "utf-8"
+          );
+        } catch {
+          migrationSQL = readFileSync(
+            join(__dirname, "server", "migrations", "create-client-notes.sql"),
+            "utf-8"
+          );
+        }
+      }
 
       await connection.query(migrationSQL);
       console.log("✅ client_notes table created successfully!");
