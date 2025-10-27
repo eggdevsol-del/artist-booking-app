@@ -129,3 +129,4 @@ MIT
 
 For questions or issues, please open an issue on GitHub.
 
+# Trigger deployment with pre-deploy migration
