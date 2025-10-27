@@ -345,6 +345,25 @@ export const consultations = mysqlTable("consultations", {
 export type Consultation = typeof consultations.$inferSelect;
 export type InsertConsultation = typeof consultations.$inferInsert;
 
+/**
+ * Client notes - Artists can add private notes about their clients
+ */
+export const clientNotes = mysqlTable("client_notes", {
+  id: varchar("id", { length: 255 }).primaryKey(),
+  artistId: varchar("artist_id", { length: 255 })
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  clientId: varchar("client_id", { length: 255 })
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  note: text("note").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type ClientNote = typeof clientNotes.$inferSelect;
+export type InsertClientNote = typeof clientNotes.$inferInsert;
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   artistSettings: one(artistSettings, {
