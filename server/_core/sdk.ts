@@ -290,30 +290,8 @@ class SDKServer {
       }
     }
 
-    // FALLBACK: Demo mode - return mock user if no authentication
-    const mockUserId = "demo_user_001";
-    const signedInAt = new Date();
-    let user = await db.getUser(mockUserId);
-
-    // Create mock user if doesn't exist
-    if (!user) {
-      await db.upsertUser({
-        id: mockUserId,
-        name: "Demo User",
-        email: "demo@example.com",
-        loginMethod: "demo",
-        role: "artist",
-        hasCompletedOnboarding: true,
-        lastSignedIn: signedInAt,
-      });
-      user = await db.getUser(mockUserId);
-    }
-
-    if (!user) {
-      throw ForbiddenError("Failed to create demo user");
-    }
-
-    return user;
+    // No valid authentication found
+    throw ForbiddenError("Authentication required");
   }
 }
 
