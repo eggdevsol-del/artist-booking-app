@@ -4,6 +4,7 @@ import { protectedProcedure, router } from "./_core/trpc";
 import { getDb } from "./db";
 import { sql } from "drizzle-orm";
 import { storagePut } from "./storage";
+import { nanoid } from "nanoid";
 
 // Custom procedure for artist-only operations
 const artistProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -194,7 +195,7 @@ export const clientContentRouter = router({
   saveNote: artistProcedure
     .input(
       z.object({
-        id: z.number().optional(),
+        id: z.string().optional(),
         clientId: z.string(),
         note: z.string(),
       })
@@ -221,9 +222,10 @@ export const clientContentRouter = router({
           );
         } else {
           // Create new note
+          const noteId = `note_${nanoid()}`;
           await connection.execute(
-            'INSERT INTO client_notes (client_id, artist_id, note) VALUES (?, ?, ?)',
-            [input.clientId, ctx.user.id, input.note]
+            'INSERT INTO client_notes (id, client_id, artist_id, note) VALUES (?, ?, ?, ?)',
+            [noteId, input.clientId, ctx.user.id, input.note]
           );
         }
       } finally {
