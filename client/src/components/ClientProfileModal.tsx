@@ -48,7 +48,7 @@ export default function ClientProfileModal({
   const [bio, setBio] = useState(clientBio || "");
   const [newNote, setNewNote] = useState("");
   const [uploadingContent, setUploadingContent] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // fileInputRef removed - now using label-based file input
 
   const utils = trpc.useUtils();
 
@@ -353,21 +353,19 @@ export default function ClientProfileModal({
           <TabsContent value="content" className="space-y-4">
             <div className="space-y-4">
               <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,video/*"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingContent}
-                  className="w-full"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  {uploadingContent ? "Uploading..." : "Upload Photo/Video"}
-                </Button>
+                <label className="cursor-pointer block">
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    onChange={handleFileUpload}
+                    disabled={uploadingContent}
+                    className="hidden"
+                  />
+                  <div className={`w-full inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 ${uploadingContent ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    <Upload className="w-4 h-4 mr-2" />
+                    {uploadingContent ? "Uploading..." : "Upload Photo/Video"}
+                  </div>
+                </label>
                 <p className="text-xs text-muted-foreground mt-1">
                   Max 50MB. Images will be compressed automatically.
                 </p>
