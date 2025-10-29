@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Calendar, Settings } from "lucide-react";
+import { MessageCircle, Calendar, Image, Settings } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function BottomNav() {
@@ -18,6 +18,7 @@ export default function BottomNav() {
   }
 
   const isActive = (path: string) => location === path || location.startsWith(path + "/");
+  const isClient = user?.role === "client";
 
   return (
     <nav className="mobile-bottom-nav">
@@ -41,6 +42,18 @@ export default function BottomNav() {
           <Calendar className="w-6 h-6" />
           <span className="text-xs font-medium">Calendar</span>
         </Button>
+
+        {isClient && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`flex-col h-auto py-2 gap-1 ${isActive("/content") ? "text-primary" : ""}`}
+            onClick={() => setLocation("/content")}
+          >
+            <Image className="w-6 h-6" />
+            <span className="text-xs font-medium">Content</span>
+          </Button>
+        )}
 
         <Button
           variant="ghost"
