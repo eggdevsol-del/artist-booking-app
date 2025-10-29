@@ -429,7 +429,7 @@ Once transfer is complete, please send a screenshot of remittance here in this m
   const otherUserName = conversation.otherUser?.name || "Unknown User";
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background pb-20">
       {/* Header */}
       <header className="mobile-header px-4 py-3 border-b">
         <div className="flex items-center gap-3">

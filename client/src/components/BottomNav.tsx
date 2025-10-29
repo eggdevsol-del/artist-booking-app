@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Calendar, Settings, Image as ImageIcon } from "lucide-react";
+import { MessageCircle, Calendar, Settings } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function BottomNav() {
@@ -31,18 +31,6 @@ export default function BottomNav() {
           <MessageCircle className="w-6 h-6" />
           <span className="text-xs font-medium">Messages</span>
         </Button>
-
-        {user?.role === "client" && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`flex-col h-auto py-2 gap-1 ${isActive("/content") ? "text-primary" : ""}`}
-            onClick={() => setLocation("/content")}
-          >
-            <ImageIcon className="w-6 h-6" />
-            <span className="text-xs font-medium">Content</span>
-          </Button>
-        )}
 
         <Button
           variant="ghost"
