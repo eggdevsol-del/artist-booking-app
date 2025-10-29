@@ -64,12 +64,12 @@ export default function FindNextModal({
   const [isCalculating, setIsCalculating] = useState(false);
   const [availableServices, setAvailableServices] = useState<Service[]>([]);
 
-  const { data: artistSettings } = trpc.artistSettings.get.useQuery(undefined, {
-    enabled: !!user && user.role === "artist",
+  const { data: artistSettings, isLoading: settingsLoading } = trpc.artistSettings.get.useQuery(undefined, {
+    enabled: !!user && user.role === "artist" && open,
   });
 
-  const { data: appointments } = trpc.appointments.list.useQuery(undefined, {
-    enabled: !!user && user.role === "artist",
+  const { data: appointments, isLoading: appointmentsLoading } = trpc.appointments.list.useQuery(undefined, {
+    enabled: !!user && user.role === "artist" && open,
   });
 
   // Parse services from artist settings
@@ -140,10 +140,23 @@ export default function FindNextModal({
   };
 
   const findAvailableDates = () => {
-    if (!selectedService || !artistSettings || !appointments) {
-      toast.error("Missing required data");
+    if (!selectedService) {
+      toast.error("Please select a service first");
       return;
     }
+    
+    if (!artistSettings) {
+      toast.error("Artist settings not loaded. Please try again.");
+      return;
+    }
+    
+    if (!artistSettings.workSchedule) {
+      toast.error("Work schedule not configured. Please set up your work hours in Settings.");
+      return;
+    }
+    
+    // Appointments can be empty array, that's fine
+    const appointmentsList = appointments || [];
 
     setIsCalculating(true);
 
@@ -195,7 +208,7 @@ export default function FindNextModal({
             isDateTimeAvailable(
               proposedDateTime,
               selectedService.duration,
-              appointments
+              appointmentsList
             )
           ) {
             foundDates.push(proposedDateTime.toISOString());
@@ -458,8 +471,12 @@ export default function FindNextModal({
           )}
 
           {step === 3 && (
-            <Button onClick={findAvailableDates} className="ml-auto">
-              Find Dates
+            <Button 
+              onClick={findAvailableDates} 
+              className="ml-auto"
+              disabled={settingsLoading || appointmentsLoading}
+            >
+              {settingsLoading || appointmentsLoading ? "Loading..." : "Find Dates"}
             </Button>
           )}
 
