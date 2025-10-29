@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { trpc } from "@/lib/trpc";
 import {
   Bell,
+  Calendar,
   ChevronRight,
   Clock,
   LogOut,
