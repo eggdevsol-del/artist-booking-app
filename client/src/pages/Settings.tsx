@@ -418,7 +418,7 @@ export default function Settings() {
   // Profile section
   if (activeSection === "profile") {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="min-h-screen flex flex-col bg-background pb-20">
         <header className="mobile-header px-4 py-4">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => setActiveSection("main")}>
@@ -518,6 +518,7 @@ export default function Settings() {
             </CardContent>
           </Card>
         </main>
+        <BottomNav />
       </div>
     );
   }
@@ -539,7 +540,7 @@ export default function Settings() {
   // Business Info section
   if (activeSection === "business" && isArtist) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="min-h-screen flex flex-col bg-background pb-20">
         <header className="mobile-header px-4 py-4 border-b">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => setActiveSection("main")}>
@@ -631,6 +632,7 @@ export default function Settings() {
             </CardContent>
           </Card>
         </main>
+        <BottomNav />
       </div>
     );
   }
