@@ -11,6 +11,7 @@ import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 import { compressChatImage } from "@/lib/imageCompression";
 import ClientProfileModal from "@/components/ClientProfileModal";
+import FindNextModal from "@/components/FindNextModal";
 import BottomNav from "@/components/BottomNav";
 
 export default function Chat() {
@@ -33,6 +34,7 @@ export default function Chat() {
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [selectedDatesForConfirm, setSelectedDatesForConfirm] = useState<string[]>([]);
   const [currentMessageMetadata, setCurrentMessageMetadata] = useState<any>(null);
+  const [showFindNext, setShowFindNext] = useState(false);
 
   // Get consultation ID from URL if present
   const searchParams = new URLSearchParams(window.location.search);
@@ -346,6 +348,51 @@ Once transfer is complete, please send a screenshot of remittance here in this m
     toast.success("Dates sent successfully");
   };
 
+  const handleSendFindNextDates = (dates: string[], service: any) => {
+    if (!dates || dates.length === 0 || !service) {
+      toast.error("No dates to send");
+      return;
+    }
+
+    // Format dates for display
+    const datesList = dates
+      .map(dateStr => {
+        const date = new Date(dateStr);
+        return date.toLocaleString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+      })
+      .join('\n');
+
+    const message = `I have the following dates available for ${service.name}:\n\n${datesList}\n\nService Details:\n- Duration: ${service.duration} minutes\n- Price: $${service.price}\n${service.description ? `- ${service.description}` : ''}\n\nPlease let me know which date(s) work for you.`;
+
+    // Store service details and deposit info in metadata for later use when client accepts
+    const metadata = JSON.stringify({
+      serviceName: service.name,
+      duration: service.duration,
+      price: service.price,
+      description: service.description || '',
+      depositAmount: artistSettings?.depositAmount || 0,
+      bsb: artistSettings?.bsb || '',
+      accountNumber: artistSettings?.accountNumber || '',
+    });
+
+    sendMessageMutation.mutate({
+      conversationId,
+      content: message,
+      messageType: "appointment_request",
+      metadata,
+    });
+
+    toast.success("Dates sent successfully");
+  };
+
   const toggleDateSelection = (date: Date) => {
     const dateStr = date.toDateString();
     const isSelected = selectedDates.some(d => d.toDateString() === dateStr);
@@ -622,7 +669,16 @@ Once transfer is complete, please send a screenshot of remittance here in this m
       {/* Quick Actions + Book Now */}
       {isArtist && quickActions && quickActions.length > 0 && (
         <div className="px-4 py-2 border-t bg-background">
-          <div className="grid grid-cols-3 gap-2 mb-2">
+          <div className="grid grid-cols-4 gap-2 mb-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={() => setShowFindNext(true)}
+            >
+              <CalendarIcon className="w-4 h-4 mr-1" />
+              Find Next
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -722,6 +778,14 @@ Once transfer is complete, please send a screenshot of remittance here in this m
           }}
         />
       )}
+
+      {/* Find Next Modal */}
+      <FindNextModal
+        open={showFindNext}
+        onClose={() => setShowFindNext(false)}
+        conversationId={conversationId}
+        onSendDates={handleSendFindNextDates}
+      />
 
       {/* Service Selection Dialog */}
       <Dialog open={showServiceSelection} onOpenChange={setShowServiceSelection}>
