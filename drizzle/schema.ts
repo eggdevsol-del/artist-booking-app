@@ -424,3 +424,74 @@ export const appointmentsRelations = relations(appointments, ({ one }) => ({
   }),
 }));
 
+
+
+/**
+ * Notification settings for automated client communication
+ */
+export const notificationSettings = mysqlTable("notificationSettings", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: varchar("userId", { length: 64 }).notNull(),
+  
+  // Follow-up Notification Settings
+  followupEnabled: boolean("followupEnabled").default(false),
+  followupSms: boolean("followupSms").default(false),
+  followupEmail: boolean("followupEmail").default(false),
+  followupPush: boolean("followupPush").default(false),
+  followupText: text("followupText"),
+  followupTriggerType: mysqlEnum("followupTriggerType", ["after_sitting", "days", "weeks", "months"]).default("days"),
+  followupTriggerValue: int("followupTriggerValue").default(1),
+  
+  // Aftercare Notification Settings
+  aftercareEnabled: boolean("aftercareEnabled").default(false),
+  aftercareSms: boolean("aftercareSms").default(false),
+  aftercareEmail: boolean("aftercareEmail").default(false),
+  aftercarePush: boolean("aftercarePush").default(false),
+  aftercareDailyMessage: text("aftercareDailyMessage"),
+  aftercarePostMessage: text("aftercarePostMessage"),
+  aftercareFrequency: mysqlEnum("aftercareFrequency", ["daily", "every_other_day", "twice_weekly", "weekly"]).default("daily"),
+  aftercareDurationDays: int("aftercareDurationDays").default(14),
+  aftercareTime: varchar("aftercareTime", { length: 8 }).default("09:00:00"),
+  
+  // Review Notification Settings
+  reviewEnabled: boolean("reviewEnabled").default(false),
+  reviewSms: boolean("reviewSms").default(false),
+  reviewEmail: boolean("reviewEmail").default(false),
+  reviewPush: boolean("reviewPush").default(false),
+  reviewText: text("reviewText"),
+  reviewGoogleLink: varchar("reviewGoogleLink", { length: 500 }),
+  reviewFacebookLink: varchar("reviewFacebookLink", { length: 500 }),
+  reviewCustomLink: varchar("reviewCustomLink", { length: 500 }),
+  reviewTriggerType: mysqlEnum("reviewTriggerType", ["after_sitting", "days", "weeks", "months"]).default("days"),
+  reviewTriggerValue: int("reviewTriggerValue").default(7),
+  
+  // Pre-booking Notification Settings
+  prebookingEnabled: boolean("prebookingEnabled").default(false),
+  prebookingSms: boolean("prebookingSms").default(false),
+  prebookingEmail: boolean("prebookingEmail").default(false),
+  prebookingPush: boolean("prebookingPush").default(false),
+  prebookingText: text("prebookingText"),
+  prebookingIncludeDetails: boolean("prebookingIncludeDetails").default(true),
+  prebookingIncludeTime: boolean("prebookingIncludeTime").default(true),
+  prebookingIncludeMaps: boolean("prebookingIncludeMaps").default(true),
+  prebookingTriggerType: mysqlEnum("prebookingTriggerType", ["hours", "days"]).default("hours"),
+  prebookingTriggerValue: int("prebookingTriggerValue").default(24),
+  
+  // Location for maps
+  businessLocation: varchar("businessLocation", { length: 500 }),
+  businessAddress: text("businessAddress"),
+  
+  createdAt: timestamp("createdAt").defaultNow(),
+  updatedAt: timestamp("updatedAt").defaultNow(),
+});
+
+export type NotificationSettings = typeof notificationSettings.$inferSelect;
+export type InsertNotificationSettings = typeof notificationSettings.$inferInsert;
+
+export const notificationSettingsRelations = relations(notificationSettings, ({ one }) => ({
+  user: one(users, {
+    fields: [notificationSettings.userId],
+    references: [users.id],
+  }),
+}));
+

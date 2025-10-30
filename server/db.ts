@@ -17,6 +17,7 @@ import {
   InsertSocialMessageSync,
   InsertUser,
   messages,
+  notificationSettings,
   notificationTemplates,
   policies,
   pushSubscriptions,
@@ -939,5 +940,89 @@ export async function confirmAppointments(conversationId: number, paymentProof?:
         eq(appointments.status, "pending")
       )
     );
+}
+
+
+
+// Notification Settings Functions
+export async function getNotificationSettings(userId: string) {
+  const settings = await db.query.notificationSettings.findFirst({
+    where: eq(notificationSettings.userId, userId),
+  });
+  
+  // Return default settings if none exist
+  if (!settings) {
+    return {
+      followupEnabled: false,
+      followupSms: false,
+      followupEmail: false,
+      followupPush: false,
+      followupText: "",
+      followupTriggerType: "days",
+      followupTriggerValue: 1,
+      
+      aftercareEnabled: false,
+      aftercareSms: false,
+      aftercareEmail: false,
+      aftercarePush: false,
+      aftercareDailyMessage: "",
+      aftercarePostMessage: "",
+      aftercareFrequency: "daily",
+      aftercareDurationDays: 14,
+      aftercareTime: "09:00:00",
+      
+      reviewEnabled: false,
+      reviewSms: false,
+      reviewEmail: false,
+      reviewPush: false,
+      reviewText: "",
+      reviewGoogleLink: "",
+      reviewFacebookLink: "",
+      reviewCustomLink: "",
+      reviewTriggerType: "days",
+      reviewTriggerValue: 7,
+      
+      prebookingEnabled: false,
+      prebookingSms: false,
+      prebookingEmail: false,
+      prebookingPush: false,
+      prebookingText: "",
+      prebookingIncludeDetails: true,
+      prebookingIncludeTime: true,
+      prebookingIncludeMaps: true,
+      prebookingTriggerType: "hours",
+      prebookingTriggerValue: 24,
+      
+      businessLocation: "",
+      businessAddress: "",
+    };
+  }
+  
+  return settings;
+}
+
+export async function upsertNotificationSettings(userId: string, settings: any) {
+  const existing = await db.query.notificationSettings.findFirst({
+    where: eq(notificationSettings.userId, userId),
+  });
+  
+  if (existing) {
+    // Update existing settings
+    await db
+      .update(notificationSettings)
+      .set({
+        ...settings,
+        updatedAt: new Date(),
+      })
+      .where(eq(notificationSettings.userId, userId));
+  } else {
+    // Create new settings
+    await db.insert(notificationSettings).values({
+      userId,
+      ...settings,
+    });
+  }
+  
+  return { success: true };
 }
 

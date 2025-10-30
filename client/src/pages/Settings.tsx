@@ -373,7 +373,7 @@ export default function Settings() {
                 </CardHeader>
               </Card>
 
-              <Card className="cursor-pointer hover:bg-accent/5 transition-colors" onClick={() => setLocation("/notifications-management")}>
+              <Card className="cursor-pointer hover:bg-accent/5 transition-colors" onClick={() => setLocation("/notification-settings")}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -383,7 +383,7 @@ export default function Settings() {
                       <div>
                         <CardTitle className="text-base">Notifications</CardTitle>
                         <CardDescription className="text-sm">
-                          Manage notification templates and settings
+                          Automate client communication
                         </CardDescription>
                       </div>
                     </div>
