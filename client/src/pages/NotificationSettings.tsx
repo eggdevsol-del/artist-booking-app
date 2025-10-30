@@ -81,6 +81,9 @@ export default function NotificationSettings() {
   useEffect(() => {
     if (settings) {
       loadSettings(settings);
+    } else if (settings === null) {
+      // No settings found for this user, use defaults
+      setLoading(false);
     }
   }, [settings]);
 
