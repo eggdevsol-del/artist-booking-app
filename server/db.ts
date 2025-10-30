@@ -17,6 +17,7 @@ import {
   InsertSocialMessageSync,
   InsertUser,
   messages,
+  notificationSettings,
   notificationTemplates,
   policies,
   pushSubscriptions,
@@ -951,8 +952,8 @@ export async function getNotificationSettings(userId: string) {
     
     const [settings] = await db
       .select()
-      .from(schema.notificationSettings)
-      .where(eq(schema.notificationSettings.userId, userId))
+      .from(notificationSettings)
+      .where(eq(notificationSettings.userId, userId))
       .limit(1);
     
     return settings || null;
@@ -973,17 +974,17 @@ export async function upsertNotificationSettings(userId: string, settings: any) 
     if (existing) {
       // Update existing settings
       await db
-        .update(schema.notificationSettings)
+        .update(notificationSettings)
         .set({
           ...settings,
           updatedAt: new Date(),
         })
-        .where(eq(schema.notificationSettings.userId, userId));
+        .where(eq(notificationSettings.userId, userId));
       
       return await getNotificationSettings(userId);
     } else {
       // Insert new settings
-      await db.insert(schema.notificationSettings).values({
+      await db.insert(notificationSettings).values({
         userId,
         ...settings,
       });
