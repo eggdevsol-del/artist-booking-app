@@ -206,11 +206,11 @@ export default function Conversations() {
 
       {/* Bottom Navigation */}
       <nav className="mobile-bottom-nav">
-        <div className="flex items-center justify-around px-4 py-3">
+        <div className="flex items-center justify-around px-2 py-3">
           <Button
             variant="ghost"
             size="sm"
-            className="flex-col h-auto py-2 gap-1 text-primary"
+            className="flex-col h-auto py-2 px-3 gap-1 bg-purple-600 text-white rounded-lg"
           >
             <MessageCircle className="w-6 h-6" />
             <span className="text-xs font-medium">Messages</span>
@@ -218,7 +218,7 @@ export default function Conversations() {
           <Button
             variant="ghost"
             size="sm"
-            className="flex-col h-auto py-2 gap-1"
+            className="flex-col h-auto py-2 px-3 gap-1 bg-transparent text-gray-400 hover:text-gray-300 hover:bg-gray-800/50 rounded-lg transition-all"
             onClick={() => setLocation("/calendar")}
           >
             <Calendar className="w-6 h-6" />
@@ -227,7 +227,7 @@ export default function Conversations() {
           <Button
             variant="ghost"
             size="sm"
-            className="flex-col h-auto py-2 gap-1"
+            className="flex-col h-auto py-2 px-3 gap-1 bg-transparent text-gray-400 hover:text-gray-300 hover:bg-gray-800/50 rounded-lg transition-all"
             onClick={() => setLocation("/settings")}
           >
             <Settings className="w-6 h-6" />
