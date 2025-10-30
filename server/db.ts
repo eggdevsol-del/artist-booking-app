@@ -946,6 +946,9 @@ export async function confirmAppointments(conversationId: number, paymentProof?:
 // Notification Settings Functions
 export async function getNotificationSettings(userId: string) {
   try {
+    const db = await getDb();
+    if (!db) throw new Error("Database not initialized");
+    
     const [settings] = await db
       .select()
       .from(schema.notificationSettings)
@@ -961,6 +964,9 @@ export async function getNotificationSettings(userId: string) {
 
 export async function upsertNotificationSettings(userId: string, settings: any) {
   try {
+    const db = await getDb();
+    if (!db) throw new Error("Database not initialized");
+    
     // Check if settings exist
     const existing = await getNotificationSettings(userId);
     
