@@ -8,6 +8,7 @@ import * as db from "./db";
 import { uploadRouter } from "./uploadRouter";
 import { authRouter } from "./_core/auth-router";
 import { clientContentRouter } from "./clientContentRouter";
+import { notificationSettingsRouter } from "./notificationSettingsRouter";
 import { notifyNewMessage, notifyAppointmentConfirmed } from "./_core/pushNotification";
 
 // Custom procedure for artist-only operations
@@ -859,6 +860,7 @@ export const appRouter = router({
 
   upload: uploadRouter,
   clientContent: clientContentRouter,
+  notificationSettings: notificationSettingsRouter,
 });
 
 export type AppRouter = typeof appRouter;

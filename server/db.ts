@@ -941,3 +941,52 @@ export async function confirmAppointments(conversationId: number, paymentProof?:
     );
 }
 
+
+
+// Notification Settings Functions
+export async function getNotificationSettings(userId: string) {
+  try {
+    const [settings] = await db
+      .select()
+      .from(schema.notificationSettings)
+      .where(eq(schema.notificationSettings.userId, userId))
+      .limit(1);
+    
+    return settings || null;
+  } catch (error) {
+    console.error("Error getting notification settings:", error);
+    throw error;
+  }
+}
+
+export async function upsertNotificationSettings(userId: string, settings: any) {
+  try {
+    // Check if settings exist
+    const existing = await getNotificationSettings(userId);
+    
+    if (existing) {
+      // Update existing settings
+      await db
+        .update(schema.notificationSettings)
+        .set({
+          ...settings,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.notificationSettings.userId, userId));
+      
+      return await getNotificationSettings(userId);
+    } else {
+      // Insert new settings
+      await db.insert(schema.notificationSettings).values({
+        userId,
+        ...settings,
+      });
+      
+      return await getNotificationSettings(userId);
+    }
+  } catch (error) {
+    console.error("Error upserting notification settings:", error);
+    throw error;
+  }
+}
+
