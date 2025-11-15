@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { ChevronRight, Plus, Trash2 } from "lucide-react";
+import { ChevronRight, Plus, Trash2, Pencil, Check, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -51,6 +51,10 @@ export default function WorkHoursAndServices({ onBack }: WorkHoursAndServicesPro
   const { user } = useAuth();
   const [workSchedule, setWorkSchedule] = useState<WorkSchedule>(defaultSchedule);
   const [services, setServices] = useState<Service[]>([]);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newService, setNewService] = useState<Service>({ name: "", duration: 60, price: 0, description: "" });
 
   const { data: artistSettings } = trpc.artistSettings.get.useQuery(undefined, {
     enabled: !!user && (user.role === "artist" || user.role === "admin"),
@@ -107,18 +111,54 @@ export default function WorkHoursAndServices({ onBack }: WorkHoursAndServicesPro
     }));
   };
 
+  const handleShowAddForm = () => {
+    setShowAddForm(true);
+    setEditingIndex(null);
+  };
+
   const handleAddService = () => {
-    setServices(prev => [...prev, { name: "", duration: 60, price: 0, description: "" }]);
+    if (!newService.name.trim()) {
+      toast.error("Please enter a service name");
+      return;
+    }
+    setServices(prev => [...prev, newService]);
+    setNewService({ name: "", duration: 60, price: 0, description: "" });
+    setShowAddForm(false);
+    toast.success("Service added successfully");
+  };
+
+  const handleCancelAdd = () => {
+    setNewService({ name: "", duration: 60, price: 0, description: "" });
+    setShowAddForm(false);
+  };
+
+  const handleEditService = (index: number) => {
+    setEditingIndex(index);
+    setEditingService({ ...services[index] });
+    setShowAddForm(false);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingService?.name.trim()) {
+      toast.error("Please enter a service name");
+      return;
+    }
+    setServices(prev => prev.map((service, i) => 
+      i === editingIndex ? editingService : service
+    ));
+    setEditingIndex(null);
+    setEditingService(null);
+    toast.success("Service updated successfully");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingIndex(null);
+    setEditingService(null);
   };
 
   const handleRemoveService = (index: number) => {
     setServices(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleServiceChange = (index: number, field: keyof Service, value: string | number) => {
-    setServices(prev => prev.map((service, i) => 
-      i === index ? { ...service, [field]: value } : service
-    ));
+    toast.success("Service removed");
   };
 
   const handleSave = () => {
@@ -208,70 +248,169 @@ export default function WorkHoursAndServices({ onBack }: WorkHoursAndServicesPro
                 <CardTitle>Services</CardTitle>
                 <CardDescription>Manage the services you offer</CardDescription>
               </div>
-              <Button size="sm" onClick={handleAddService}>
-                <Plus className="w-4 h-4 mr-1" />
-                Add Service
-              </Button>
+              {!showAddForm && (
+                <Button size="sm" onClick={handleShowAddForm}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Service
+                </Button>
+              )}
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {services.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No services added yet. Click "Add Service" to get started.
-              </div>
-            ) : (
-              services.map((service, index) => (
-                <div key={index} className="space-y-3 p-4 border rounded-lg relative">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2"
-                    onClick={() => handleRemoveService(index)}
-                  >
-                    <Trash2 className="w-4 h-4 text-destructive" />
-                  </Button>
+          <CardContent className="space-y-4">
+            {/* Existing Services */}
+            {services.map((service, index) => (
+              <div key={index} className="p-4 border rounded-lg">
+                {editingIndex === index && editingService ? (
+                  // Edit Mode
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label>Service Name</Label>
+                      <Input
+                        value={editingService.name}
+                        onChange={(e) => setEditingService({ ...editingService, name: e.target.value })}
+                        placeholder="e.g., Full day sitting"
+                      />
+                    </div>
 
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label>Duration (minutes)</Label>
+                        <Input
+                          type="number"
+                          value={editingService.duration}
+                          onChange={(e) => setEditingService({ ...editingService, duration: parseInt(e.target.value) || 0 })}
+                          placeholder="60"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Price ($)</Label>
+                        <Input
+                          type="number"
+                          value={editingService.price}
+                          onChange={(e) => setEditingService({ ...editingService, price: parseInt(e.target.value) || 0 })}
+                          placeholder="100"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Description (optional)</Label>
+                      <Textarea
+                        value={editingService.description}
+                        onChange={(e) => setEditingService({ ...editingService, description: e.target.value })}
+                        placeholder="Brief description of the service"
+                        rows={2}
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={handleSaveEdit}>
+                        <Check className="w-4 h-4 mr-1" />
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                        <X className="w-4 h-4 mr-1" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  // View Mode
                   <div className="space-y-2">
-                    <Label>Service Name</Label>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg">{service.name}</h3>
+                        <div className="flex gap-4 mt-1 text-sm text-muted-foreground">
+                          <span>{service.duration} minutes</span>
+                          <span>${service.price}</span>
+                        </div>
+                        {service.description && (
+                          <p className="mt-2 text-sm text-muted-foreground">{service.description}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditService(index)}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveService(index)}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Add New Service Form */}
+            {showAddForm && (
+              <div className="p-4 border-2 border-dashed rounded-lg space-y-3">
+                <h3 className="font-semibold">New Service</h3>
+                
+                <div className="space-y-2">
+                  <Label>Service Name</Label>
+                  <Input
+                    value={newService.name}
+                    onChange={(e) => setNewService({ ...newService, name: e.target.value })}
+                    placeholder="e.g., Full day sitting"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Duration (minutes)</Label>
                     <Input
-                      value={service.name}
-                      onChange={(e) => handleServiceChange(index, 'name', e.target.value)}
-                      placeholder="e.g., Full day sitting"
+                      type="number"
+                      value={newService.duration}
+                      onChange={(e) => setNewService({ ...newService, duration: parseInt(e.target.value) || 0 })}
+                      placeholder="60"
                     />
                   </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label>Duration (minutes)</Label>
-                      <Input
-                        type="number"
-                        value={service.duration}
-                        onChange={(e) => handleServiceChange(index, 'duration', parseInt(e.target.value) || 0)}
-                        placeholder="60"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Price ($)</Label>
-                      <Input
-                        type="number"
-                        value={service.price}
-                        onChange={(e) => handleServiceChange(index, 'price', parseInt(e.target.value) || 0)}
-                        placeholder="100"
-                      />
-                    </div>
-                  </div>
-
                   <div className="space-y-2">
-                    <Label>Description (optional)</Label>
-                    <Textarea
-                      value={service.description}
-                      onChange={(e) => handleServiceChange(index, 'description', e.target.value)}
-                      placeholder="Brief description of the service"
-                      rows={2}
+                    <Label>Price ($)</Label>
+                    <Input
+                      type="number"
+                      value={newService.price}
+                      onChange={(e) => setNewService({ ...newService, price: parseInt(e.target.value) || 0 })}
+                      placeholder="100"
                     />
                   </div>
                 </div>
-              ))
+
+                <div className="space-y-2">
+                  <Label>Description (optional)</Label>
+                  <Textarea
+                    value={newService.description}
+                    onChange={(e) => setNewService({ ...newService, description: e.target.value })}
+                    placeholder="Brief description of the service"
+                    rows={2}
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleAddService}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Service
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleCancelAdd}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {services.length === 0 && !showAddForm && (
+              <div className="text-center py-8 text-muted-foreground">
+                No services added yet. Click "Add Service" to get started.
+              </div>
             )}
           </CardContent>
         </Card>
@@ -287,4 +426,3 @@ export default function WorkHoursAndServices({ onBack }: WorkHoursAndServicesPro
     </div>
   );
 }
-
