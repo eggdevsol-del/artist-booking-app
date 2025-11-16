@@ -14,6 +14,7 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState<"artist" | "client">("artist");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,8 +29,8 @@ export default function Signup() {
       
       toast.success("Account created successfully!");
       
-      // Redirect to role selection for onboarding
-      setLocation("/role-selection");
+      // Redirect based on role
+      setLocation(role === "artist" ? "/conversations" : "/client-dashboard");
       
       setIsLoading(false);
     },
@@ -58,7 +59,7 @@ export default function Signup() {
     }
 
     setIsLoading(true);
-    registerMutation.mutate({ name, email, password });
+    registerMutation.mutate({ name, email, password, role });
   };
 
   return (
@@ -160,6 +161,48 @@ export default function Signup() {
                   ) : (
                     <Eye className="h-5 w-5" />
                   )}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label>I am a...</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setRole("artist")}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    role === "artist"
+                      ? "border-primary bg-primary/5 shadow-sm"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  disabled={isLoading}
+                >
+                  <div className="text-center">
+                    <div className="text-2xl mb-1">🎨</div>
+                    <div className="font-semibold">Artist</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Manage bookings
+                    </div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole("client")}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    role === "client"
+                      ? "border-primary bg-primary/5 shadow-sm"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  disabled={isLoading}
+                >
+                  <div className="text-center">
+                    <div className="text-2xl mb-1">👤</div>
+                    <div className="font-semibold">Client</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Book appointments
+                    </div>
+                  </div>
                 </button>
               </div>
             </div>
