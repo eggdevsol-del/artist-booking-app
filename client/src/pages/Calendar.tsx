@@ -792,6 +792,7 @@ export default function Calendar() {
           )}
         </DialogContent>
       </Dialog>
+      </Dialog>
 
       <BottomNav />
     </div>
