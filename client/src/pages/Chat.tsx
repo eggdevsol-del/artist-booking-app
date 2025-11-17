@@ -669,7 +669,7 @@ Once transfer is complete, please send a screenshot of remittance here in this m
       {/* Quick Actions + Book Now */}
       {isArtist && quickActions && quickActions.length > 0 && (
         <div className="px-4 py-2 border-t bg-background">
-          <div className="grid grid-cols-4 gap-2 mb-2">
+          <div className="grid grid-cols-3 gap-2 mb-2">
             <Button
               variant="outline"
               size="sm"
@@ -687,15 +687,6 @@ Once transfer is complete, please send a screenshot of remittance here in this m
             >
               <CalendarIcon className="w-4 h-4 mr-1" />
               Book Now
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs"
-              onClick={handleSendBankDetails}
-            >
-              <CreditCard className="w-4 h-4 mr-1" />
-              Deposit
             </Button>
             <Button
               variant="default"
