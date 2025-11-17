@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, UserPlus, Mail, User } from "lucide-react";
+import OnboardingTutorial from "@/components/OnboardingTutorial";
 
 export default function Signup() {
   const [, setLocation] = useLocation();
@@ -18,6 +19,8 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [registeredRole, setRegisteredRole] = useState<"artist" | "client">("artist");
 
   const registerMutation = trpc.auth.register.useMutation({
     onSuccess: (data) => {
@@ -29,8 +32,9 @@ export default function Signup() {
       
       toast.success("Account created successfully!");
       
-      // Redirect based on role
-      setLocation(role === "artist" ? "/conversations" : "/client-dashboard");
+      // Show onboarding tutorial
+      setRegisteredRole(role);
+      setShowOnboarding(true);
       
       setIsLoading(false);
     },
@@ -251,6 +255,18 @@ export default function Signup() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Onboarding Tutorial */}
+      {showOnboarding && (
+        <OnboardingTutorial
+          userRole={registeredRole}
+          onComplete={() => {
+            setShowOnboarding(false);
+            // Redirect based on role after tutorial
+            setLocation(registeredRole === "artist" ? "/conversations" : "/client-dashboard");
+          }}
+        />
+      )}
     </div>
   );
 }
