@@ -17,77 +17,77 @@ interface TutorialScreen {
 
 const artistScreens: TutorialScreen[] = [
   {
-    icon: "🎨",
-    title: "Welcome to Your Artist Dashboard!",
+    icon: "💸",
+    title: "Stop Losing Money on No-Shows",
     description:
-      "Manage all your client bookings, conversations, and schedule in one place. Everything you need to run your business efficiently.",
-    color: "from-purple-500 to-pink-500",
+      "Artists lose 30% of revenue to no-shows and cancellations. Automated reminders mean clients actually show up—and you get paid.",
+    color: "from-red-500 to-orange-500",
   },
   {
-    icon: "💬",
-    title: "Chat with Clients Instantly",
+    icon: "⏱️",
+    title: "Book Clients in 60 Seconds, Not 3 Days",
     description:
-      "Respond to booking inquiries, share updates, and build relationships with your clients through real-time messaging.",
-    color: "from-blue-500 to-cyan-500",
+      "Stop the endless back-and-forth. Chat + Calendar in ONE screen = instant booking. What used to take 20 messages now takes one.",
+    color: "from-blue-500 to-purple-500",
   },
   {
-    icon: "📅",
-    title: "Manage Your Schedule Effortlessly",
+    icon: "🔔",
+    title: "Set It Once, Market Forever",
     description:
-      "View appointments in week or month view, create new bookings, and keep track of all your sessions in one organized calendar.",
+      "Send aftercare tips, rebooking reminders, and promotions automatically. Your clients stay engaged while you focus on your art—not admin work.",
+    color: "from-purple-500 to-indigo-500",
+  },
+  {
+    icon: "📊",
+    title: "Turn One-Time Clients Into Regulars",
+    description:
+      "Automated 'time for your next session' messages bring clients back. More repeat bookings = predictable income without chasing anyone.",
     color: "from-green-500 to-emerald-500",
   },
   {
-    icon: "✏️",
-    title: "Full Control Over Appointments",
+    icon: "🎯",
+    title: "Everything You Need. Nothing You Don't.",
     description:
-      "Edit appointment details, update status, manage pricing, and keep everything organized with ease.",
-    color: "from-orange-500 to-red-500",
-  },
-  {
-    icon: "👥",
-    title: "Know Your Clients Better",
-    description:
-      "Store client notes, preferences, and history to provide personalized service every time.",
-    color: "from-indigo-500 to-purple-500",
+      "Chat, calendar, reminders, and client history—all in one app. Stop juggling Instagram DMs, Google Calendar, and sticky notes. Start winning.",
+    color: "from-yellow-500 to-amber-500",
   },
 ];
 
 const clientScreens: TutorialScreen[] = [
   {
-    icon: "👋",
-    title: "Welcome to Easy Booking!",
+    icon: "✅",
+    title: "Book in Seconds. Seriously.",
     description:
-      "Book appointments with your favorite artists and stay connected—all in one convenient app.",
+      "No more waiting days for a response. Chat with your artist and lock in your appointment instantly—all in one conversation.",
     color: "from-pink-500 to-rose-500",
   },
   {
-    icon: "🔍",
-    title: "Connect with Artists",
+    icon: "💡",
+    title: "See Their Calendar. Pick Your Time.",
     description:
-      "Browse and connect with talented artists, view their work, and start conversations about your next booking.",
-    color: "from-blue-500 to-indigo-500",
+      "No more 'What times work for you?' back-and-forth. See available slots, choose what fits your schedule, done. It's that simple.",
+    color: "from-blue-500 to-cyan-500",
   },
   {
-    icon: "💬",
-    title: "Chat Directly with Artists",
+    icon: "📱",
+    title: "Never Miss Your Appointment Again",
     description:
-      "Discuss your ideas, ask questions, and get instant responses from artists through our messaging system.",
-    color: "from-cyan-500 to-blue-500",
+      "Get reminders before your session, aftercare tips after, and rebooking nudges when it's time. Stay on track effortlessly.",
+    color: "from-cyan-500 to-teal-500",
   },
   {
-    icon: "📆",
-    title: "Book Appointments Seamlessly",
+    icon: "⭐",
+    title: "Your Artist Knows You",
     description:
-      "View available times, confirm appointments, and receive notifications—booking has never been easier.",
-    color: "from-green-500 to-teal-500",
-  },
-  {
-    icon: "✅",
-    title: "Stay Organized",
-    description:
-      "View all your upcoming and past appointments, receive reminders, and never miss a session.",
+      "All your preferences, past appointments, and conversations in one place. Every visit feels personalized because your artist remembers everything.",
     color: "from-purple-500 to-pink-500",
+  },
+  {
+    icon: "🎉",
+    title: "Booking Shouldn't Be Hard. Now It Isn't.",
+    description:
+      "One app. One conversation. One click. That's how booking should work. Welcome to the easiest way to connect with artists.",
+    color: "from-yellow-500 to-orange-500",
   },
 ];
 
@@ -145,19 +145,24 @@ export default function OnboardingTutorial({
   };
 
   const screen = tutorialScreens[currentScreen];
+  const isLastScreen = currentScreen === tutorialScreens.length - 1;
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
-      {/* Skip button */}
-      <div className="absolute top-4 right-4 z-10">
+      {/* Skip button with FOMO tooltip */}
+      <div className="absolute top-4 right-4 z-10 group">
         <Button
           variant="ghost"
           size="icon"
           onClick={handleSkip}
           className="tap-target"
+          title="Skip (but you'll miss the best parts)"
         >
           <X className="w-5 h-5" />
         </Button>
+        <span className="absolute top-12 right-0 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap bg-popover px-2 py-1 rounded shadow-lg">
+          Skip (but you'll miss the best parts)
+        </span>
       </div>
 
       {/* Main content */}
@@ -194,20 +199,25 @@ export default function OnboardingTutorial({
 
       {/* Bottom navigation */}
       <div className="px-6 py-8 space-y-4 mobile-safe-area">
-        {/* Progress dots */}
-        <div className="flex justify-center gap-2 mb-4">
-          {tutorialScreens.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => handleDotClick(index)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                index === currentScreen
-                  ? "w-8 bg-primary"
-                  : "w-2 bg-muted hover:bg-muted-foreground/30"
-              }`}
-              aria-label={`Go to step ${index + 1}`}
-            />
-          ))}
+        {/* Progress dots with motivational text */}
+        <div className="flex flex-col items-center gap-2 mb-4">
+          <div className="flex justify-center gap-2">
+            {tutorialScreens.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => handleDotClick(index)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  index === currentScreen
+                    ? "w-8 bg-primary"
+                    : "w-2 bg-muted hover:bg-muted-foreground/30"
+                }`}
+                aria-label={`Go to step ${index + 1}`}
+              />
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {currentScreen + 1} of {tutorialScreens.length} reasons you'll love this
+          </p>
         </div>
 
         {/* Action buttons */}
@@ -224,12 +234,14 @@ export default function OnboardingTutorial({
           )}
           <Button
             size="lg"
-            className="flex-1 h-14 text-lg font-semibold"
+            className="flex-1 h-14 text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
             onClick={handleNext}
           >
-            {currentScreen < tutorialScreens.length - 1
-              ? "Next"
-              : "Get Started"}
+            {isLastScreen
+              ? userRole === "artist"
+                ? "Start Winning 🚀"
+                : "Let's Go! 🎉"
+              : "Show Me More →"}
           </Button>
         </div>
       </div>
