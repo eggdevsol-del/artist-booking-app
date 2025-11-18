@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, UserPlus, Mail, User } from "lucide-react";
-import OnboardingTutorial from "@/components/OnboardingTutorial";
+import { OnboardingBenefits } from "@/components/OnboardingBenefits";
 
 export default function Signup() {
   const [, setLocation] = useLocation();
@@ -256,14 +256,14 @@ export default function Signup() {
         </CardContent>
       </Card>
 
-      {/* Onboarding Tutorial */}
+      {/* Onboarding Benefits */}
       {showOnboarding && (
-        <OnboardingTutorial
-          userRole={registeredRole}
-          onComplete={() => {
+        <OnboardingBenefits
+          role={registeredRole}
+          onClose={() => {
             setShowOnboarding(false);
-            // Redirect based on role after tutorial
-            setLocation(registeredRole === "artist" ? "/conversations" : "/client-dashboard");
+            // Redirect based on role after viewing benefits
+            setLocation(registeredRole === "artist" ? "/conversations" : "/conversations");
           }}
         />
       )}
