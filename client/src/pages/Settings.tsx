@@ -25,6 +25,7 @@ import {
   Zap,
 } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
+import { DeleteAccountDialog } from "@/components/DeleteAccountDialog";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -397,6 +398,27 @@ export default function Settings() {
 
           {/* Demo Data Loader (Artist only) */}
           {isArtist && <DemoDataLoader />}
+
+          {/* Danger Zone */}
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Danger Zone</CardTitle>
+              <CardDescription>
+                Irreversible and destructive actions for your account.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium">Delete Account</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Permanently delete your account and all associated data
+                  </p>
+                </div>
+                <DeleteAccountDialog />
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Logout */}
           <Card className="cursor-pointer hover:bg-destructive/5 transition-colors" onClick={handleLogout}>

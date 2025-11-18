@@ -10,6 +10,7 @@ import { authRouter } from "./_core/auth-router";
 import { clientContentRouter } from "./clientContentRouter";
 import { notificationSettingsRouter } from "./notificationSettingsRouter";
 import { notifyNewMessage, notifyAppointmentConfirmed } from "./_core/pushNotification";
+import { checkUserDeletionDependencies, deleteUserAccount } from "./accountDeletion";
 
 // Custom procedure for artist-only operations
 const artistProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -153,6 +154,56 @@ export const appRouter = router({
       // Get all users with artist or admin role
       return db.getArtists();
     }),
+    checkDeletionEligibility: protectedProcedure.query(async ({ ctx }) => {
+      return checkUserDeletionDependencies(ctx.user.id);
+    }),
+    deleteAccount: protectedProcedure
+      .input(
+        z.object({
+          password: z.string(),
+          confirmation: z.literal("DELETE"),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        // 1. Verify password
+        const user = await db.getUser(ctx.user.id);
+        
+        if (!user || !user.password) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Invalid password",
+          });
+        }
+        
+        const bcrypt = await import("bcryptjs");
+        const validPassword = await bcrypt.compare(input.password, user.password);
+        
+        if (!validPassword) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Invalid password",
+          });
+        }
+        
+        // 2. Check dependencies
+        const dependencies = await checkUserDeletionDependencies(ctx.user.id);
+        
+        if (!dependencies.canDelete) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: dependencies.blockers.join(" "),
+          });
+        }
+        
+        // 3. Execute deletion
+        const result = await deleteUserAccount(ctx.user.id);
+        
+        // 4. Clear session cookie
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+        
+        return result;
+      }),
   }),
 
   artistSettings: router({
