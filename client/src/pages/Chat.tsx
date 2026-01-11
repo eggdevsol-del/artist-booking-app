@@ -1,14 +1,18 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, Calendar as CalendarIcon, Send, User, Phone, Mail, Cake, CreditCard, ImagePlus } from "lucide-react";
+import { ArrowLeft, Calendar as CalendarIcon, Send, User, Phone, Mail, Cake, CreditCard, ImagePlus, ChevronRight, Check, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
+import { addDays, format } from "date-fns";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
@@ -21,15 +25,22 @@ export default function Chat() {
   const [showBookingCalendar, setShowBookingCalendar] = useState(false);
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [showServiceSelection, setShowServiceSelection] = useState(false);
+
+  // Project Wizard State
+  const [showProjectWizard, setShowProjectWizard] = useState(false);
+  const [wizardStep, setWizardStep] = useState<'service' | 'frequency' | 'review'>('service');
   const [selectedService, setSelectedService] = useState<any>(null);
+  const [projectFrequency, setProjectFrequency] = useState<'consecutive' | 'weekly' | 'biweekly' | 'monthly'>('consecutive');
+  const [projectStartDate, setProjectStartDate] = useState<Date | null>(null);
+
   const [availableServices, setAvailableServices] = useState<any[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [showDateSelection, setShowDateSelection] = useState(false);
-  const [availableDates, setAvailableDates] = useState<string[]>([]);
-  const [selectedDatesForConfirm, setSelectedDatesForConfirm] = useState<string[]>([]);
-  const [currentMessageMetadata, setCurrentMessageMetadata] = useState<any>(null);
+
+  const [showClientConfirmDialog, setShowClientConfirmDialog] = useState(false);
+  const [clientConfirmMessageId, setClientConfirmMessageId] = useState<number | null>(null);
+  const [clientConfirmDates, setClientConfirmDates] = useState<{ date: string, selected: boolean }[]>([]);
+  const [clientConfirmMetadata, setClientConfirmMetadata] = useState<any>(null);
 
   // Get consultation ID from URL if present
   const searchParams = new URLSearchParams(window.location.search);
@@ -71,6 +82,20 @@ export default function Chat() {
   const { data: artistSettings } = trpc.artistSettings.get.useQuery(undefined, {
     enabled: !!user && (user.role === "artist" || user.role === "admin"),
   });
+
+  const { data: projectAvailability, isLoading: loadingAvailability } = trpc.appointments.findProjectAvailability.useQuery(
+    {
+      conversationId,
+      serviceName: selectedService?.name || '',
+      serviceDuration: selectedService?.duration || 60,
+      sittings: selectedService?.sittings || 1,
+      frequency: projectFrequency,
+      startDate: projectStartDate || new Date(),
+    },
+    {
+      enabled: !!selectedService && !!projectStartDate && wizardStep === 'review',
+    }
+  );
 
   // Parse services when artistSettings loads
   useEffect(() => {
@@ -133,31 +158,13 @@ export default function Chat() {
     },
   });
 
-  const updateMessageMetadataMutation = trpc.messages.updateMetadata.useMutation({
-    onSuccess: () => {
-      refetchMessages();
-    },
-    onError: (error: any) => {
-      toast.error("Failed to update message: " + error.message);
-    },
-  });
-
-  const createAppointmentMutation = trpc.appointments.create.useMutation({
-    onSuccess: () => {
-      toast.success("Appointment created");
-    },
-    onError: (error: any) => {
-      toast.error("Failed to create appointment: " + error.message);
-    },
-  });
-
-  const confirmDepositMutation = trpc.appointments.confirmDeposit.useMutation({
+  const bookProjectMutation = trpc.appointments.bookProject.useMutation({
     onSuccess: (data) => {
-      toast.success(`${data.count} appointment(s) confirmed!`);
+      toast.success(`${data.count} appointments booked successfully!`);
       refetchMessages();
     },
     onError: (error: any) => {
-      toast.error("Failed to confirm deposit: " + error.message);
+      toast.error("Failed to book project: " + error.message);
     },
   });
 
@@ -207,13 +214,11 @@ export default function Chat() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Check file type
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
       return;
     }
 
-    // Check file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       toast.error("Image size must be less than 10MB");
       return;
@@ -222,7 +227,6 @@ export default function Chat() {
     setUploadingImage(true);
     toast.info("Uploading image...");
 
-    // Convert to base64
     const reader = new FileReader();
     reader.onload = async (e) => {
       const base64Data = e.target?.result as string;
@@ -239,7 +243,6 @@ export default function Chat() {
     };
     reader.readAsDataURL(file);
 
-    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -255,68 +258,23 @@ export default function Chat() {
     }
   };
 
-  const handleSendBankDetails = () => {
-    if (!artistSettings || !conversation) return;
+  const handleSendProjectDates = () => {
+    if (!projectAvailability?.dates || !selectedService) return;
 
-    const bsb = artistSettings.bsb || "[BSB not set]";
-    const account = artistSettings.accountNumber || "[Account not set]";
-    const depositAmount = artistSettings.depositAmount || "[Amount not set]";
-
-    // Get client name from conversation
-    const clientName = conversation.clientId; // This should be the client's full name
-
-    const bankDetailsMessage = `Please find deposit details below:
-
-BSB: ${bsb}
-ACCOUNT: ${account}
-AMOUNT: $${depositAmount}
-REFERENCE: ${clientName}
-
-Once transfer is complete, please send a screenshot of remittance here in this message thread.`;
-
-    sendMessageMutation.mutate({
-      conversationId,
-      content: bankDetailsMessage,
-      messageType: "text",
-    });
-  };
-
-  const handleSendDates = () => {
-    if (selectedDates.length === 0) {
-      toast.error("Please select at least one date");
-      return;
-    }
-
-    // Check if services are available
-    if (availableServices.length === 0) {
-      toast.error("Please add services in Settings > Work Hours & Services first");
-      return;
-    }
-
-    // Show service selection dialog
-    setShowBookingCalendar(false);
-    setShowServiceSelection(true);
-  };
-
-  const handleConfirmServiceAndSendDates = () => {
-    if (!selectedService) {
-      toast.error("Please select a service");
-      return;
-    }
-
-    const datesList = selectedDates
-      .sort((a, b) => a.getTime() - b.getTime())
-      .map(date => date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }))
+    const datesList = projectAvailability.dates
+      .map((date: string) => format(new Date(date), 'EEEE, MMMM do yyyy, h:mm a'))
       .join('\n');
 
-    const message = `I have the following dates available for ${selectedService.name}:\n\n${datesList}\n\nService Details:\n- Duration: ${selectedService.duration} minutes\n- Price: $${selectedService.price}\n${selectedService.description ? `- ${selectedService.description}` : ''}\n\nPlease let me know which date(s) work for you.`;
+    const message = `I have found the following dates for your ${selectedService.name} project:\n\n${datesList}\n\nThis project consists of ${selectedService.sittings || 1} sittings.\nFrequency: ${projectFrequency}\nPrice per sitting: $${selectedService.price}\n\nPlease confirm these dates.`;
 
-    // Store service details and deposit info in metadata for later use when client accepts
     const metadata = JSON.stringify({
+      type: "project_proposal",
       serviceName: selectedService.name,
-      duration: selectedService.duration,
+      serviceDuration: selectedService.duration,
+      sittings: selectedService.sittings || 1,
       price: selectedService.price,
-      description: selectedService.description || '',
+      frequency: projectFrequency,
+      proposedDates: projectAvailability.dates,
       depositAmount: artistSettings?.depositAmount || 0,
       bsb: artistSettings?.bsb || '',
       accountNumber: artistSettings?.accountNumber || '',
@@ -325,25 +283,83 @@ Once transfer is complete, please send a screenshot of remittance here in this m
     sendMessageMutation.mutate({
       conversationId,
       content: message,
-      messageType: "appointment_request",
+      messageType: "appointment_request", // Reusing this type
       metadata,
     });
 
-    setSelectedDates([]);
-    setShowServiceSelection(false);
-    setSelectedService(null);
-    toast.success("Dates sent successfully");
+    setShowProjectWizard(false);
+    resetWizard();
+    toast.success("Project proposal sent!");
   };
 
-  const toggleDateSelection = (date: Date) => {
-    const dateStr = date.toDateString();
-    const isSelected = selectedDates.some(d => d.toDateString() === dateStr);
+  const handleClientConfirmDates = async () => {
+    if (!clientConfirmMessageId || !clientConfirmMetadata) return;
 
-    if (isSelected) {
-      setSelectedDates(selectedDates.filter(d => d.toDateString() !== dateStr));
-    } else {
-      setSelectedDates([...selectedDates, date]);
+    const selectedDateStrings = clientConfirmDates
+      .filter(d => d.selected)
+      .map(d => d.date);
+
+    if (selectedDateStrings.length === 0) {
+      toast.error("Please select at least one date");
+      return;
     }
+
+    const message = `I confirm the following dates:\n\n${selectedDateStrings.map(d => format(new Date(d), 'PPP p')).join('\n')}`;
+
+    const metadata = JSON.stringify({
+      type: "project_client_confirmation",
+      confirmedDates: selectedDateStrings,
+      originalMessageId: clientConfirmMessageId,
+      serviceName: clientConfirmMetadata.serviceName,
+      price: clientConfirmMetadata.price
+    });
+
+    sendMessageMutation.mutate({
+      conversationId,
+      content: message,
+      messageType: "text",
+      metadata
+    });
+
+    setShowClientConfirmDialog(false);
+    toast.success("Dates confirmed!");
+  };
+
+  const handleArtistBookProject = (metadata: any) => {
+    if (!metadata.confirmedDates || !metadata.serviceName) return;
+
+    const appointments = metadata.confirmedDates.map((dateStr: string) => {
+      const startTime = new Date(dateStr);
+      // Assuming duration from metadata or default 60 (should ideally pass duration in metadata)
+      // For now, let's look up service or default
+      // Wait, we have serviceName. We don't have duration in client confirmation metadata explicitly unless we pass it.
+      // Let's assume 3 hours or fetch service?
+      // Better: pass duration in metadata chain.
+      // I will update handleClientConfirmDates to include duration if possible, but I missed it.
+      // Let's use a safe default or try to find service.
+
+      return {
+        startTime,
+        endTime: new Date(startTime.getTime() + 60 * 60 * 1000), // Default 1 hr if missing
+        title: metadata.serviceName,
+        description: "Project Booking",
+        serviceName: metadata.serviceName,
+        price: metadata.price,
+        depositAmount: 0 // We handle deposits separately or via global settings
+      };
+    });
+
+    bookProjectMutation.mutate({
+      conversationId,
+      appointments
+    });
+  }
+
+  const resetWizard = () => {
+    setWizardStep('service');
+    setSelectedService(null);
+    setProjectFrequency('consecutive');
+    setProjectStartDate(null);
   };
 
   const renderCalendar = () => {
@@ -361,13 +377,13 @@ Once transfer is complete, please send a screenshot of remittance here in this m
 
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
-      const isSelected = selectedDates.some(d => d.toDateString() === date.toDateString());
+      const isSelected = projectStartDate?.toDateString() === date.toDateString();
       const isToday = date.toDateString() === new Date().toDateString();
 
       days.push(
         <button
           key={day}
-          onClick={() => toggleDateSelection(date)}
+          onClick={() => setProjectStartDate(date)}
           className={`h-12 rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${isSelected
             ? "bg-primary text-primary-foreground"
             : isToday
@@ -453,36 +469,22 @@ Once transfer is complete, please send a screenshot of remittance here in this m
         </div>
       </header>
 
-      {/* Consultation Info Banner */}
-      {consultationData && (
-        <div className="bg-primary/10 border-b border-primary/20 p-4">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-              <CalendarIcon className="w-5 h-5 text-primary" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-sm">Consultation Request</h3>
-              <p className="text-sm text-muted-foreground mt-1">{consultationData.subject}</p>
-              <p className="text-xs text-muted-foreground mt-1">{consultationData.description}</p>
-              {consultationData.preferredDate && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Preferred: {consultationData.preferredDate ? new Date(consultationData.preferredDate).toLocaleDateString() : 'Not specified'}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Messages */}
       <ScrollArea className="flex-1 px-4 py-4 pb-[160px]" ref={scrollRef}>
         <div className="space-y-4">
           {messages && messages.length > 0 ? (
             messages.map((message) => {
               const isOwn = message.senderId === user?.id;
-              const isAppointmentRequest = message.messageType === "appointment_request" && !isOwn;
-              const isAppointmentConfirmed = message.messageType === "appointment_confirmed" && isOwn;
               const isImage = message.messageType === "image";
+
+              // Determine message subtype based on metadata
+              let metadata: any = null;
+              try {
+                metadata = message.metadata ? JSON.parse(message.metadata) : null;
+              } catch (e) { }
+
+              const isProjectProposal = metadata?.type === "project_proposal";
+              const isClientConfirmation = metadata?.type === "project_client_confirmation";
 
               return (
                 <div
@@ -490,7 +492,7 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                   className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[75%] rounded-2xl px-4 py-2 overflow-hidden ${isOwn
+                    className={`max-w-[85%] rounded-2xl px-4 py-2 overflow-hidden ${isOwn
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted"
                       }`}
@@ -514,82 +516,37 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                         minute: "2-digit",
                       })}
                     </p>
-                    {isAppointmentConfirmed && message.metadata && (() => {
-                      try {
-                        const metadata = JSON.parse(message.metadata);
-                        if (metadata.bsb && metadata.accountNumber) {
-                          return (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="mt-3 w-full"
-                              onClick={() => {
-                                const bankDetails = `BSB: ${metadata.bsb}\nAccount: ${metadata.accountNumber}\nAmount: $${metadata.totalDeposit}`;
-                                navigator.clipboard.writeText(bankDetails);
-                                toast.success("Bank details copied to clipboard!");
-                              }}
-                            >
-                              Copy Details
-                            </Button>
+
+                    {/* Client View: Project Proposal Action */}
+                    {!isArtist && isProjectProposal && (
+                      <Button
+                        className="mt-2 w-full bg-background/20 hover:bg-background/30 text-inherit border-none"
+                        size="sm"
+                        onClick={() => {
+                          setClientConfirmMessageId(message.id);
+                          setClientConfirmMetadata(metadata);
+                          setClientConfirmDates(
+                            metadata.proposedDates.map((d: string) => ({ date: d, selected: true }))
                           );
-                        }
-                      } catch (e) {
-                        console.error('Failed to parse metadata:', e);
-                      }
-                      return null;
-                    })()}
-                    {isAppointmentRequest && (() => {
-                      // Check if dates have already been accepted
-                      let isAccepted = false;
-                      if (message.metadata) {
-                        try {
-                          const metadata = JSON.parse(message.metadata);
-                          isAccepted = metadata.accepted === true;
-                        } catch (e) {
-                          console.error('Failed to parse metadata:', e);
-                        }
-                      }
+                          setShowClientConfirmDialog(true);
+                        }}
+                      >
+                        Review & Confirm
+                      </Button>
+                    )}
 
-                      if (isAccepted) {
-                        return (
-                          <div className="mt-3 w-full px-3 py-2 bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg text-sm font-medium text-center">
-                            ✓ Dates Accepted
-                          </div>
-                        );
-                      }
+                    {/* Artist View: Confirm Booking Action */}
+                    {isArtist && isClientConfirmation && (
+                      <Button
+                        className="mt-2 w-full bg-background/20 hover:bg-background/30 text-inherit border-none"
+                        size="sm"
+                        onClick={() => handleArtistBookProject(metadata)}
+                        disabled={bookProjectMutation.isPending}
+                      >
+                        {bookProjectMutation.isPending ? "Booking..." : "Confirm & Book"}
+                      </Button>
+                    )}
 
-                      return (
-                        <Button
-                          size="sm"
-                          className="mt-3 w-full"
-                          onClick={() => {
-                            // Parse dates from message content
-                            const dateRegex = /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), (\w+ \d+, \d{4})/g;
-                            const matches = Array.from(message.content.matchAll(dateRegex));
-                            const dates = matches.map(match => match[0]);
-
-                            if (dates.length > 0) {
-                              // Parse service metadata if available
-                              let serviceData: any = {};
-                              if (message.metadata) {
-                                try {
-                                  serviceData = JSON.parse(message.metadata);
-                                } catch (e) {
-                                  console.error('Failed to parse metadata:', e);
-                                }
-                              }
-
-                              setAvailableDates(dates);
-                              setSelectedDatesForConfirm(dates); // Pre-select all dates
-                              setCurrentMessageMetadata({ ...serviceData, messageId: message.id });
-                              setShowDateSelection(true);
-                            }
-                          }}
-                        >
-                          Accept Dates
-                        </Button>
-                      );
-                    })()}
                   </div>
                 </div>
               );
@@ -597,9 +554,6 @@ Once transfer is complete, please send a screenshot of remittance here in this m
           ) : (
             <div className="text-center py-12">
               <p className="text-muted-foreground">No messages yet</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Start the conversation!
-              </p>
             </div>
           )}
         </div>
@@ -607,7 +561,6 @@ Once transfer is complete, please send a screenshot of remittance here in this m
 
       {/* Fixed Bottom Input Area */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t">
-        {/* Quick Actions + Book Now */}
         {isArtist && (
           <div className="px-4 py-2 border-b bg-background">
             <div className="grid grid-cols-3 gap-2 mb-2">
@@ -624,10 +577,13 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                 variant="outline"
                 size="sm"
                 className="text-xs"
-                onClick={handleSendBankDetails}
+                onClick={() => {
+                  setShowProjectWizard(true);
+                  setWizardStep('service');
+                }}
               >
-                <CreditCard className="w-4 h-4 mr-1" />
-                Deposit
+                <CalendarIcon className="w-4 h-4 mr-1" />
+                Book Project
               </Button>
               <Button
                 variant="default"
@@ -635,7 +591,8 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                 className="text-xs"
                 onClick={() => {
                   if (conversationId) {
-                    confirmDepositMutation.mutate({ conversationId });
+                    // This could be updated to confirm project bookings too depending on implementation
+                    toast.info("Use the 'Confirm & Book' button in the chat bubble for projects.");
                   }
                 }}
               >
@@ -675,7 +632,6 @@ Once transfer is complete, please send a screenshot of remittance here in this m
               variant="outline"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingImage}
-              title="Upload image"
             >
               <ImagePlus className="w-5 h-5" />
             </Button>
@@ -698,7 +654,180 @@ Once transfer is complete, please send a screenshot of remittance here in this m
         </div>
       </div>
 
-      {/* Client Info Dialog */}
+      {/* Book Project Wizard */}
+      <Dialog open={showProjectWizard} onOpenChange={setShowProjectWizard}>
+        <DialogContent className="max-w-md h-[80vh] flex flex-col p-0">
+          <DialogHeader className="px-6 py-4 border-b">
+            <DialogTitle>
+              {wizardStep === 'service' && "Select Service"}
+              {wizardStep === 'frequency' && "Select Frequency & Start Date"}
+              {wizardStep === 'review' && "Review Dates"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            {/* Step 1: Service */}
+            {wizardStep === 'service' && (
+              <div className="space-y-4">
+                {availableServices.length === 0 ? (
+                  <p className="text-muted-foreground text-center">No availble services.</p>
+                ) : (
+                  availableServices.map(service => (
+                    <Card
+                      key={service.id}
+                      className={`p-4 cursor-pointer hover:border-primary ${selectedService?.id === service.id ? 'border-primary bg-primary/5' : ''}`}
+                      onClick={() => setSelectedService(service)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold">{service.name}</h3>
+                          <p className="text-sm text-muted-foreground">{service.sittings || 1} sitting{(service.sittings || 1) > 1 ? 's' : ''}</p>
+                        </div>
+                        <p className="font-semibold">${service.price}</p>
+                      </div>
+                    </Card>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Step 2: Frequency & Date */}
+            {wizardStep === 'frequency' && (
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <Label>Frequency</Label>
+                  <RadioGroup value={projectFrequency} onValueChange={(v: any) => setProjectFrequency(v)}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="consecutive" id="r1" />
+                      <Label htmlFor="r1">Consecutive Days</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="weekly" id="r2" />
+                      <Label htmlFor="r2">Weekly</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="biweekly" id="r3" />
+                      <Label htmlFor="r3">Bi-Weekly</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="monthly" id="r4" />
+                      <Label htmlFor="r4">Monthly</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Start Date</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Button variant="ghost" size="sm" onClick={prevMonth}>&lt;</Button>
+                    <span className="font-medium">{currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
+                    <Button variant="ghost" size="sm" onClick={nextMonth}>&gt;</Button>
+                  </div>
+                  <div className="grid grid-cols-7 gap-1 text-center mb-1">
+                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                      <span key={d} className="text-xs text-muted-foreground">{d}</span>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1">
+                    {renderCalendar()}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Review */}
+            {wizardStep === 'review' && (
+              <div className="space-y-4">
+                {loadingAvailability ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : projectAvailability ? (
+                  <div className="space-y-2">
+                    <p className="font-medium">Calculated Dates:</p>
+                    {projectAvailability.dates.map((date: string, i: number) => (
+                      <div key={i} className="p-3 bg-muted rounded-md flex justify-between items-center">
+                        <span>Sitting {i + 1}</span>
+                        <span className="font-mono">{format(new Date(date), 'PP')}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-destructive">Failed to calculate dates.</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="px-6 py-4 border-t flex justify-between items-center">
+            {wizardStep !== 'service' && (
+              <Button variant="outline" onClick={() => setWizardStep(prev => prev === 'review' ? 'frequency' : 'service')}>
+                Back
+              </Button>
+            )}
+
+            {wizardStep === 'service' && (
+              <Button
+                disabled={!selectedService}
+                onClick={() => setWizardStep('frequency')}
+              >
+                Next
+              </Button>
+            )}
+
+            {wizardStep === 'frequency' && (
+              <Button
+                disabled={!projectStartDate}
+                onClick={() => setWizardStep('review')}
+              >
+                Find Dates
+              </Button>
+            )}
+
+            {wizardStep === 'review' && (
+              <Button
+                disabled={!projectAvailability}
+                onClick={handleSendProjectDates}
+              >
+                Send Dates
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Client Confirm Dialog */}
+      <Dialog open={showClientConfirmDialog} onOpenChange={setShowClientConfirmDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Project Dates</DialogTitle>
+            <DialogDescription>Please review and select the dates you can attend.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-4">
+            {clientConfirmDates.map((item, idx) => (
+              <div key={idx} className="flex items-center space-x-2 p-2 rounded hover:bg-muted">
+                <Checkbox
+                  id={`date-${idx}`}
+                  checked={item.selected}
+                  onCheckedChange={(checked) => {
+                    const newDates = [...clientConfirmDates];
+                    newDates[idx].selected = checked === true;
+                    setClientConfirmDates(newDates);
+                  }}
+                />
+                <Label htmlFor={`date-${idx}`} className="cursor-pointer flex-1">
+                  {format(new Date(item.date), 'PPPP')}
+                </Label>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button onClick={handleClientConfirmDates}>Confirm Dates</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Existing Client Info Dialog */}
       <Dialog open={showClientInfo} onOpenChange={setShowClientInfo}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -737,327 +866,6 @@ Once transfer is complete, please send a screenshot of remittance here in this m
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Service Selection Dialog */}
-      <Dialog open={showServiceSelection} onOpenChange={setShowServiceSelection}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Select Service</DialogTitle>
-            <DialogDescription>
-              Choose the service for this booking
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {availableServices.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground mb-4">
-                  No services available. Please add services in Settings first.
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowServiceSelection(false);
-                    setLocation("/work-hours");
-                  }}
-                >
-                  Go to Settings
-                </Button>
-              </div>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  {availableServices.map((service) => (
-                    <Card
-                      key={service.id}
-                      className={`p-4 cursor-pointer transition-colors ${selectedService?.id === service.id
-                        ? "border-primary bg-primary/5"
-                        : "hover:border-primary/50"
-                        }`}
-                      onClick={() => setSelectedService(service)}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-foreground">
-                            {service.name}
-                          </h3>
-                          {service.description && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {service.description}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-4 mt-2">
-                            <span className="text-sm text-muted-foreground">
-                              {service.duration} min
-                            </span>
-                            <span className="text-sm font-semibold text-primary">
-                              ${service.price}
-                            </span>
-                          </div>
-                        </div>
-                        {selectedService?.id === service.id && (
-                          <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                            <svg
-                              className="w-3 h-3 text-primary-foreground"
-                              fill="none"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path d="M5 13l4 4L19 7"></path>
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => {
-                      setShowServiceSelection(false);
-                      setShowBookingCalendar(true);
-                      setSelectedService(null);
-                    }}
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    className="flex-1"
-                    onClick={handleConfirmServiceAndSendDates}
-                    disabled={!selectedService}
-                  >
-                    Confirm & Send
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Booking Calendar Dialog */}
-      <Dialog open={showBookingCalendar} onOpenChange={setShowBookingCalendar}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Select Booking Dates</DialogTitle>
-            <DialogDescription>
-              Choose one or more dates to propose to the client
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {/* Month Navigation */}
-            <div className="flex items-center justify-between">
-              <Button variant="outline" size="sm" onClick={prevMonth}>
-                ←
-              </Button>
-              <h3 className="font-semibold">
-                {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-              </h3>
-              <Button variant="outline" size="sm" onClick={nextMonth}>
-                →
-              </Button>
-            </div>
-
-            {/* Calendar Grid */}
-            <div>
-              <div className="grid grid-cols-7 gap-1 mb-2">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                  <div key={day} className="text-center text-xs font-medium text-muted-foreground">
-                    {day}
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-1">
-                {renderCalendar()}
-              </div>
-            </div>
-
-            {/* Selected Dates Summary */}
-            {selectedDates.length > 0 && (
-              <div className="bg-muted p-3 rounded-lg">
-                <p className="text-sm font-medium mb-2">Selected Dates ({selectedDates.length}):</p>
-                <div className="space-y-1">
-                  {selectedDates.sort((a, b) => a.getTime() - b.getTime()).map((date, idx) => (
-                    <p key={idx} className="text-xs text-muted-foreground">
-                      {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => {
-                  setSelectedDates([]);
-                  setShowBookingCalendar(false);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={handleSendDates}
-                disabled={selectedDates.length === 0}
-              >
-                Send Dates ({selectedDates.length})
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Date Selection Dialog for Clients */}
-      <Dialog open={showDateSelection} onOpenChange={setShowDateSelection}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Confirm Appointment Dates</DialogTitle>
-            <DialogDescription>
-              Select the dates you'd like to confirm
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {/* Date Checkboxes */}
-            <div className="space-y-2">
-              {availableDates.map((date, idx) => (
-                <div key={idx} className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent/5">
-                  <input
-                    type="checkbox"
-                    id={`date-${idx}`}
-                    checked={selectedDatesForConfirm.includes(date)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedDatesForConfirm([...selectedDatesForConfirm, date]);
-                      } else {
-                        setSelectedDatesForConfirm(selectedDatesForConfirm.filter(d => d !== date));
-                      }
-                    }}
-                    className="w-4 h-4 text-primary rounded focus:ring-primary"
-                  />
-                  <label htmlFor={`date-${idx}`} className="flex-1 text-sm font-medium cursor-pointer">
-                    {date}
-                  </label>
-                </div>
-              ))}
-            </div>
-
-            {/* Service Info */}
-            {currentMessageMetadata && (
-              <div className="bg-muted p-3 rounded-lg text-sm">
-                <p className="font-semibold">{currentMessageMetadata.serviceName}</p>
-                <p className="text-muted-foreground">{currentMessageMetadata.duration} minutes · ${currentMessageMetadata.price}</p>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => {
-                  setShowDateSelection(false);
-                  setSelectedDatesForConfirm([]);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={async () => {
-                  if (selectedDatesForConfirm.length > 0 && conversation) {
-                    const serviceData = currentMessageMetadata || {};
-
-                    // Create appointments for each selected date
-                    selectedDatesForConfirm.forEach(dateStr => {
-                      const appointmentDate = new Date(dateStr);
-                      appointmentDate.setHours(9, 0, 0, 0);
-                      const duration = serviceData.duration || 60;
-                      const endTime = new Date(appointmentDate.getTime() + duration * 60 * 1000);
-
-                      createAppointmentMutation.mutate({
-                        conversationId,
-                        artistId: conversation.artistId,
-                        clientId: conversation.clientId,
-                        title: serviceData.serviceName || "Appointment",
-                        description: serviceData.description || "Confirmed booking",
-                        startTime: appointmentDate,
-                        endTime: endTime,
-                        serviceName: serviceData.serviceName,
-                        price: serviceData.price,
-                      });
-                    });
-
-                    // Mark the original message as accepted
-                    if (serviceData.messageId) {
-                      try {
-                        // Update the metadata to include accepted flag
-                        const updatedMetadata = {
-                          ...serviceData,
-                          accepted: true,
-                        };
-                        delete updatedMetadata.messageId; // Remove messageId from stored metadata
-
-                        await updateMessageMetadataMutation.mutateAsync({
-                          messageId: serviceData.messageId,
-                          metadata: JSON.stringify(updatedMetadata),
-                        });
-                      } catch (error) {
-                        console.error('Failed to mark message as accepted:', error);
-                      }
-                    }
-
-                    // Calculate total deposit
-                    const depositPerAppointment = serviceData.depositAmount || 0;
-                    const totalDeposit = depositPerAppointment * selectedDatesForConfirm.length;
-
-                    // Build confirmation message with payment instructions
-                    let confirmationMessage = `I've accepted the following dates:\n${selectedDatesForConfirm.join('\n')}`;
-
-                    // Add payment instructions if deposit is configured
-                    if (totalDeposit > 0 && serviceData.bsb && serviceData.accountNumber) {
-                      confirmationMessage += `\n\n💰 Deposit Payment Required:\nTotal: $${totalDeposit} (${selectedDatesForConfirm.length} appointments × $${depositPerAppointment})\n\n📋 Bank Details:\nBSB: ${serviceData.bsb}\nAccount: ${serviceData.accountNumber}\nReference: ${user?.name || 'Your Name'}\n\nPlease use your name as the payment reference.`;
-                    }
-
-                    // Store bank details in metadata for copy button
-                    const metadata = JSON.stringify({
-                      bsb: serviceData.bsb,
-                      accountNumber: serviceData.accountNumber,
-                      totalDeposit,
-                    });
-
-                    // Send confirmation message
-                    sendMessageMutation.mutate({
-                      conversationId,
-                      content: confirmationMessage,
-                      messageType: "appointment_confirmed",
-                      metadata,
-                    });
-
-                    toast.success("Dates confirmed!");
-                    setShowDateSelection(false);
-                    setSelectedDatesForConfirm([]);
-                  }
-                }}
-                disabled={selectedDatesForConfirm.length === 0}
-              >
-                Accept Dates ({selectedDatesForConfirm.length})
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
-

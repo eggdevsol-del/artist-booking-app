@@ -24,6 +24,7 @@ type Service = {
   duration: number;
   price: number;
   description: string;
+  sittings: number;
 };
 
 const DAYS = [
@@ -57,6 +58,7 @@ export default function WorkHours() {
     duration: 60,
     price: 0,
     description: "",
+    sittings: 1,
   });
   const [showAddService, setShowAddService] = useState(false);
 
@@ -149,6 +151,7 @@ export default function WorkHours() {
       duration: 60,
       price: 0,
       description: "",
+      sittings: 1,
     });
     setShowAddService(false);
     toast.success("Service added");
@@ -288,6 +291,9 @@ export default function WorkHours() {
                         <span className="text-sm font-semibold text-primary">
                           ${service.price}
                         </span>
+                        <span className="text-sm text-muted-foreground">
+                          {service.sittings || 1} sitting{(service.sittings || 1) > 1 ? 's' : ''}
+                        </span>
                       </div>
                     </div>
                     <Button
@@ -363,6 +369,25 @@ export default function WorkHours() {
                         }
                       />
                     </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="serviceSittings">Number of Sittings</Label>
+                    <Input
+                      id="serviceSittings"
+                      type="number"
+                      min="1"
+                      value={newService.sittings || 1}
+                      onChange={(e) =>
+                        setNewService({
+                          ...newService,
+                          sittings: parseInt(e.target.value) || 1,
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      How many appointments are required for this service?
+                    </p>
                   </div>
 
                   <div className="flex gap-2">

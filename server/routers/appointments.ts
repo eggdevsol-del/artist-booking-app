@@ -156,4 +156,188 @@ export const appointmentsRouter = router({
 
             return { success: true, count: pendingAppointments.length };
         }),
+
+    findProjectAvailability: artistProcedure
+        .input(z.object({
+            conversationId: z.number(),
+            serviceName: z.string(),
+            serviceDuration: z.number(),
+            sittings: z.number(),
+            frequency: z.enum(["consecutive", "weekly", "biweekly", "monthly"]),
+            startDate: z.date(),
+        }))
+        .query(async ({ ctx, input }) => {
+            const conversation = await db.getConversationById(input.conversationId);
+            if (!conversation) throw new TRPCError({ code: "NOT_FOUND", message: "Conversation not found" });
+
+            const artistSettings = await db.getArtistSettings(conversation.artistId);
+            if (!artistSettings) throw new TRPCError({ code: "NOT_FOUND", message: "Artist settings not found" });
+
+            let workSchedule: any[] = [];
+            try {
+                workSchedule = JSON.parse(artistSettings.workSchedule);
+            } catch (e) {
+                console.error("Failed to parse work schedule");
+            }
+
+            // Fetch existing appointments for the artist relative to the start date
+            // Fetching a broad range to cover potential future dates
+            // A better approach would be fetching per day or week needed, but for simplicity we fetch a large range or check iteratively
+            // For efficiency, let's just fetch future appointments
+            const existingAppointments = await db.getAppointmentsForUser(
+                conversation.artistId,
+                "artist",
+                input.startDate
+            );
+
+            const suggestedDates: Date[] = [];
+            let currentDateSearch = new Date(input.startDate);
+
+            for (let i = 0; i < input.sittings; i++) {
+                // Find next available slot starting from currentDateSearch
+                const slot = findNextAvailableSlot(
+                    currentDateSearch,
+                    input.serviceDuration,
+                    workSchedule,
+                    existingAppointments
+                );
+
+                if (!slot) {
+                    throw new TRPCError({
+                        code: "PRECONDITION_FAILED",
+                        message: `Could not find available slot for sitting ${i + 1}`,
+                    });
+                }
+
+                suggestedDates.push(slot);
+
+                // Calculate next search date based on frequency
+                const nextDate = new Date(slot);
+                switch (input.frequency) {
+                    case "consecutive":
+                        nextDate.setDate(nextDate.getDate() + 1);
+                        break;
+                    case "weekly":
+                        nextDate.setDate(nextDate.getDate() + 7);
+                        break;
+                    case "biweekly":
+                        nextDate.setDate(nextDate.getDate() + 14);
+                        break;
+                    case "monthly":
+                        nextDate.setMonth(nextDate.getMonth() + 1);
+                        break;
+                }
+                currentDateSearch = nextDate;
+            }
+
+            return { dates: suggestedDates };
+        }),
+
+    bookProject: artistProcedure
+        .input(z.object({
+            conversationId: z.number(),
+            appointments: z.array(z.object({
+                startTime: z.date(),
+                endTime: z.date(),
+                title: z.string(),
+                description: z.string().optional(),
+                serviceName: z.string(),
+                price: z.number(),
+                depositAmount: z.number().optional(),
+            })),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const conversation = await db.getConversationById(input.conversationId);
+            if (!conversation) throw new TRPCError({ code: "NOT_FOUND", message: "Conversation not found" });
+
+            let createdCount = 0;
+            for (const appt of input.appointments) {
+                await db.createAppointment({
+                    conversationId: input.conversationId,
+                    artistId: conversation.artistId,
+                    clientId: conversation.clientId,
+                    title: appt.title,
+                    description: appt.description,
+                    startTime: appt.startTime,
+                    endTime: appt.endTime,
+                    serviceName: appt.serviceName,
+                    price: appt.price,
+                    depositAmount: appt.depositAmount,
+                    status: "pending",
+                });
+                createdCount++;
+            }
+
+            return { success: true, count: createdCount };
+        }),
 });
+
+// Helper function to find next available slot
+function findNextAvailableSlot(
+    startDate: Date,
+    durationMinutes: number,
+    workSchedule: any[],
+    existingAppointments: any[]
+): Date | null {
+    const MAX_SEARCH_DAYS = 365; // Avoid infinite loops
+    let current = new Date(startDate);
+
+    // Normalize to start of day if it's in the past (though input should be future)
+    const now = new Date();
+    if (current < now) {
+        current = new Date(now);
+        current.setMinutes(Math.ceil(current.getMinutes() / 30) * 30); // Round up to next 30 min
+        current.setSeconds(0);
+        current.setMilliseconds(0);
+    }
+
+    for (let dayOffset = 0; dayOffset < MAX_SEARCH_DAYS; dayOffset++) {
+        const dayName = current.toLocaleDateString("en-US", { weekday: "long" });
+        const schedule = workSchedule.find((d: any) => d.day === dayName);
+
+        if (schedule && schedule.enabled) {
+            // Parse work hours
+            const [startHour, startMinute] = schedule.startTime.split(":").map(Number);
+            const [endHour, endMinute] = schedule.endTime.split(":").map(Number);
+
+            const dayStart = new Date(current);
+            dayStart.setHours(startHour, startMinute, 0, 0);
+
+            const dayEnd = new Date(current);
+            dayEnd.setHours(endHour, endMinute, 0, 0);
+
+            // If current time is before work start, jump to start
+            if (current < dayStart) {
+                current = new Date(dayStart);
+            }
+
+            // Iterate through slots in 30 min increments
+            while (current.getTime() + durationMinutes * 60000 <= dayEnd.getTime()) {
+                const potentialEnd = new Date(current.getTime() + durationMinutes * 60000);
+
+                // Check collision
+                const hasCollision = existingAppointments.some((appt) => {
+                    const apptStart = new Date(appt.startTime);
+                    const apptEnd = new Date(appt.endTime);
+                    // Check overlap
+                    return (
+                        (current < apptEnd && potentialEnd > apptStart)
+                    );
+                });
+
+                if (!hasCollision) {
+                    return new Date(current);
+                }
+
+                // Increment by 30 mins
+                current.setTime(current.getTime() + 30 * 60000);
+            }
+        }
+
+        // Move to start of next day
+        current.setDate(current.getDate() + 1);
+        current.setHours(0, 0, 0, 0);
+    }
+
+    return null;
+}
