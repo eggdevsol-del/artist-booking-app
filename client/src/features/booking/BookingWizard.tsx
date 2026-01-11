@@ -30,7 +30,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
     // 1. Availability Query (Only runs on Review step)
     const {
         data: availability,
-        isLoading: isLoadingAvailability,
+        isPending: isLoadingAvailability, // Alias to keep variable name or change it
         error: availabilityError
     } = trpc.booking.checkAvailability.useQuery({
         conversationId,
@@ -269,10 +269,10 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
                         {step === 'review' && (
                             <Button
-                                disabled={!availability || bookProjectMutation.isLoading}
+                                disabled={!availability || bookProjectMutation.isPending}
                                 onClick={handleConfirmBooking}
                             >
-                                {bookProjectMutation.isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                                {bookProjectMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                                 Send Proposal
                             </Button>
                         )}
@@ -281,4 +281,5 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
             </DialogContent>
         </Dialog>
     );
+
 }

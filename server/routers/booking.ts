@@ -23,46 +23,75 @@ export const bookingRouter = router({
             if (!artistSettings) throw new TRPCError({ code: "NOT_FOUND", message: "Artist settings not found" });
 
             // 1. Parse Schedule
-            const workSchedule = BookingService.parseWorkSchedule(artistSettings.workSchedule);
-            if (workSchedule.length === 0) {
-                throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Work hours not set up" });
-            }
+        .query(async ({ input, ctx }) => {
+                const { conversationId, frequency, sittings, serviceDuration } = input;
+                try {
+                    console.log("[BookingRouter] Checking availability for:", { conversationId, frequency, sittings });
+                    const conversation = await ctx.prisma.conversation.findUnique({
+                        where: { id: conversationId },
+                        include: { artist: true },
+                    });
 
-            // 2. Validate Duration Constraints
-            const maxDailyMinutes = BookingService.getMaxDailyMinutes(workSchedule);
-            if (input.serviceDuration > maxDailyMinutes) {
-                throw new TRPCError({
-                    code: "PRECONDITION_FAILED",
-                    message: `Service duration (${input.serviceDuration} min) exceeds your longest work day (${maxDailyMinutes} min).`
-                });
-            }
+                    if (!conversation) {
+                        console.error("[BookingRouter] Conversation not found");
+                        throw new TRPCError({ code: "NOT_FOUND", message: "Conversation not found" });
+                    }
 
-            // 3. Fetch Existing Appointments
-            let searchStart = new Date(input.startDate);
-            const now = new Date();
-            if (searchStart < now) searchStart = now;
-            searchStart.setHours(0, 0, 0, 0);
+                    const artistSettings = await ctx.prisma.artistSettings.findUnique({
+                        where: { userId: conversation.artistId },
+                    });
 
-            const existingAppointments = await db.getAppointmentsForUser(
-                conversation.artistId,
-                "artist",
-                searchStart
-            );
+                    console.log("[BookingRouter] Artist Settings found:", !!artistSettings);
 
-            // 4. Calculate Dates
-            const dates = BookingService.calculateProjectDates({
-                serviceDuration: input.serviceDuration,
-                sittings: input.sittings,
-                frequency: input.frequency,
-                startDate: input.startDate,
-                workSchedule,
-                existingAppointments
-            });
+                    if (!artistSettings) {
+                        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Artist has not configured settings" });
+                    }
 
-            const totalCost = input.price * input.sittings;
+                    // Helper to parse work schedule safely
+                    const workSchedule = BookingService.parseWorkSchedule(artistSettings.workSchedule);
+                    console.log("[BookingRouter] Work Schedule parsed, days enabled:", workSchedule.filter(d => d.enabled).length);
 
-            return { dates, totalCost };
-        }),
+                    // 2. Validate Duration Constraints (moved from original position)
+                    const maxDailyMinutes = BookingService.getMaxDailyMinutes(workSchedule);
+                    if (serviceDuration > maxDailyMinutes) {
+                        throw new TRPCError({
+                            code: "PRECONDITION_FAILED",
+                            message: `Service duration (${serviceDuration} min) exceeds your longest work day (${maxDailyMinutes} min).`
+                        });
+                    }
+
+                    const existingAppointments = await ctx.prisma.appointment.findMany({
+                        where: {
+                            artistId: conversation.artistId,
+                            startTime: { gte: input.startDate },
+                        },
+                        select: { startTime: true, endTime: true },
+                    });
+
+                    console.log("[BookingRouter] Existing appointments count:", existingAppointments.length);
+
+                    const dates = BookingService.calculateProjectDates({
+                        serviceDuration,
+                        sittings,
+                        frequency,
+                        startDate: input.startDate,
+                        workSchedule,
+                        existingAppointments,
+                    });
+
+                    console.log("[BookingRouter] Calculation success, dates found:", dates.length);
+
+                    const totalCost = input.price * input.sittings;
+
+                    return {
+                        dates,
+                        totalCost,
+                    };
+                } catch (error) {
+                    console.error("[BookingRouter] Error in checkAvailability:", error);
+                    throw error;
+                }
+            }),
 
     // Migration of the bookProject mutation
     bookProject: artistProcedure
