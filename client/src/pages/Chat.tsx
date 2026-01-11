@@ -150,7 +150,7 @@ export default function Chat() {
       toast.error("Failed to create appointment: " + error.message);
     },
   });
-  
+
   const confirmDepositMutation = trpc.appointments.confirmDeposit.useMutation({
     onSuccess: (data) => {
       toast.success(`${data.count} appointment(s) confirmed!`);
@@ -226,7 +226,7 @@ export default function Chat() {
     const reader = new FileReader();
     reader.onload = async (e) => {
       const base64Data = e.target?.result as string;
-      
+
       uploadImageMutation.mutate({
         fileName: file.name,
         fileData: base64Data,
@@ -261,7 +261,7 @@ export default function Chat() {
     const bsb = artistSettings.bsb || "[BSB not set]";
     const account = artistSettings.accountNumber || "[Account not set]";
     const depositAmount = artistSettings.depositAmount || "[Amount not set]";
-    
+
     // Get client name from conversation
     const clientName = conversation.clientId; // This should be the client's full name
 
@@ -368,13 +368,12 @@ Once transfer is complete, please send a screenshot of remittance here in this m
         <button
           key={day}
           onClick={() => toggleDateSelection(date)}
-          className={`h-12 rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${
-            isSelected
+          className={`h-12 rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${isSelected
               ? "bg-primary text-primary-foreground"
               : isToday
-              ? "bg-accent text-accent-foreground border-2 border-primary"
-              : "hover:bg-accent"
-          }`}
+                ? "bg-accent text-accent-foreground border-2 border-primary"
+                : "hover:bg-accent"
+            }`}
         >
           {day}
         </button>
@@ -476,7 +475,7 @@ Once transfer is complete, please send a screenshot of remittance here in this m
       )}
 
       {/* Messages */}
-      <ScrollArea className="flex-1 px-4 py-4" ref={scrollRef}>
+      <ScrollArea className="flex-1 px-4 py-4 pb-[160px]" ref={scrollRef}>
         <div className="space-y-4">
           {messages && messages.length > 0 ? (
             messages.map((message) => {
@@ -484,18 +483,17 @@ Once transfer is complete, please send a screenshot of remittance here in this m
               const isAppointmentRequest = message.messageType === "appointment_request" && !isOwn;
               const isAppointmentConfirmed = message.messageType === "appointment_confirmed" && isOwn;
               const isImage = message.messageType === "image";
-              
+
               return (
                 <div
                   key={message.id}
                   className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[75%] rounded-2xl px-4 py-2 overflow-hidden ${
-                      isOwn
+                    className={`max-w-[75%] rounded-2xl px-4 py-2 overflow-hidden ${isOwn
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted"
-                    }`}
+                      }`}
                   >
                     {isImage ? (
                       <div className="space-y-2">
@@ -551,7 +549,7 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                           console.error('Failed to parse metadata:', e);
                         }
                       }
-                      
+
                       if (isAccepted) {
                         return (
                           <div className="mt-3 w-full px-3 py-2 bg-green-500/10 text-green-600 dark:text-green-400 rounded-lg text-sm font-medium text-center">
@@ -559,7 +557,7 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                           </div>
                         );
                       }
-                      
+
                       return (
                         <Button
                           size="sm"
@@ -569,7 +567,7 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                             const dateRegex = /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), (\w+ \d+, \d{4})/g;
                             const matches = Array.from(message.content.matchAll(dateRegex));
                             const dates = matches.map(match => match[0]);
-                            
+
                             if (dates.length > 0) {
                               // Parse service metadata if available
                               let serviceData: any = {};
@@ -580,7 +578,7 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                                   console.error('Failed to parse metadata:', e);
                                 }
                               }
-                              
+
                               setAvailableDates(dates);
                               setSelectedDatesForConfirm(dates); // Pre-select all dates
                               setCurrentMessageMetadata({ ...serviceData, messageId: message.id });
@@ -607,91 +605,94 @@ Once transfer is complete, please send a screenshot of remittance here in this m
         </div>
       </ScrollArea>
 
-      {/* Quick Actions + Book Now */}
-      {isArtist && quickActions && quickActions.length > 0 && (
-        <div className="px-4 py-2 border-t bg-background">
-          <div className="grid grid-cols-3 gap-2 mb-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs"
-              onClick={() => setShowBookingCalendar(true)}
-            >
-              <CalendarIcon className="w-4 h-4 mr-1" />
-              Book Now
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs"
-              onClick={handleSendBankDetails}
-            >
-              <CreditCard className="w-4 h-4 mr-1" />
-              Deposit
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              className="text-xs"
-              onClick={() => {
-                if (conversationId) {
-                  confirmDepositMutation.mutate({ conversationId });
-                }
-              }}
-            >
-              ✓ Confirm
-            </Button>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {quickActions.slice(0, 6).map((action) => (
+      {/* Fixed Bottom Input Area */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t">
+        {/* Quick Actions + Book Now */}
+        {isArtist && quickActions && quickActions.length > 0 && (
+          <div className="px-4 py-2 border-b bg-background">
+            <div className="grid grid-cols-3 gap-2 mb-2">
               <Button
-                key={action.id}
                 variant="outline"
                 size="sm"
                 className="text-xs"
-                onClick={() => handleQuickAction(action)}
+                onClick={() => setShowBookingCalendar(true)}
               >
-                {action.label}
+                <CalendarIcon className="w-4 h-4 mr-1" />
+                Book Now
               </Button>
-            ))}
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={handleSendBankDetails}
+              >
+                <CreditCard className="w-4 h-4 mr-1" />
+                Deposit
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                className="text-xs"
+                onClick={() => {
+                  if (conversationId) {
+                    confirmDepositMutation.mutate({ conversationId });
+                  }
+                }}
+              >
+                ✓ Confirm
+              </Button>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {quickActions.slice(0, 6).map((action) => (
+                <Button
+                  key={action.id}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => handleQuickAction(action)}
+                >
+                  {action.label}
+                </Button>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Message Input */}
-      <div className="px-4 py-3 border-t bg-background">
-        <div className="flex items-center gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            className="hidden"
-          />
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploadingImage}
-            title="Upload image"
-          >
-            <ImagePlus className="w-5 h-5" />
-          </Button>
-          <Input
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-            placeholder="Type a message..."
-            className="flex-1"
-            disabled={uploadingImage}
-          />
-          <Button
-            size="icon"
-            onClick={handleSendMessage}
-            disabled={!messageText.trim() || sendMessageMutation.isPending || uploadingImage}
-          >
-            <Send className="w-5 h-5" />
-          </Button>
+        {/* Message Input */}
+        <div className="px-4 py-3 bg-background pb-safe-bottom">
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingImage}
+              title="Upload image"
+            >
+              <ImagePlus className="w-5 h-5" />
+            </Button>
+            <Input
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+              placeholder="Type a message..."
+              className="flex-1"
+              disabled={uploadingImage}
+            />
+            <Button
+              size="icon"
+              onClick={handleSendMessage}
+              disabled={!messageText.trim() || sendMessageMutation.isPending || uploadingImage}
+            >
+              <Send className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -767,11 +768,10 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                   {availableServices.map((service) => (
                     <Card
                       key={service.id}
-                      className={`p-4 cursor-pointer transition-colors ${
-                        selectedService?.id === service.id
+                      className={`p-4 cursor-pointer transition-colors ${selectedService?.id === service.id
                           ? "border-primary bg-primary/5"
                           : "hover:border-primary/50"
-                      }`}
+                        }`}
                       onClick={() => setSelectedService(service)}
                     >
                       <div className="flex items-start justify-between">
@@ -975,14 +975,14 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                 onClick={async () => {
                   if (selectedDatesForConfirm.length > 0 && conversation) {
                     const serviceData = currentMessageMetadata || {};
-                    
+
                     // Create appointments for each selected date
                     selectedDatesForConfirm.forEach(dateStr => {
                       const appointmentDate = new Date(dateStr);
                       appointmentDate.setHours(9, 0, 0, 0);
                       const duration = serviceData.duration || 60;
                       const endTime = new Date(appointmentDate.getTime() + duration * 60 * 1000);
-                      
+
                       createAppointmentMutation.mutate({
                         conversationId,
                         artistId: conversation.artistId,
@@ -995,7 +995,7 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                         price: serviceData.price,
                       });
                     });
-                    
+
                     // Mark the original message as accepted
                     if (serviceData.messageId) {
                       try {
@@ -1005,7 +1005,7 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                           accepted: true,
                         };
                         delete updatedMetadata.messageId; // Remove messageId from stored metadata
-                        
+
                         await updateMessageMetadataMutation.mutateAsync({
                           messageId: serviceData.messageId,
                           metadata: JSON.stringify(updatedMetadata),
@@ -1014,26 +1014,26 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                         console.error('Failed to mark message as accepted:', error);
                       }
                     }
-                    
+
                     // Calculate total deposit
                     const depositPerAppointment = serviceData.depositAmount || 0;
                     const totalDeposit = depositPerAppointment * selectedDatesForConfirm.length;
-                    
+
                     // Build confirmation message with payment instructions
                     let confirmationMessage = `I've accepted the following dates:\n${selectedDatesForConfirm.join('\n')}`;
-                    
+
                     // Add payment instructions if deposit is configured
                     if (totalDeposit > 0 && serviceData.bsb && serviceData.accountNumber) {
                       confirmationMessage += `\n\n💰 Deposit Payment Required:\nTotal: $${totalDeposit} (${selectedDatesForConfirm.length} appointments × $${depositPerAppointment})\n\n📋 Bank Details:\nBSB: ${serviceData.bsb}\nAccount: ${serviceData.accountNumber}\nReference: ${user?.name || 'Your Name'}\n\nPlease use your name as the payment reference.`;
                     }
-                    
+
                     // Store bank details in metadata for copy button
                     const metadata = JSON.stringify({
                       bsb: serviceData.bsb,
                       accountNumber: serviceData.accountNumber,
                       totalDeposit,
                     });
-                    
+
                     // Send confirmation message
                     sendMessageMutation.mutate({
                       conversationId,
@@ -1041,7 +1041,7 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                       messageType: "appointment_confirmed",
                       metadata,
                     });
-                    
+
                     toast.success("Dates confirmed!");
                     setShowDateSelection(false);
                     setSelectedDatesForConfirm([]);
