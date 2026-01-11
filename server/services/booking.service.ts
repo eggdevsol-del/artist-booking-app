@@ -309,56 +309,8 @@ export function findNextAvailableSlotOptimized(
     existingAppointments: AppointmentInterval[],
     timeZone: string
 ): Date | null {
-    const MAX_SEARCH_DAYS = 365;
-    let currentDayIter = new Date(startDate);
-
-    for (let i = 0; i < MAX_SEARCH_DAYS; i++) {
-        const dayName = currentDayIter.toLocaleDateString("en-US", { weekday: "long", timeZone });
-        const schedule = workSchedule.find((d) => d.day && d.day.toLowerCase() === dayName.toLowerCase());
-
-        if (schedule && schedule.enabled) {
-            const startStr = schedule.start || schedule.startTime;
-            const endStr = schedule.end || schedule.endTime;
-
-            if (startStr && endStr) {
-                const s = parseTime(startStr);
-                const e = parseTime(endStr);
-
-                if (s && e) {
-                    // Find the UTC timestamp for "Start Time" on "currentDayIter" in "timeZone"
-                    // We construct a string "MM/DD/YYYY HH:mm:ss" in target timezone, then parse? No.
-
-                    // We need to find the specific UTC timestamp X such that X in TimeZone is s.hour:s.minute on Day D.
-
-                    // Helper: Create a date object, set UTC times to target times, then shift by offset?
-                    // Hard without offset.
-
-                    // "Inverse Date" method:
-                    // 1. Take currentDayIter (UTC).
-                    // 2. Format to parts in TZ.
-                    // 3. Construct ISO string relative to TZ.
-                    // 4. Create Date.
-                    // 5. This date is "Local". We need UTC.
-                    // This is too complex for this context potentially.
-
-                    // Iterate 30 mins is safer if we just jump to the *approximate* start of day.
-                    // 00:00 UTC might be 11am Local.
-
-                    // Let's rely on the previous logic but ensure "current" is correctly advanced.
-                    // We need to advance `current` to match the day.
-
-                    // Let's assume we can loop every 30 mins from `startDate` until we find a match.
-                    // If we skip periods where WorkDay is disabled, we save time.
-                }
-            }
-        }
-
-        // Move to next day (trying to keep it simple and robust)
-        currentDayIter.setDate(currentDayIter.getDate() + 1);
-    }
-
-    // Fallback to the purely iterative approach (slower but correct)
-    // We already implemented a check-logic above, let's merge it properly.
+    const endSearchLimit = new Date(startDate);
+    endSearchLimit.setFullYear(endSearchLimit.getFullYear() + 1);
 
     // Re-implementing the loop to be robust:
     let searchPointer = new Date(startDate);
@@ -369,8 +321,9 @@ export function findNextAvailableSlotOptimized(
     searchPointer.setSeconds(0);
     searchPointer.setMilliseconds(0);
 
-    const endSearchLimit = new Date(startDate);
-    endSearchLimit.setFullYear(endSearchLimit.getFullYear() + 1);
+    // Debug log
+    console.log(`[BookingService] Searching for slot from ${searchPointer.toISOString()} in TZ: ${timeZone}`);
+
 
     while (searchPointer < endSearchLimit) {
         // 1. Is this time within working hours?

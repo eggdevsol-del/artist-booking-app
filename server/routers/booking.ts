@@ -123,6 +123,30 @@ export const bookingRouter = router({
                 createdCount++;
             }
 
+            // Create Proposal Message
+            const firstAppt = input.appointments[0];
+            const datesSummary = input.appointments.map(a => a.startTime).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+            // Construct metadata for the message (JSON string)
+            // This structure should match what ProjectProposalMessage expects
+            const proposalMetadata = JSON.stringify({
+                serviceName: firstAppt.serviceName,
+                totalCost: input.appointments.reduce((sum, a) => sum + a.price, 0),
+                sittings: input.appointments.length,
+                dates: datesSummary,
+                status: 'pending'
+            });
+
+            await db.createMessage({
+                conversationId: input.conversationId,
+                senderId: conversation.artistId,
+                content: "Project Proposal", // Fallback text
+                messageType: "appointment_request",
+                metadata: proposalMetadata,
+                readBy: null,
+                createdAt: new Date()
+            });
+
             return { success: true, count: createdCount };
         })
 });
