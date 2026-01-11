@@ -122,181 +122,83 @@ export function findNextAvailableSlot(
     existingAppointments: AppointmentInterval[],
     timeZone: string
 ): Date | null {
-    const MAX_SEARCH_DAYS = 365;
-    let current = new Date(startDate);
-    const now = new Date();
+    const endSearchLimit = new Date(startDate);
+    endSearchLimit.setFullYear(endSearchLimit.getFullYear() + 1);
 
-    // If start date is in the past, align to "now" + next 30 min block
-    if (current < now) {
-        current = new Date(now);
-        const remainder = current.getMinutes() % 30;
-        if (remainder !== 0) {
-            current.setMinutes(current.getMinutes() + (30 - remainder));
-        }
-        current.setSeconds(0);
-        current.setMilliseconds(0);
-    }
+    // Re-implementing the loop to be robust:
+    let searchPointer = new Date(startDate);
 
-    for (let dayOffset = 0; dayOffset < MAX_SEARCH_DAYS; dayOffset++) {
-        // Get day name in TARGET TIMEZONE
-        const dayName = current.toLocaleDateString("en-US", { weekday: "long", timeZone });
+    // Ensure 30 min alignment
+    const rem = searchPointer.getMinutes() % 30;
+    if (rem !== 0) searchPointer.setMinutes(searchPointer.getMinutes() + (30 - rem));
+    searchPointer.setSeconds(0);
+    searchPointer.setMilliseconds(0);
+
+    // Debug log
+    const failureLog: string[] = [];
+    console.log(`[BookingService] Searching for slot from ${searchPointer.toISOString()} in TZ: ${timeZone}`);
+
+    while (searchPointer < endSearchLimit) {
+        // 1. Is this time within working hours?
+        const dayName = searchPointer.toLocaleDateString("en-US", { weekday: "long", timeZone });
         const schedule = workSchedule.find((d) => d.day && d.day.toLowerCase() === dayName.toLowerCase());
 
         if (schedule && schedule.enabled) {
-            const startStr = schedule.start || schedule.startTime;
-            const endStr = schedule.end || schedule.endTime;
+            const s = parseTime(schedule.start || schedule.startTime || "");
+            const e = parseTime(schedule.end || schedule.endTime || "");
 
-            if (startStr && endStr) {
-                const s = parseTime(startStr);
-                const e = parseTime(endStr);
+            if (s && e) {
+                // Get current time in TZ
+                const timeParts = Intl.DateTimeFormat('en-US', {
+                    timeZone,
+                    hour: 'numeric', minute: 'numeric',
+                    hour12: false
+                }).formatToParts(searchPointer);
 
-                if (s && e) {
-                    // We need to construct the start/end times in the TARGET timezone
-                    // and then coverting back to UTC timestamp for comparison.
+                const hourPart = timeParts.find(p => p.type === 'hour')?.value;
+                const minPart = timeParts.find(p => p.type === 'minute')?.value;
 
-                    // 1. Get the date string in target timezone (YYYY-MM-DD)
-                    // We stick to 'en-CA' for ISO format YYYY-MM-DD
-                    const dateInTz = current.toLocaleDateString("en-CA", { timeZone });
+                // Handle "24" hour issue if sometimes returned
+                let currentH = parseInt(hourPart || "0");
+                if (currentH === 24) currentH = 0;
+                const currentM = parseInt(minPart || "0");
 
-                    // 2. Construct ISO-like strings with time appended
-                    // We need to handle single digit hours/minutes
-                    const sHour = s.hour.toString().padStart(2, '0');
-                    const sMin = s.minute.toString().padStart(2, '0');
-                    const eHour = e.hour.toString().padStart(2, '0');
-                    const eMin = e.minute.toString().padStart(2, '0');
+                const currentTotal = currentH * 60 + currentM;
+                const startTotal = s.hour * 60 + s.minute;
+                const endTotal = e.hour * 60 + e.minute;
 
-                    // This creates a Date object that effectively represents that time in that timezone
-                    // BUT initializing new Date("YYYY-MM-DDTHH:mm:ss") parses effectively in Local or UTC depending on env.
-                    // Ideally we use a library, but here is a robust native way:
+                if (currentTotal >= startTotal && (currentTotal + durationMinutes) <= endTotal) {
+                    // Check appointments
+                    const potentialEnd = new Date(searchPointer.getTime() + durationMinutes * 60000);
+                    const hasCollision = existingAppointments.some((appt) => {
+                        const apptStart = new Date(appt.startTime);
+                        const apptEnd = new Date(appt.endTime);
+                        return searchPointer < apptEnd && potentialEnd > apptStart;
+                    });
 
-                    // We want: Timestamp for "YYYY-MM-DD HH:mm" in "timeZone".
-                    // Trick: Use Intl.DateTimeFormat to find offset or iterate. 
-                    // Alternate: construct string and rely on browser interpretation (risky on Node).
-
-                    // Better approach:
-                    // Find the timestamp where `toLocaleString(timeZone)` matches our target YYYY-MM-DD HH:mm:00.
-                    // Since we already have `current` near the day, let's find the start of that day in that timezone.
-
-                    // Rough approximation:
-                    // Take current UTC timestamp. 
-                    // Format to Parts in TimeZone.
-                    // Reconstruct.
-
-                    const formatToParts = (date: Date) => {
-                        return Intl.DateTimeFormat('en-US', {
-                            timeZone,
-                            year: 'numeric', month: 'numeric', day: 'numeric',
-                            hour: 'numeric', minute: 'numeric', second: 'numeric',
-                            hour12: false
-                        }).formatToParts(date);
-                    };
-
-                    // Create a date object for the target start time
-                    // We basically need to "shift" `current` so it aligns with `dateInTz` + `sHour:sMin`.
-
-                    // Simplest reliable method without libs:
-                    // Construct a string that is explicitly in the target timezone if possible? No.
-
-                    // Let's use the offset method.
-                    // 1. Get current offset of `current` in `timeZone`.
-                    // This is hard to get natively.
-
-                    // Fallback Method: "Wall Clock Shift"
-                    // Assume `current` is already somewhat close.
-                    // We iterate `current` until `toLocaleTimeString(timeZone)` matches expected start.
-                    // This is inefficient.
-
-                    // Let's try constructing a string effectively.
-                    // `new Date("2023-01-01T09:00:00+11:00")` works if we know the offset.
-                    // We don't know the offset easily.
-
-                    // OK, simpler logic:
-                    // Use `current` (UTC). 
-                    // Check if `current` (UTC) falls within the window defined by "9am Sydney".
-                    // How to know 9am Sydney in UTC?
-
-                    // Let's assume the server has `timeZone` in `Intl`.
-                    // We can find the midnight of the current day in that timezone.
-
-                    const getZonedTime = (d: Date) => new Date(d.toLocaleString("en-US", { timeZone }));
-                    // This yields a Date object where the internal UTC time is actually the Local time values.
-                    // e.g. 9am Sydney -> Date object with internal time 9am.
-                    // We can then create the "start date" using setHours on this shifted object.
-                    // Then shift it back.
-                    // Shift Back = subtract the difference.
-
-                    // This "Shifted Date" pattern is common when no lib is available.
-
-                    // 1. Get "Local" representation
-                    const localParts = Intl.DateTimeFormat('en-US', {
-                        timeZone,
-                        year: 'numeric', month: '2-digit', day: '2-digit',
-                        hour: '2-digit', minute: '2-digit', second: '2-digit',
-                        hour12: false
-                    }).format(current); // "01/11/2026, 22:46:00"
-
-                    // This parsing is fragile.
-
-                    // Let's trust that we can just check collisions in the loop.
-                    // We don't strictly need exact start/end bounds unless we are starting the search.
-                    // But we DO need to return a Date that corresponds to the slot.
-
-                    // Let's stick with the simplest reliable heuristic:
-                    // Use the `current` iterator (which moves by 30 mins).
-                    // For each `current`:
-                    // 1. Check if `current` matches the day and time window in the target `timeZone`.
-
-                    const currentInTz = new Date(current.toLocaleString("en-US", { timeZone }));
-                    // Warning: toLocaleString returns a string. new Date(string) uses local parser.
-                    // To avoid parser issues, we explicitly parse the string.
-                    // "1/11/2026, 10:46:00 PM"
-
-                    // Better verify enabled day match again with `timeZone`.
-                    // We did that at top of loop. `dayName` is correct.
-
-                    // Check if currentInTz time is >= start and <= end - duration
-                    const currentHour = parseInt(current.toLocaleTimeString("en-US", { timeZone, hour: 'numeric', hour12: false }));
-                    const currentMin = parseInt(current.toLocaleTimeString("en-US", { timeZone, minute: 'numeric' }));
-                    const currentTotalMins = currentHour * 60 + currentMin;
-
-                    const startTotalMins = s.hour * 60 + s.minute;
-                    const endTotalMins = e.hour * 60 + e.minute;
-
-                    // Check if we are within the working hours OF THAT DAY
-                    if (currentTotalMins >= startTotalMins && (currentTotalMins + durationMinutes) <= endTotalMins) {
-                        // Valid time window! 
-                        // Check collision.
-                        const potentialEnd = new Date(current.getTime() + durationMinutes * 60000);
-
-                        const hasCollision = existingAppointments.some((appt) => {
-                            const apptStart = new Date(appt.startTime);
-                            const apptEnd = new Date(appt.endTime);
-                            return current < apptEnd && potentialEnd > apptStart;
-                        });
-
-                        if (!hasCollision) {
-                            return new Date(current);
-                        }
+                    if (!hasCollision) {
+                        return new Date(searchPointer);
+                    } else {
+                        if (failureLog.length < 5) failureLog.push(`${dayName} ${currentH}:${currentM} Collision`);
+                    }
+                } else {
+                    // Only log if inside the "day" but outside hours
+                    if (currentTotal > startTotal - 60 && currentTotal < endTotal + 60 && failureLog.length < 5) {
+                        failureLog.push(`${dayName} ${currentH}:${currentM} Outside (${startTotal}-${endTotal} vs ${currentTotal}+${durationMinutes})`);
                     }
                 }
+            } else {
+                if (failureLog.length < 1) failureLog.push(`${dayName} ParseFail`);
             }
         }
 
-        // Try next 30 min block
-        current.setTime(current.getTime() + 30 * 60000);
-
-        // Safety break if we go way too far
-        if (dayOffset > MAX_SEARCH_DAYS * 48) break; // Should not trigger with dayOffset loop but we are hijacking it
+        // Advance 30 mins
+        searchPointer.setTime(searchPointer.getTime() + 30 * 60000);
     }
 
-    // We changed the loop structure to iterate minutes, but the outer loop iterates days?
-    // The original code reset to midnight at end of day loop.
-    // We should keep the outer loop structure but adapt the inner check.
-
-    // Actually, iterating 30 mins for a full year is expensive (17k iterations).
-    // Better to finding the day, constructing the start time, and iterating within the day.
-
-    return null;
+    // Throw detailed error
+    const debugMsg = failureLog.join('\n');
+    throw new Error(`SLOT_SEARCH_FAILED:::${debugMsg}`);
 }
 
 /**
@@ -398,18 +300,31 @@ export function calculateProjectDates(input: ProjectAvailabilityInput): Date[] {
     const tempAppointments = [...input.existingAppointments];
 
     for (let i = 0; i < input.sittings; i++) {
-        const slot = findNextAvailableSlot(
-            currentDateSearch,
-            input.serviceDuration,
-            input.workSchedule,
-            tempAppointments,
-            input.timeZone
-        );
+        let slot: Date | null = null;
+        try {
+            slot = findNextAvailableSlot(
+                currentDateSearch,
+                input.serviceDuration,
+                input.workSchedule,
+                tempAppointments,
+                input.timeZone
+            );
+        } catch (e: any) {
+            if (e.message && e.message.startsWith('SLOT_SEARCH_FAILED:::')) {
+                const debugLog = e.message.split(':::')[1];
+                throw new TRPCError({
+                    code: "PRECONDITION_FAILED",
+                    message: `Could not find slot for sitting ${i + 1}.\nFailures (First 5 Attempts):\n${debugLog}\nDebug Info:\nTZ: ${input.timeZone}\nStart: ${currentDateSearch.toISOString()}`,
+                });
+            }
+            throw e; // Rethrow other errors
+        }
 
         if (!slot) {
+            // This fallback should rarely be hit now
             throw new TRPCError({
                 code: "PRECONDITION_FAILED",
-                message: `Could not find available slot for sitting ${i + 1} within the next year.\nDebug Info:\nTZ: ${input.timeZone}\nSchedule Days: ${input.workSchedule.length}\nEnabled: ${input.workSchedule.filter(d => d.enabled).map(d => d.day).join(',')}\nStart: ${currentDateSearch.toISOString()}`,
+                message: `Could not find available slot for sitting ${i + 1} within the next year.`,
             });
         }
 
