@@ -175,7 +175,17 @@ export const appointmentsRouter = router({
 
             let workSchedule: any[] = [];
             try {
-                workSchedule = JSON.parse(artistSettings.workSchedule);
+                const parsedSchedule = JSON.parse(artistSettings.workSchedule);
+                // Check if it's an object (new format) or array (old format if any)
+                if (parsedSchedule && typeof parsedSchedule === 'object' && !Array.isArray(parsedSchedule)) {
+                    // Convert object { monday: {...} } to array [ { day: 'Monday', ... } ]
+                    workSchedule = Object.entries(parsedSchedule).map(([key, value]: [string, any]) => ({
+                        day: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize: monday -> Monday
+                        ...value
+                    }));
+                } else if (Array.isArray(parsedSchedule)) {
+                    workSchedule = parsedSchedule;
+                }
             } catch (e) {
                 console.error("Failed to parse work schedule");
                 throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Invalid work schedule format" });
@@ -188,8 +198,17 @@ export const appointmentsRouter = router({
             // Validation: Check if service fits in ANY work day
             const maxDailyMinutes = workSchedule.reduce((max, day) => {
                 if (!day.enabled) return max;
-                const [startH, startM] = day.startTime.split(":").map(Number);
-                const [endH, endM] = day.endTime.split(":").map(Number);
+                if (!day.start && !day.startTime) return max; // handle potential missing keys if format varies
+
+                // Handle different key names. The verified format uses 'start' and 'end', 
+                // but the previous code used 'startTime' and 'endTime'.
+                const start = day.start || day.startTime;
+                const end = day.end || day.endTime;
+
+                if (!start || !end) return max;
+
+                const [startH, startM] = start.split(":").map(Number);
+                const [endH, endM] = end.split(":").map(Number);
                 const minutes = (endH * 60 + endM) - (startH * 60 + startM);
                 return Math.max(max, minutes);
             }, 0);
@@ -326,41 +345,46 @@ function findNextAvailableSlot(
         const schedule = workSchedule.find((d: any) => d.day === dayName);
 
         if (schedule && schedule.enabled) {
-            // Parse work hours
-            const [startHour, startMinute] = schedule.startTime.split(":").map(Number);
-            const [endHour, endMinute] = schedule.endTime.split(":").map(Number);
+            // Parse work hours - handle both naming conventions
+            const startStr = schedule.start || schedule.startTime;
+            const endStr = schedule.end || schedule.endTime;
 
-            const dayStart = new Date(current);
-            dayStart.setHours(startHour, startMinute, 0, 0);
+            if (startStr && endStr) {
+                const [startHour, startMinute] = startStr.split(":").map(Number);
+                const [endHour, endMinute] = endStr.split(":").map(Number);
 
-            const dayEnd = new Date(current);
-            dayEnd.setHours(endHour, endMinute, 0, 0);
+                const dayStart = new Date(current);
+                dayStart.setHours(startHour, startMinute, 0, 0);
 
-            // If current time is before work start, jump to start
-            if (current < dayStart) {
-                current = new Date(dayStart);
-            }
+                const dayEnd = new Date(current);
+                dayEnd.setHours(endHour, endMinute, 0, 0);
 
-            // Iterate through slots in 30 min increments
-            while (current.getTime() + durationMinutes * 60000 <= dayEnd.getTime()) {
-                const potentialEnd = new Date(current.getTime() + durationMinutes * 60000);
-
-                // Check collision
-                const hasCollision = existingAppointments.some((appt) => {
-                    const apptStart = new Date(appt.startTime);
-                    const apptEnd = new Date(appt.endTime);
-                    // Check overlap
-                    return (
-                        (current < apptEnd && potentialEnd > apptStart)
-                    );
-                });
-
-                if (!hasCollision) {
-                    return new Date(current);
+                // If current time is before work start, jump to start
+                if (current < dayStart) {
+                    current = new Date(dayStart);
                 }
 
-                // Increment by 30 mins
-                current.setTime(current.getTime() + 30 * 60000);
+                // Iterate through slots in 30 min increments
+                while (current.getTime() + durationMinutes * 60000 <= dayEnd.getTime()) {
+                    const potentialEnd = new Date(current.getTime() + durationMinutes * 60000);
+
+                    // Check collision
+                    const hasCollision = existingAppointments.some((appt) => {
+                        const apptStart = new Date(appt.startTime);
+                        const apptEnd = new Date(appt.endTime);
+                        // Check overlap
+                        return (
+                            (current < apptEnd && potentialEnd > apptStart)
+                        );
+                    });
+
+                    if (!hasCollision) {
+                        return new Date(current);
+                    }
+
+                    // Increment by 30 mins
+                    current.setTime(current.getTime() + 30 * 60000);
+                }
             }
         }
 
