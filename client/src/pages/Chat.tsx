@@ -664,146 +664,16 @@ export default function Chat() {
       </div>
 
       {/* Book Project Wizard */}
-      <Dialog open={showProjectWizard} onOpenChange={setShowProjectWizard}>
-        <DialogContent className="max-w-md h-[80vh] flex flex-col p-0">
-          <DialogHeader className="px-6 py-4 border-b">
-            <DialogTitle>
-              {wizardStep === 'service' && "Select Service"}
-              {wizardStep === 'frequency' && "Select Frequency"}
-              {wizardStep === 'review' && "Review Dates"}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="flex-1 overflow-y-auto px-6 py-4">
-            {/* Step 1: Service */}
-            {wizardStep === 'service' && (
-              <div className="space-y-4">
-                {availableServices.length === 0 ? (
-                  <p className="text-muted-foreground text-center">No availble services.</p>
-                ) : (
-                  availableServices.map(service => (
-                    <Card
-                      key={service.id}
-                      className={`p-4 cursor-pointer hover:border-primary ${selectedService?.id === service.id ? 'border-primary bg-primary/5' : ''}`}
-                      onClick={() => setSelectedService(service)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-semibold">{service.name}</h3>
-                          <p className="text-sm text-muted-foreground">{service.sittings || 1} sitting{(service.sittings || 1) > 1 ? 's' : ''}</p>
-                        </div>
-                        <p className="font-semibold">${service.price} / sitting</p>
-                      </div>
-                    </Card>
-                  ))
-                )}
-              </div>
-            )}
-
-            {/* Step 2: Frequency */}
-            {wizardStep === 'frequency' && (
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <Label>Frequency</Label>
-                  <RadioGroup value={projectFrequency} onValueChange={(v: any) => setProjectFrequency(v)}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="consecutive" id="r1" />
-                      <Label htmlFor="r1">Consecutive Days</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="weekly" id="r2" />
-                      <Label htmlFor="r2">Weekly</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="biweekly" id="r3" />
-                      <Label htmlFor="r3">Bi-Weekly</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="monthly" id="r4" />
-                      <Label htmlFor="r4">Monthly</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                <div className="p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground flex items-center">
-                  <CalendarIcon className="w-4 h-4 mr-2" />
-                  <span>The system will automatically find the earliest available slots starting from today.</span>
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Review */}
-            {wizardStep === 'review' && (
-              <div className="space-y-4">
-                {loadingAvailability ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  </div>
-                ) : projectAvailability ? (
-                  <div className="space-y-2">
-                    <p className="font-medium">Calculated Dates:</p>
-                    {projectAvailability.dates.map((date: string, i: number) => (
-                      <div key={i} className="p-3 bg-muted rounded-md flex justify-between items-center">
-                        <span>Sitting {i + 1}</span>
-                        <span className="font-mono">{format(new Date(date), 'PP')}</span>
-                      </div>
-                    ))}
-                    <div className="pt-2 mt-2 border-t flex justify-between items-center font-bold">
-                      <span>Total Project Cost</span>
-                      <span>${projectAvailability.totalCost}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
-                    <p className="text-destructive font-semibold text-sm">Failed to calculate dates</p>
-                    <div className="text-xs font-mono mt-2 p-2 bg-black/10 rounded">
-                      <p>Status: {projectAvailability ? 'Has Data' : 'No Data'}</p>
-                      <p>Loading: {loadingAvailability ? 'Yes' : 'No'}</p>
-                      <p>Error: {JSON.stringify(availabilityError, Object.getOwnPropertyNames(availabilityError || {}), 2)}</p>
-                      <p>Service: {selectedService ? selectedService.name : 'NULL'}</p>
-                      <p>Step: {wizardStep}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <DialogFooter className="px-6 py-4 border-t flex justify-between items-center">
-            {wizardStep !== 'service' && (
-              <Button variant="outline" onClick={() => setWizardStep(prev => prev === 'review' ? 'frequency' : 'service')}>
-                Back
-              </Button>
-            )}
-
-            {wizardStep === 'service' && (
-              <Button
-                disabled={!selectedService}
-                onClick={() => setWizardStep('frequency')}
-              >
-                Next
-              </Button>
-            )}
-
-            {wizardStep === 'frequency' && (
-              <Button
-                onClick={() => setWizardStep('review')}
-              >
-                Find Dates
-              </Button>
-            )}
-
-            {wizardStep === 'review' && (
-              <Button
-                disabled={!projectAvailability}
-                onClick={handleSendProjectDates}
-              >
-                Send Dates
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <BookingWizard
+        isOpen={showProjectWizard}
+        onClose={() => setShowProjectWizard(false)}
+        conversationId={conversationId}
+        artistServices={artistServices}
+        onBookingSuccess={() => {
+          setShowProjectWizard(false);
+          // Optional: trigger a refresh or toast
+        }}
+      />
 
       {/* Client Confirm Dialog */}
       <Dialog open={showClientConfirmDialog} onOpenChange={setShowClientConfirmDialog}>

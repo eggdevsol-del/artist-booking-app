@@ -10,17 +10,20 @@ import { policiesRouter } from "./policies";
 import { quickActionsRouter } from "./quickActions";
 import { systemRouter } from "./system";
 
+import { bookingRouter } from "./booking";
+
 export const appRouter = router({
-    system: systemRouter,
     auth: authRouter,
+    system: systemRouter,
     artistSettings: artistSettingsRouter,
     conversations: conversationsRouter,
     messages: messagesRouter,
     appointments: appointmentsRouter,
-    quickActions: quickActionsRouter,
-    notificationTemplates: notificationTemplatesRouter,
-    policies: policiesRouter,
+    booking: bookingRouter,
+    notifications: notificationTemplatesRouter,
     consultations: consultationsRouter,
+    policies: policiesRouter,
+    quickActions: quickActionsRouter,
 });
 
 export type AppRouter = typeof appRouter;
