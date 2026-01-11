@@ -15,25 +15,20 @@ export const bookingRouter = router({
             frequency: z.enum(["consecutive", "weekly", "biweekly", "monthly"]),
             startDate: z.date(),
         }))
-        .query(async ({ input, ctx }) => {
+        .query(async ({ input }) => {
             const { conversationId, frequency, sittings, serviceDuration } = input;
 
             try {
                 console.log("[BookingRouter] Checking availability for:", { conversationId, frequency, sittings });
 
-                const conversation = await ctx.prisma.conversation.findUnique({
-                    where: { id: conversationId },
-                    include: { artist: true },
-                });
+                const conversation = await db.getConversationById(conversationId);
 
                 if (!conversation) {
                     console.error("[BookingRouter] Conversation not found");
                     throw new TRPCError({ code: "NOT_FOUND", message: "Conversation not found" });
                 }
 
-                const artistSettings = await ctx.prisma.artistSettings.findUnique({
-                    where: { userId: conversation.artistId },
-                });
+                const artistSettings = await db.getArtistSettings(conversation.artistId);
 
                 console.log("[BookingRouter] Artist Settings found:", !!artistSettings);
 
@@ -55,13 +50,14 @@ export const bookingRouter = router({
                 }
 
                 // 3. Fetch Existing Appointments
-                const existingAppointments = await ctx.prisma.appointment.findMany({
-                    where: {
-                        artistId: conversation.artistId,
-                        startTime: { gte: input.startDate },
-                    },
-                    select: { startTime: true, endTime: true },
-                });
+                // Use getAppointmentsForUser which supports fromDate
+                const searchStart = new Date(input.startDate);
+
+                const existingAppointments = await db.getAppointmentsForUser(
+                    conversation.artistId,
+                    "artist",
+                    searchStart
+                );
 
                 console.log("[BookingRouter] Existing appointments count:", existingAppointments.length);
 
