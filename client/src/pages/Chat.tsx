@@ -692,7 +692,7 @@ export default function Chat() {
                           <h3 className="font-semibold">{service.name}</h3>
                           <p className="text-sm text-muted-foreground">{service.sittings || 1} sitting{(service.sittings || 1) > 1 ? 's' : ''}</p>
                         </div>
-                        <p className="font-semibold">${service.price}</p>
+                        <p className="font-semibold">${service.price} / sitting</p>
                       </div>
                     </Card>
                   ))
@@ -748,6 +748,10 @@ export default function Chat() {
                         <span className="font-mono">{format(new Date(date), 'PP')}</span>
                       </div>
                     ))}
+                    <div className="pt-2 mt-2 border-t flex justify-between items-center font-bold">
+                      <span>Total Project Cost</span>
+                      <span>${projectAvailability.totalCost}</span>
+                    </div>
                   </div>
                 ) : (
                   <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
