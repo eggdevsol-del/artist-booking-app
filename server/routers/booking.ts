@@ -14,6 +14,7 @@ export const bookingRouter = router({
             price: z.number(),
             frequency: z.enum(["consecutive", "weekly", "biweekly", "monthly"]),
             startDate: z.date(),
+            timeZone: z.string(),
         }))
         .query(async ({ input }) => {
             const { conversationId, frequency, sittings, serviceDuration } = input;
@@ -69,6 +70,7 @@ export const bookingRouter = router({
                     startDate: input.startDate,
                     workSchedule,
                     existingAppointments,
+                    timeZone: input.timeZone,
                 });
 
                 console.log("[BookingRouter] Calculation success, dates found:", dates.length);

@@ -41,6 +41,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
         price: Number(selectedService?.price) || 0,
         frequency,
         startDate,
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     }, {
         enabled: isOpen && step === 'review' && !!selectedService,
         retry: false,
