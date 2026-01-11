@@ -68,12 +68,15 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
         const message = `I have found the following dates for your ${selectedService.name} project:\n\n${datesList}\n\nThis project consists of ${selectedService.sittings || 1} sittings.\nFrequency: ${frequency}\nPrice per sitting: $${selectedService.price}\n\nPlease confirm these dates.`;
 
+        const totalCost = Number(selectedService.price) * (selectedService.sittings || 1);
+
         const metadata = JSON.stringify({
             type: "project_proposal",
             serviceName: selectedService.name,
             serviceDuration: selectedService.duration,
             sittings: selectedService.sittings || 1,
             price: Number(selectedService.price),
+            totalCost: totalCost,
             frequency: frequency,
             dates: availability.dates, // Use 'dates' consistently
             proposedDates: availability.dates, // Keep for backward compat
