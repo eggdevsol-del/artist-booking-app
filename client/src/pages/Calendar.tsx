@@ -8,13 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import {
-  Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
-  MessageCircle,
   Plus,
-  Settings,
 } from "lucide-react";
+import BottomNav from "@/components/BottomNav";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -69,7 +67,7 @@ export default function Calendar() {
     id: conv.clientId,
     name: conv.clientName,
     email: conv.otherUser?.email,
-  })).filter((client: any, index: number, self: any[]) => 
+  })).filter((client: any, index: number, self: any[]) =>
     index === self.findIndex((c: any) => c.id === client.id)
   ) || [];
 
@@ -266,7 +264,7 @@ export default function Calendar() {
   const isArtist = user?.role === "artist" || user?.role === "admin";
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background pb-20">
       {/* Header */}
       <header className="mobile-header px-4 py-4">
         <div className="flex items-center justify-between">
@@ -337,9 +335,8 @@ export default function Calendar() {
               return (
                 <Card
                   key={day.toISOString()}
-                  className={`p-4 min-h-[120px] cursor-pointer hover:bg-accent/5 transition-colors ${
-                    isToday(day) ? "border-primary border-2" : ""
-                  }`}
+                  className={`p-4 min-h-[120px] cursor-pointer hover:bg-accent/5 transition-colors ${isToday(day) ? "border-primary border-2" : ""
+                    }`}
                   onClick={() => handleDateClick(day)}
                 >
                   <div className="flex items-center justify-between mb-3">
@@ -425,16 +422,14 @@ export default function Calendar() {
               return (
                 <Card
                   key={index}
-                  className={`aspect-square p-2 cursor-pointer hover:bg-accent/5 transition-colors ${
-                    isToday(day) ? "border-primary border-2" : ""
-                  } ${!isCurrentMonth(day) ? "opacity-40" : ""}`}
+                  className={`aspect-square p-2 cursor-pointer hover:bg-accent/5 transition-colors ${isToday(day) ? "border-primary border-2" : ""
+                    } ${!isCurrentMonth(day) ? "opacity-40" : ""}`}
                   onClick={() => handleDateClick(day)}
                 >
                   <div className="text-center">
                     <p
-                      className={`text-sm font-semibold ${
-                        isToday(day) ? "text-primary" : "text-foreground"
-                      }`}
+                      className={`text-sm font-semibold ${isToday(day) ? "text-primary" : "text-foreground"
+                        }`}
                     >
                       {day.getDate()}
                     </p>
@@ -601,11 +596,11 @@ export default function Calendar() {
               <div>
                 <Label className="text-muted-foreground">Date & Time</Label>
                 <p className="font-medium">
-                  {new Date(selectedAppointment.startTime).toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                  {new Date(selectedAppointment.startTime).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
                   })}
                 </p>
                 <p className="text-sm text-muted-foreground">
@@ -663,28 +658,7 @@ export default function Calendar() {
       </Dialog>
 
       {/* Bottom Navigation */}
-      <nav className="mobile-nav grid grid-cols-3">
-        <button
-          onClick={() => setLocation("/conversations")}
-          className="flex flex-col items-center justify-center py-3 tap-target"
-        >
-          <MessageCircle className="w-6 h-6 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground mt-1">Messages</span>
-        </button>
-        <button className="flex flex-col items-center justify-center py-3 tap-target">
-          <CalendarIcon className="w-6 h-6 text-primary" />
-          <span className="text-xs text-primary font-semibold mt-1">
-            Calendar
-          </span>
-        </button>
-        <button
-          onClick={() => setLocation("/settings")}
-          className="flex flex-col items-center justify-center py-3 tap-target"
-        >
-          <Settings className="w-6 h-6 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground mt-1">Settings</span>
-        </button>
-      </nav>
+      <BottomNav />
     </div>
   );
 }
