@@ -620,6 +620,7 @@ export default function Chat() {
               <p className="text-muted-foreground">No messages yet</p>
             </div>
           )}
+          <div ref={bottomRef} />
         </div>
       </ScrollArea>
 

@@ -47,9 +47,11 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
         retry: false,
     });
 
-    // 2. Booking Mutation
-    const bookProjectMutation = trpc.booking.bookProject.useMutation({
+    // 2. Send Proposal Mutation (Send Message instead of Booking)
+    const utils = trpc.useUtils();
+    const sendMessageMutation = trpc.messages.send.useMutation({
         onSuccess: () => {
+            utils.messages.list.invalidate({ conversationId });
             setStep('success');
             onBookingSuccess();
         }
@@ -60,23 +62,29 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
     const handleConfirmBooking = () => {
         if (!availability?.dates || !selectedService) return;
 
-        const appointments = availability.dates.map((date: string | Date, index: number) => {
-            const startDate = new Date(date);
-            const endDate = new Date(startDate.getTime() + selectedService.duration * 60000);
-            return {
-                startTime: startDate,
-                endTime: endDate,
-                title: `${selectedService.name} (${index + 1}/${selectedService.sittings})`,
-                description: `Project Sitting ${index + 1}`,
-                serviceName: selectedService.name,
-                price: Number(selectedService.price),
-                depositAmount: 0 // Could calculated based on policy
-            };
+        const datesList = availability.dates
+            .map((date: string | Date) => format(new Date(date), 'EEEE, MMMM do yyyy, h:mm a'))
+            .join('\n');
+
+        const message = `I have found the following dates for your ${selectedService.name} project:\n\n${datesList}\n\nThis project consists of ${selectedService.sittings || 1} sittings.\nFrequency: ${frequency}\nPrice per sitting: $${selectedService.price}\n\nPlease confirm these dates.`;
+
+        const metadata = JSON.stringify({
+            type: "project_proposal",
+            serviceName: selectedService.name,
+            serviceDuration: selectedService.duration,
+            sittings: selectedService.sittings || 1,
+            price: Number(selectedService.price),
+            frequency: frequency,
+            dates: availability.dates, // Use 'dates' consistently
+            proposedDates: availability.dates, // Keep for backward compat
+            status: 'pending'
         });
 
-        bookProjectMutation.mutate({
+        sendMessageMutation.mutate({
             conversationId,
-            appointments
+            content: message,
+            messageType: "appointment_request",
+            metadata: metadata
         });
     };
 
@@ -271,10 +279,10 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
                         {step === 'review' && (
                             <Button
-                                disabled={!availability || bookProjectMutation.isPending}
+                                disabled={!availability || sendMessageMutation.isPending}
                                 onClick={handleConfirmBooking}
                             >
-                                {bookProjectMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                                {sendMessageMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                                 Send Proposal
                             </Button>
                         )}
