@@ -17,10 +17,11 @@ interface BookingWizardProps {
     onClose: () => void;
     conversationId: number;
     artistServices: any[]; // Ideally typed from router
+    artistSettings?: any;
     onBookingSuccess: () => void;
 }
 
-export function BookingWizard({ isOpen, onClose, conversationId, artistServices, onBookingSuccess }: BookingWizardProps) {
+export function BookingWizard({ isOpen, onClose, conversationId, artistServices, artistSettings, onBookingSuccess }: BookingWizardProps) {
     const [step, setStep] = useState<WizardStep>('service');
     const [selectedService, setSelectedService] = useState<any>(null);
     const [frequency, setFrequency] = useState<"consecutive" | "weekly" | "biweekly" | "monthly">("consecutive");
@@ -80,7 +81,11 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
             frequency: frequency,
             dates: availability.dates, // Use 'dates' consistently
             proposedDates: availability.dates, // Keep for backward compat
-            status: 'pending'
+            status: 'pending',
+            bsb: artistSettings?.bsb,
+            accountNumber: artistSettings?.accountNumber,
+            depositAmount: artistSettings?.depositAmount,
+            autoSendDeposit: artistSettings?.autoSendDepositInfo
         });
 
         sendMessageMutation.mutate({

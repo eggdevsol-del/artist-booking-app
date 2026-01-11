@@ -79,7 +79,7 @@ export function ProjectProposalMessage({
                 </div>
             </CardContent>
 
-            {/* Actions */}
+            {/* Client Actions */}
             {!isArtist && status === 'pending' && (
                 <CardFooter className="pt-0 grid grid-cols-2 gap-2">
                     <Button
@@ -107,6 +107,21 @@ export function ProjectProposalMessage({
                     <p className="text-[10px] text-center w-full text-muted-foreground italic">
                         Waiting for client response...
                     </p>
+                </CardFooter>
+            )}
+
+            {/* Deposit Info (Only if accepted and info exists) */}
+            {status === 'accepted' && (metadata as any).autoSendDeposit && (
+                <CardFooter className="pt-0 block">
+                    <div className="bg-muted/50 p-2 rounded-md border border-border/50">
+                        <h4 className="text-xs font-semibold mb-1">Deposit Information</h4>
+                        <div className="text-[10px] space-y-0.5 text-muted-foreground">
+                            {(metadata as any).depositAmount ? <p>Amount: ${(metadata as any).depositAmount}</p> : null}
+                            {(metadata as any).bsb ? <p>BSB: {(metadata as any).bsb}</p> : null}
+                            {(metadata as any).accountNumber ? <p>Acc: {(metadata as any).accountNumber}</p> : null}
+                            {!(metadata as any).bsb && !(metadata as any).accountNumber && <p>Please contact artist for details.</p>}
+                        </div>
+                    </div>
                 </CardFooter>
             )}
         </Card>

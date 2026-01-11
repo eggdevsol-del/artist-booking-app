@@ -338,25 +338,24 @@ export default function Chat() {
     toast.success("Dates confirmed!");
   };
 
+  const updateMetadataMutation = trpc.messages.updateMetadata.useMutation({
+    onSuccess: () => {
+      utils.messages.list.invalidate({ conversationId });
+    }
+  });
+
   const handleClientAcceptProposal = (message: any, metadata: any) => {
-    if (!metadata.proposedDates || !metadata.serviceName) return;
+    if (!metadata.proposedDates && !metadata.dates) return;
+    const bookingDates = metadata.dates || metadata.proposedDates || [];
 
-    // Use metadata.dates or metadata.proposedDates (check what Backend sends)
-    // BookingService.calculateProjectDates sends: dates: suggestedDates
-    // bookProject adds metadata: dates: suggestedDates
-    // BUT Chat.tsx handleSendProjectDates used: proposedDates: projectAvailability.dates
-    // We need to handle BOTH cases or standardise.
-    // The "BookingWizard" creates `appointment_request` with `metadata.dates`.
-
-    const dates = metadata.dates || metadata.proposedDates || [];
-    if (!Array.isArray(dates) || dates.length === 0) {
+    if (!Array.isArray(bookingDates) || bookingDates.length === 0) {
       toast.error("No dates found in proposal");
       return;
     }
 
-    const appointments = dates.map((dateStr: string) => {
+    const appointments = bookingDates.map((dateStr: string) => {
       const startTime = new Date(dateStr);
-      const duration = metadata.serviceDuration || 60; // Default 60 if missing
+      const duration = metadata.serviceDuration || 60;
 
       return {
         startTime,
@@ -364,7 +363,7 @@ export default function Chat() {
         title: metadata.serviceName,
         description: "Project Booking (Client Accepted)",
         serviceName: metadata.serviceName,
-        price: metadata.price || 0, // Should be per sitting
+        price: metadata.price || 0,
         depositAmount: 0
       };
     });
@@ -374,11 +373,45 @@ export default function Chat() {
       appointments
     }, {
       onSuccess: () => {
-        // Send a confirmation text automatically
+        // 1. Update message metadata to 'accepted'
+        const newMetadata = JSON.stringify({
+          ...metadata,
+          status: 'accepted'
+        });
+
+        updateMetadataMutation.mutate({
+          messageId: message.id,
+          metadata: newMetadata
+        });
+
+        // 2. Send acceptance message
         sendMessageMutation.mutate({
           conversationId,
           content: `I accept the project proposal for ${metadata.serviceName}.`,
           messageType: "text"
+        }, {
+          onSuccess: () => {
+            // 3. Auto-send deposit info if enabled
+            if (isArtist || !isArtist) { // logic runs for client, but we check ARTIST settings.
+              // Wait, the CLIENT is clicking accept. The Client app context has 'artistSettings' ??
+              // 'artistSettings' query in Chat.tsx fetches settings for the "current user" if artist?
+              // No, line 84: `trpc.artistSettings.get.useQuery(undefined, { enabled: !!user && (user.role === "artist" ...) })`
+              // If I am the CLIENT, I don't have the ARTIST's settings loaded in `artistSettings`.
+              // I need to fetch the OTHER user's settings or the CONVERSATION'S artist settings.
+              // Actually, `projectAvailability` uses `findProjectAvailability`.
+              // I should probably make the backend handle the auto-response or fetch it here.
+              // But strictly, `Chat.tsx` lines 84 loads settings only if `user.role === "artist"`.
+              // So as a client, `artistSettings` is undefined.
+              // I cannot check `autoSendDepositInfo` here easily as a client.
+              // HOWEVER, the user asked: "please add a page to adjust settings ... such as whether to automatically send deposit information upon acceptance".
+              // If the CLIENT accepts, the SYSTEM (or Client acting as proxy) should send the info?
+              // Or the Artist's "bot" sends it.
+              // Since we are client-side only, maybe I can't do it as the client.
+              // BUT, maybe I can rely on the trigger happening on the backend? No, backend just does booking.
+              // Let's look at `BookingWizard` - that was Artist side.
+              // `handleClientAcceptProposal` runs on CLIENT side.
+            }
+          }
         });
       }
     });

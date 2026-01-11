@@ -25,18 +25,18 @@ export const users = mysqlTable("users", {
     .notNull(),
   createdAt: timestamp("createdAt").defaultNow(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow(),
-  
+
   // Additional profile fields
   phone: varchar("phone", { length: 20 }),
   avatar: text("avatar"),
   bio: text("bio"),
-  
+
   // Social auth
   instagramId: varchar("instagramId", { length: 255 }),
   instagramUsername: varchar("instagramUsername", { length: 255 }),
   facebookId: varchar("facebookId", { length: 255 }),
   facebookName: varchar("facebookName", { length: 255 }),
-  
+
   // Onboarding
   hasCompletedOnboarding: boolean("hasCompletedOnboarding").default(false),
 });
@@ -52,20 +52,21 @@ export const artistSettings = mysqlTable("artistSettings", {
   userId: varchar("userId", { length: 64 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  
+
   // Business information
   businessName: text("businessName"),
   businessAddress: text("businessAddress"),
   bsb: varchar("bsb", { length: 10 }),
   accountNumber: varchar("accountNumber", { length: 20 }),
   depositAmount: int("depositAmount"),
-  
+  autoSendDepositInfo: boolean("autoSendDepositInfo").default(false),
+
   // Work schedule (JSON format: {monday: {enabled: true, start: "09:00", end: "17:00"}, ...})
   workSchedule: text("workSchedule").notNull(),
-  
+
   // Services offered (JSON array: [{name: "Consultation", duration: 60, price: 100}, ...])
   services: text("services").notNull(),
-  
+
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
 });
@@ -84,7 +85,7 @@ export const conversations = mysqlTable("conversations", {
   clientId: varchar("clientId", { length: 64 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  
+
   lastMessageAt: timestamp("lastMessageAt").defaultNow(),
   createdAt: timestamp("createdAt").defaultNow(),
 });
@@ -103,7 +104,7 @@ export const messages = mysqlTable("messages", {
   senderId: varchar("senderId", { length: 64 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  
+
   content: text("content").notNull(),
   messageType: mysqlEnum("messageType", [
     "text",
@@ -114,13 +115,13 @@ export const messages = mysqlTable("messages", {
   ])
     .default("text")
     .notNull(),
-  
+
   // For appointment-related messages (JSON format)
   metadata: text("metadata"),
-  
+
   // Track if message has been read by recipient
   readBy: text("readBy"), // JSON array of user IDs who have read this message
-  
+
   createdAt: timestamp("createdAt").defaultNow(),
 });
 
@@ -141,13 +142,13 @@ export const appointments = mysqlTable("appointments", {
   clientId: varchar("clientId", { length: 64 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  
+
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  
+
   startTime: datetime("startTime").notNull(),
   endTime: datetime("endTime").notNull(),
-  
+
   status: mysqlEnum("status", [
     "pending",
     "confirmed",
@@ -156,19 +157,19 @@ export const appointments = mysqlTable("appointments", {
   ])
     .default("pending")
     .notNull(),
-  
+
   // Service details
   serviceName: varchar("serviceName", { length: 255 }),
   price: int("price"),
   depositAmount: int("depositAmount"),
   depositPaid: boolean("depositPaid").default(false),
   paymentProof: text("paymentProof"), // URL to payment screenshot
-  
+
   // Notifications sent
   confirmationSent: boolean("confirmationSent").default(false),
   reminderSent: boolean("reminderSent").default(false),
   followUpSent: boolean("followUpSent").default(false),
-  
+
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
 });
@@ -184,7 +185,7 @@ export const quickActionButtons = mysqlTable("quickActionButtons", {
   userId: varchar("userId", { length: 64 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  
+
   label: varchar("label", { length: 100 }).notNull(),
   actionType: mysqlEnum("actionType", [
     "send_text",
@@ -192,13 +193,13 @@ export const quickActionButtons = mysqlTable("quickActionButtons", {
     "deposit_info",
     "custom",
   ]).notNull(),
-  
+
   // Action content (text to send, or JSON config for complex actions)
   content: text("content").notNull(),
-  
+
   position: int("position").notNull().default(0),
   enabled: boolean("enabled").default(true),
-  
+
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
 });
@@ -214,7 +215,7 @@ export const notificationTemplates = mysqlTable("notificationTemplates", {
   userId: varchar("userId", { length: 64 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  
+
   templateType: mysqlEnum("templateType", [
     "confirmation",
     "reminder",
@@ -225,15 +226,15 @@ export const notificationTemplates = mysqlTable("notificationTemplates", {
     "preparation",
     "custom",
   ]).notNull(),
-  
+
   title: varchar("title", { length: 255 }).notNull(),
   content: text("content").notNull(),
-  
+
   // Timing configuration (JSON: {sendBefore: 24, unit: "hours"})
   timing: text("timing"),
-  
+
   enabled: boolean("enabled").default(true),
-  
+
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
 });
@@ -250,10 +251,10 @@ export const pushSubscriptions = mysqlTable("pushSubscriptions", {
   userId: varchar("userId", { length: 64 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  
+
   endpoint: text("endpoint").notNull(),
   keys: text("keys").notNull(), // JSON: {p256dh, auth}
-  
+
   createdAt: timestamp("createdAt").defaultNow(),
 });
 
@@ -268,14 +269,14 @@ export const socialMessageSync = mysqlTable("socialMessageSync", {
   artistId: varchar("artistId", { length: 64 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  
+
   platform: mysqlEnum("platform", ["instagram", "facebook"]).notNull(),
   lastSyncedAt: timestamp("lastSyncedAt"),
   lastMessageId: varchar("lastMessageId", { length: 255 }),
   accessToken: text("accessToken"),
   refreshToken: text("refreshToken"),
   tokenExpiresAt: timestamp("tokenExpiresAt"),
-  
+
   enabled: boolean("enabled").default(true),
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
@@ -292,18 +293,18 @@ export const policies = mysqlTable("policies", {
   artistId: varchar("artistId", { length: 64 })
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  
+
   policyType: mysqlEnum("policyType", [
     "deposit",
     "design",
     "reschedule",
     "cancellation",
   ]).notNull(),
-  
+
   title: varchar("title", { length: 255 }).notNull(),
   content: text("content").notNull(),
   enabled: boolean("enabled").default(true),
-  
+
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
 });
@@ -324,11 +325,11 @@ export const consultations = mysqlTable("consultations", {
     .references(() => users.id, { onDelete: "cascade" }),
   conversationId: int("conversationId")
     .references(() => conversations.id, { onDelete: "cascade" }),
-  
+
   subject: varchar("subject", { length: 255 }).notNull(),
   description: text("description").notNull(),
   preferredDate: datetime("preferredDate"),
-  
+
   status: mysqlEnum("status", [
     "pending",
     "scheduled",
@@ -337,7 +338,7 @@ export const consultations = mysqlTable("consultations", {
   ])
     .default("pending")
     .notNull(),
-  
+
   createdAt: timestamp("createdAt").defaultNow(),
   updatedAt: timestamp("updatedAt").defaultNow(),
 });

@@ -50,6 +50,7 @@ export default function Settings() {
   const [bsb, setBsb] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
+  const [autoSendDepositInfo, setAutoSendDepositInfo] = useState(false);
 
   const updateProfileMutation = trpc.auth.updateProfile.useMutation({
     onSuccess: () => {
@@ -103,7 +104,9 @@ export default function Settings() {
       setBusinessAddress(artistSettings.businessAddress || "");
       setBsb(artistSettings.bsb || "");
       setAccountNumber(artistSettings.accountNumber || "");
+      setAccountNumber(artistSettings.accountNumber || "");
       setDepositAmount(artistSettings.depositAmount?.toString() || "");
+      setAutoSendDepositInfo(artistSettings.autoSendDepositInfo || false);
     }
   }, [artistSettings]);
 
@@ -513,6 +516,7 @@ export default function Settings() {
         bsb,
         accountNumber,
         depositAmount: depositAmount ? parseInt(depositAmount) : undefined,
+        autoSendDepositInfo: autoSendDepositInfo,
         workSchedule: artistSettings.workSchedule,
         services: artistSettings.services,
       });
@@ -563,6 +567,23 @@ export default function Settings() {
                 <p className="text-xs text-muted-foreground">
                   Clients will receive a map link to this address on appointment day
                 </p>
+              </div>
+
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="font-semibold text-foreground">Usage Settings</h3>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="autoSendDeposit">Auto-send Deposit Info</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Automatically send deposit details when a client accepts a proposal
+                    </p>
+                  </div>
+                  <Switch
+                    id="autoSendDeposit"
+                    checked={autoSendDepositInfo}
+                    onCheckedChange={setAutoSendDepositInfo}
+                  />
+                </div>
               </div>
 
               <div className="space-y-4 pt-4 border-t">
