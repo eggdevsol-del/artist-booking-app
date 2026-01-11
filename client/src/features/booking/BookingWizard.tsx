@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { trpc } from "@/utils/trpc";
+import { trpc } from "@/lib/trpc";
 import { Loader2, Calendar, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
