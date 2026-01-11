@@ -23,6 +23,7 @@ export default function Chat() {
   const [, setLocation] = useLocation();
   const [messageText, setMessageText] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const [showClientInfo, setShowClientInfo] = useState(false);
   const [showBookingCalendar, setShowBookingCalendar] = useState(false);
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
