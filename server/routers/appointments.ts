@@ -188,6 +188,7 @@ export const appointmentsRouter = router({
             }
 
             if (!workSchedule || workSchedule.length === 0) {
+                console.log("Debug: Work schedule empty");
                 throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Work hours not set up" });
             }
 
@@ -211,7 +212,11 @@ export const appointmentsRouter = router({
                 return Math.max(max, minutes);
             }, 0);
 
+            console.log(`Debug: maxDailyMinutes=${maxDailyMinutes}, serviceDuration=${input.serviceDuration}`);
+            console.log("Debug: Work Schedule Sample:", JSON.stringify(workSchedule[0]));
+
             if (input.serviceDuration > maxDailyMinutes) {
+                console.log("Debug: Service duration exceeds maxDailyMinutes");
                 throw new TRPCError({
                     code: "PRECONDITION_FAILED",
                     message: `Service duration (${input.serviceDuration} min) exceeds your longest work day (${maxDailyMinutes} min).`

@@ -756,9 +756,9 @@ export default function Chat() {
                 ) : (
                   <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
                     <p className="text-destructive font-semibold text-sm">Failed to calculate dates</p>
-                    <p className="text-sm text-destructive mt-1 whitespace-pre-wrap">
-                      {availabilityError?.message || (availabilityError as any)?.shape?.message || "Please check your Work Hours settings to ensure the service fits within your schedule."}
-                    </p>
+                    <pre className="text-xs text-destructive mt-1 whitespace-pre-wrap overflow-auto">
+                      {JSON.stringify(availabilityError, null, 2)}
+                    </pre>
                   </div>
                 )}
               </div>
