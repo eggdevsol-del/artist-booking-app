@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { BookingWizard } from "@/features/booking/BookingWizard";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { ProjectProposalMessage } from "@/components/chat/ProjectProposalMessage";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export default function Chat() {
