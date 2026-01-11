@@ -409,7 +409,7 @@ export function calculateProjectDates(input: ProjectAvailabilityInput): Date[] {
         if (!slot) {
             throw new TRPCError({
                 code: "PRECONDITION_FAILED",
-                message: `Could not find available slot for sitting ${i + 1} within the next year.`,
+                message: `Could not find available slot for sitting ${i + 1} within the next year.\nDebug Info:\nTZ: ${input.timeZone}\nSchedule Days: ${input.workSchedule.length}\nEnabled: ${input.workSchedule.filter(d => d.enabled).map(d => d.day).join(',')}\nStart: ${currentDateSearch.toISOString()}`,
             });
         }
 
