@@ -5,8 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { trpc } from "@/lib/trpc";
-import { ChevronLeft, Clock, Plus, Save, Trash2 } from "lucide-react";
+import { ChevronLeft, Clock, Plus, Save, Trash2, Layers } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -62,13 +70,25 @@ export default function WorkHours() {
   });
   const [showAddService, setShowAddService] = useState(false);
 
+  // Project Service Builder State
+  const [showProjectBuilder, setShowProjectBuilder] = useState(false);
+  const [projectBaseServiceId, setProjectBaseServiceId] = useState<string>("");
+  const [projectSittings, setProjectSittings] = useState<number>(1);
+  const [newProjectService, setNewProjectService] = useState<Service>({
+    name: "",
+    duration: 0,
+    price: 0,
+    description: "",
+    sittings: 1,
+  });
+
   const { data: settings, refetch } = trpc.artistSettings.get.useQuery(undefined, {
     enabled: !!user && (user.role === "artist" || user.role === "admin"),
   });
 
   const updateSettingsMutation = trpc.artistSettings.upsert.useMutation({
     onSuccess: () => {
-      toast.success("Work hours saved successfully");
+      toast.success("Saved successfully");
       refetch();
     },
     onError: (error: any) => {
@@ -108,6 +128,21 @@ export default function WorkHours() {
       }
     }
   }, [settings]);
+
+  // Project Builder Logic
+  useEffect(() => {
+    if (projectBaseServiceId && projectSittings > 0) {
+      const baseService = services.find(s => s.id?.toString() === projectBaseServiceId);
+      if (baseService) {
+        setNewProjectService(prev => ({
+          ...prev,
+          duration: baseService.duration, // Duration is per sitting usually, but let's keep it as base duration
+          price: baseService.price * projectSittings,
+          sittings: projectSittings
+        }));
+      }
+    }
+  }, [projectBaseServiceId, projectSittings, services]);
 
   const handleSaveWorkHours = () => {
     updateSettingsMutation.mutate({
@@ -155,6 +190,32 @@ export default function WorkHours() {
     });
     setShowAddService(false);
     toast.success("Service added");
+  };
+
+  const handleAddProjectService = () => {
+    if (!newProjectService.name.trim()) {
+      toast.error("Project Service name is required");
+      return;
+    }
+    if (!projectBaseServiceId) {
+      toast.error("Base service is required");
+      return;
+    }
+
+    setServices([...services, { ...newProjectService, id: Date.now() }]);
+
+    // Reset
+    setNewProjectService({
+      name: "",
+      duration: 0,
+      price: 0,
+      description: "",
+      sittings: 1,
+    });
+    setProjectBaseServiceId("");
+    setProjectSittings(1);
+    setShowProjectBuilder(false);
+    toast.success("Project Service added");
   };
 
   const handleRemoveService = (id: number) => {
@@ -258,14 +319,25 @@ export default function WorkHours() {
                   Manage your services and pricing
                 </CardDescription>
               </div>
-              <Button
-                size="sm"
-                onClick={() => setShowAddService(true)}
-                className="tap-target"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowProjectBuilder(true)}
+                  className="tap-target"
+                >
+                  <Layers className="w-4 h-4 mr-2" />
+                  Project
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setShowAddService(true)}
+                  className="tap-target"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Service
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -385,9 +457,6 @@ export default function WorkHours() {
                         })
                       }
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      How many appointments are required for this service?
-                    </p>
                   </div>
 
                   <div className="flex gap-2">
@@ -420,6 +489,76 @@ export default function WorkHours() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Project Service Builder Dialog */}
+      <Dialog open={showProjectBuilder} onOpenChange={setShowProjectBuilder}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Project Service</DialogTitle>
+            <DialogDescription>Create a multi-sitting project package based on an existing service.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label>Service Name</Label>
+              <Input
+                placeholder="e.g., Full arm sleeve"
+                value={newProjectService.name}
+                onChange={(e) => setNewProjectService({ ...newProjectService, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Textarea
+                placeholder="Description of the project..."
+                rows={2}
+                value={newProjectService.description}
+                onChange={(e) => setNewProjectService({ ...newProjectService, description: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Base Service</Label>
+              <Select value={projectBaseServiceId} onValueChange={setProjectBaseServiceId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a service..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {services.map(service => (
+                    <SelectItem key={service.id} value={service.id?.toString() || ""}>
+                      {service.name} (${service.price} / {service.duration}m)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Sittings Required</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={projectSittings}
+                  onChange={(e) => setProjectSittings(parseInt(e.target.value) || 1)}
+                />
+              </div>
+              <div>
+                <Label>Total Price ($)</Label>
+                <Input
+                  type="number"
+                  value={newProjectService.price}
+                  onChange={(e) => setNewProjectService({ ...newProjectService, price: parseFloat(e.target.value) || 0 })}
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Auto-calculated: ${services.find(s => s.id?.toString() === projectBaseServiceId)?.price || 0} x {projectSittings}
+                </p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowProjectBuilder(false)}>Cancel</Button>
+            <Button onClick={handleAddProjectService}>Add Project Service</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
