@@ -151,9 +151,6 @@ export const appointmentsRouter = router({
             // Confirm all pending appointments
             await db.confirmAppointments(input.conversationId, input.paymentProof);
 
-            // TODO: Send push notification to client
-            // TODO: Schedule reminder notifications
-
             return { success: true, count: pendingAppointments.length };
         }),
 
@@ -176,11 +173,9 @@ export const appointmentsRouter = router({
             let workSchedule: any[] = [];
             try {
                 const parsedSchedule = JSON.parse(artistSettings.workSchedule);
-                // Check if it's an object (new format) or array (old format if any)
                 if (parsedSchedule && typeof parsedSchedule === 'object' && !Array.isArray(parsedSchedule)) {
-                    // Convert object { monday: {...} } to array [ { day: 'Monday', ... } ]
                     workSchedule = Object.entries(parsedSchedule).map(([key, value]: [string, any]) => ({
-                        day: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize: monday -> Monday
+                        day: key.charAt(0).toUpperCase() + key.slice(1),
                         ...value
                     }));
                 } else if (Array.isArray(parsedSchedule)) {
@@ -198,18 +193,20 @@ export const appointmentsRouter = router({
             // Validation: Check if service fits in ANY work day
             const maxDailyMinutes = workSchedule.reduce((max, day) => {
                 if (!day.enabled) return max;
-                if (!day.start && !day.startTime) return max; // handle potential missing keys if format varies
+                const startStr = day.start || day.startTime;
+                const endStr = day.end || day.endTime;
 
-                // Handle different key names. The verified format uses 'start' and 'end', 
-                // but the previous code used 'startTime' and 'endTime'.
-                const start = day.start || day.startTime;
-                const end = day.end || day.endTime;
+                const s = parseTime(startStr);
+                const e = parseTime(endStr);
 
-                if (!start || !end) return max;
+                if (!s || !e) return max;
 
-                const [startH, startM] = start.split(":").map(Number);
-                const [endH, endM] = end.split(":").map(Number);
-                const minutes = (endH * 60 + endM) - (startH * 60 + startM);
+                let startMins = s.hour * 60 + s.minute;
+                let endMins = e.hour * 60 + e.minute;
+
+                if (endMins < startMins) endMins += 24 * 60; // Handle overnight
+
+                const minutes = endMins - startMins;
                 return Math.max(max, minutes);
             }, 0);
 
@@ -220,11 +217,17 @@ export const appointmentsRouter = router({
                 });
             }
 
-            // Fetch existing appointments for the artist relative to the start date
+            // Fetch existing appointments for the artist relative to now to catch all future info
+            // Ensure we use a date that covers potential overlap with the start date
+            let searchStart = new Date(input.startDate);
+            const now = new Date();
+            if (searchStart < now) searchStart = now;
+            searchStart.setHours(0, 0, 0, 0);
+
             const existingAppointments = await db.getAppointmentsForUser(
                 conversation.artistId,
                 "artist",
-                input.startDate
+                searchStart
             );
 
             const suggestedDates: Date[] = [];
@@ -238,7 +241,7 @@ export const appointmentsRouter = router({
             }
 
             for (let i = 0; i < input.sittings; i++) {
-                // Find next available slot starting from currentDateSearch
+                // Find next available slot
                 const slot = findNextAvailableSlot(
                     currentDateSearch,
                     input.serviceDuration,
@@ -255,10 +258,14 @@ export const appointmentsRouter = router({
 
                 suggestedDates.push(slot);
 
+                // Add to existing appointments to prevent overlap with consecutive sittings
+                existingAppointments.push({
+                    startTime: new Date(slot),
+                    endTime: new Date(slot.getTime() + input.serviceDuration * 60000)
+                });
+
                 // Calculate next search date based on frequency
                 const nextDate = new Date(slot);
-                // Ensure we advance at least by the duration of the current appt + buffer, or simply the next day for consecutive
-
                 switch (input.frequency) {
                     case "consecutive":
                         nextDate.setDate(nextDate.getDate() + 1);
@@ -274,7 +281,6 @@ export const appointmentsRouter = router({
                         break;
                 }
 
-                // Reset to start of day for broader search on the next target day
                 nextDate.setHours(0, 0, 0, 0);
                 currentDateSearch = nextDate;
             }
@@ -321,6 +327,36 @@ export const appointmentsRouter = router({
         }),
 });
 
+// Helper to parse time strings like "14:30" or "02:30 PM"
+function parseTime(timeStr: string): { hour: number; minute: number } | null {
+    if (!timeStr) return null;
+    try {
+        const normalized = timeStr.trim().toUpperCase();
+        let hour = 0;
+        let minute = 0;
+
+        const isPM = normalized.includes("PM");
+        const isAM = normalized.includes("AM");
+
+        const cleanTime = normalized.replace("PM", "").replace("AM", "").trim();
+        const parts = cleanTime.split(":");
+
+        if (parts.length < 2) return null;
+
+        hour = parseInt(parts[0], 10);
+        minute = parseInt(parts[1], 10);
+
+        if (isNaN(hour) || isNaN(minute)) return null;
+
+        if (isPM && hour < 12) hour += 12;
+        if (isAM && hour === 12) hour = 0;
+
+        return { hour, minute };
+    } catch (e) {
+        return null; // Fail safe
+    }
+}
+
 // Helper function to find next available slot
 function findNextAvailableSlot(
     startDate: Date,
@@ -328,14 +364,16 @@ function findNextAvailableSlot(
     workSchedule: any[],
     existingAppointments: any[]
 ): Date | null {
-    const MAX_SEARCH_DAYS = 365; // Avoid infinite loops
+    const MAX_SEARCH_DAYS = 365;
     let current = new Date(startDate);
-
-    // Normalize to start of day if it's in the past (though input should be future)
     const now = new Date();
+
     if (current < now) {
         current = new Date(now);
-        current.setMinutes(Math.ceil(current.getMinutes() / 30) * 30); // Round up to next 30 min
+        const remainder = current.getMinutes() % 30;
+        if (remainder !== 0) {
+            current.setMinutes(current.getMinutes() + (30 - remainder));
+        }
         current.setSeconds(0);
         current.setMilliseconds(0);
     }
@@ -345,37 +383,30 @@ function findNextAvailableSlot(
         const schedule = workSchedule.find((d: any) => d.day === dayName);
 
         if (schedule && schedule.enabled) {
-            // Parse work hours - handle both naming conventions
             const startStr = schedule.start || schedule.startTime;
             const endStr = schedule.end || schedule.endTime;
 
-            if (startStr && endStr) {
-                const [startHour, startMinute] = startStr.split(":").map(Number);
-                const [endHour, endMinute] = endStr.split(":").map(Number);
+            const startParsed = parseTime(startStr);
+            const endParsed = parseTime(endStr);
 
+            if (startParsed && endParsed) {
                 const dayStart = new Date(current);
-                dayStart.setHours(startHour, startMinute, 0, 0);
+                dayStart.setHours(startParsed.hour, startParsed.minute, 0, 0);
 
                 const dayEnd = new Date(current);
-                dayEnd.setHours(endHour, endMinute, 0, 0);
+                dayEnd.setHours(endParsed.hour, endParsed.minute, 0, 0);
 
-                // If current time is before work start, jump to start
                 if (current < dayStart) {
-                    current = new Date(dayStart);
+                    current.setTime(dayStart.getTime());
                 }
 
-                // Iterate through slots in 30 min increments
                 while (current.getTime() + durationMinutes * 60000 <= dayEnd.getTime()) {
                     const potentialEnd = new Date(current.getTime() + durationMinutes * 60000);
 
-                    // Check collision
-                    const hasCollision = existingAppointments.some((appt) => {
+                    const hasCollision = existingAppointments.some((appt: any) => {
                         const apptStart = new Date(appt.startTime);
                         const apptEnd = new Date(appt.endTime);
-                        // Check overlap
-                        return (
-                            (current < apptEnd && potentialEnd > apptStart)
-                        );
+                        return current < apptEnd && potentialEnd > apptStart;
                     });
 
                     if (!hasCollision) {
@@ -388,7 +419,6 @@ function findNextAvailableSlot(
             }
         }
 
-        // Move to start of next day
         current.setDate(current.getDate() + 1);
         current.setHours(0, 0, 0, 0);
     }
