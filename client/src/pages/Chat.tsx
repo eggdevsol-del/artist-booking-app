@@ -9,7 +9,8 @@ import { ArrowLeft, Calendar as CalendarIcon, Send, User, Phone, Mail, Cake, Cre
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
+import { BookingWizard } from "@/features/booking/BookingWizard";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -668,7 +669,7 @@ export default function Chat() {
         isOpen={showProjectWizard}
         onClose={() => setShowProjectWizard(false)}
         conversationId={conversationId}
-        artistServices={artistServices}
+        artistServices={availableServices}
         onBookingSuccess={() => {
           setShowProjectWizard(false);
           // Optional: trigger a refresh or toast
