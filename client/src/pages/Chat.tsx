@@ -100,7 +100,7 @@ export default function Chat() {
       price: selectedService?.price ? Number(selectedService.price) : 0,
     },
     {
-      enabled: !!selectedService && !!projectStartDate && wizardStep === 'review',
+      enabled: !!selectedService && wizardStep === 'review',
       // Don't retry on failure so we show error immediately
       retry: false
     }
