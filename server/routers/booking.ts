@@ -127,6 +127,10 @@ export const bookingRouter = router({
             const firstAppt = input.appointments[0];
             const datesSummary = input.appointments.map(a => a.startTime).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
+            // Fetch policies
+            const policies = await db.getPolicies(conversation.artistId);
+            const enabledPolicies = policies.filter(p => p.enabled);
+
             // Construct metadata for the message (JSON string)
             // This structure should match what ProjectProposalMessage expects
             const proposalMetadata = JSON.stringify({
@@ -134,7 +138,8 @@ export const bookingRouter = router({
                 totalCost: input.appointments.reduce((sum, a) => sum + a.price, 0),
                 sittings: input.appointments.length,
                 dates: datesSummary,
-                status: 'pending'
+                status: 'pending',
+                policies: enabledPolicies
             });
 
             await db.createMessage({

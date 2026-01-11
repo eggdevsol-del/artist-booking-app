@@ -194,6 +194,7 @@ export default function Clients() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3 flex-1">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-lg">
                         {client.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -215,13 +216,13 @@ export default function Clients() {
                       </div>
                     </div>
                     <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:text-destructive h-8 w-8 -mr-2 -mt-2"
-                        onClick={() => handleDeleteClick({ id: client.id, name: client.name })}
-                        title="Delete all bookings"
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground hover:text-destructive h-8 w-8 -mr-2 -mt-2"
+                      onClick={() => handleDeleteClick({ id: client.id, name: client.name })}
+                      title="Delete all bookings"
                     >
-                        <Trash className="w-4 h-4" />
+                      <Trash className="w-4 h-4" />
                     </Button>
                   </div>
                 </CardHeader>
@@ -237,84 +238,104 @@ export default function Clients() {
                   </Button>
                 </CardContent>
               </Card>
-        ))}
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Add Client Dialog */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Client</DialogTitle>
+            <DialogDescription>
+              Create a new client profile and start a conversation
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                placeholder="John Doe"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                placeholder="john@example.com"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+                placeholder="+1 (555) 123-4567"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                onClick={handleAddClient}
+                disabled={createConversationMutation.isPending}
+                className="flex-1"
+              >
+                {createConversationMutation.isPending ? "Adding..." : "Add Client"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAddDialog(false);
+                  resetForm();
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!clientToDelete} onOpenChange={(open) => !open && setClientToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Bookings</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete all of this client's bookings? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button variant="outline" onClick={() => setClientToDelete(null)}>No</Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleteBookingsMutation.isPending}
+            >
+              {deleteBookingsMutation.isPending ? "Deleting..." : "Yes, Delete All"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
-  )
-}
-      </main >
-
-  {/* Add Client Dialog */ }
-  < Dialog open = { showAddDialog } onOpenChange = { setShowAddDialog } >
-    <DialogContent className="max-w-md">
-      <DialogHeader>
-        <DialogTitle>Add New Client</DialogTitle>
-        <DialogDescription>
-          Create a new client profile and start a conversation
-        </DialogDescription>
-      </DialogHeader>
-
-      <div className="space-y-4 py-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Full Name *</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) =>
-              setFormData({ ...formData, name: e.target.value })
-            }
-            placeholder="John Doe"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="email">Email *</Label>
-          <Input
-            id="email"
-            type="email"
-            value={formData.email}
-            onChange={(e) =>
-              setFormData({ ...formData, email: e.target.value })
-            }
-            placeholder="john@example.com"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="phone">Phone Number</Label>
-          <Input
-            id="phone"
-            type="tel"
-            value={formData.phone}
-            onChange={(e) =>
-              setFormData({ ...formData, phone: e.target.value })
-            }
-            placeholder="+1 (555) 123-4567"
-          />
-        </div>
-
-        <div className="flex gap-2">
-          <Button
-            onClick={handleAddClient}
-            disabled={createConversationMutation.isPending}
-            className="flex-1"
-          >
-            {createConversationMutation.isPending ? "Adding..." : "Add Client"}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setShowAddDialog(false);
-              resetForm();
-            }}
-            className="flex-1"
-          >
-            Cancel
-          </Button>
-        </div>
-      </div>
-    </DialogContent>
-      </Dialog >
-    </div >
   );
 }
-

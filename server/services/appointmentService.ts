@@ -163,3 +163,10 @@ export async function confirmAppointments(conversationId: number, paymentProof?:
             )
         );
 }
+export async function deleteAppointmentsForClient(clientId: string) {
+    const db = await getDb();
+    if (!db) return false;
+
+    await db.delete(appointments).where(eq(appointments.clientId, clientId));
+    return true;
+}
