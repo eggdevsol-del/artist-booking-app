@@ -6,9 +6,17 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { ChevronRight, Plus, Trash2, Pencil, Check, X } from "lucide-react";
+import { ChevronRight, Plus, Trash2, Pencil, Check, X, Layers } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface WorkHoursAndServicesProps {
   onBack: () => void;
@@ -35,6 +43,7 @@ interface Service {
   duration: number;
   price: number;
   description: string;
+  sittings?: number;
 }
 
 const defaultSchedule: WorkSchedule = {
@@ -54,7 +63,19 @@ export default function WorkHoursAndServices({ onBack }: WorkHoursAndServicesPro
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newService, setNewService] = useState<Service>({ name: "", duration: 60, price: 0, description: "" });
+  const [newService, setNewService] = useState<Service>({ name: "", duration: 60, price: 0, description: "", sittings: 1 });
+
+  // Project Service Builder State
+  const [showProjectBuilder, setShowProjectBuilder] = useState(false);
+  const [projectBaseServiceId, setProjectBaseServiceId] = useState<string>("");
+  const [projectSittings, setProjectSittings] = useState<number>(1);
+  const [newProjectService, setNewProjectService] = useState<Service>({
+    name: "",
+    duration: 0,
+    price: 0,
+    description: "",
+    sittings: 1,
+  });
 
   const { data: artistSettings } = trpc.artistSettings.get.useQuery(undefined, {
     enabled: !!user && (user.role === "artist" || user.role === "admin"),
@@ -97,6 +118,25 @@ export default function WorkHoursAndServices({ onBack }: WorkHoursAndServicesPro
     }
   }, [artistSettings]);
 
+  // Project Builder Logic
+  useEffect(() => {
+    if (projectBaseServiceId && projectSittings > 0) {
+      // Find base service by name since we don't have IDs here, or index? 
+      // The select value will be the index for simplicity
+      const baseServiceIndex = parseInt(projectBaseServiceId);
+      const baseService = services[baseServiceIndex];
+
+      if (baseService) {
+        setNewProjectService(prev => ({
+          ...prev,
+          duration: baseService.duration,
+          price: baseService.price * projectSittings,
+          sittings: projectSittings
+        }));
+      }
+    }
+  }, [projectBaseServiceId, projectSittings, services]);
+
   const handleDayToggle = (day: keyof WorkSchedule) => {
     setWorkSchedule(prev => ({
       ...prev,
@@ -122,13 +162,39 @@ export default function WorkHoursAndServices({ onBack }: WorkHoursAndServicesPro
       return;
     }
     setServices(prev => [...prev, newService]);
-    setNewService({ name: "", duration: 60, price: 0, description: "" });
+    setNewService({ name: "", duration: 60, price: 0, description: "", sittings: 1 });
     setShowAddForm(false);
     toast.success("Service added successfully");
   };
 
+  const handleAddProjectService = () => {
+    if (!newProjectService.name.trim()) {
+      toast.error("Project Service name is required");
+      return;
+    }
+    if (!projectBaseServiceId) {
+      toast.error("Base service is required");
+      return;
+    }
+
+    setServices(prev => [...prev, newProjectService]);
+
+    // Reset
+    setNewProjectService({
+      name: "",
+      duration: 0,
+      price: 0,
+      description: "",
+      sittings: 1,
+    });
+    setProjectBaseServiceId("");
+    setProjectSittings(1);
+    setShowProjectBuilder(false);
+    toast.success("Project Service added");
+  };
+
   const handleCancelAdd = () => {
-    setNewService({ name: "", duration: 60, price: 0, description: "" });
+    setNewService({ name: "", duration: 60, price: 0, description: "", sittings: 1 });
     setShowAddForm(false);
   };
 
@@ -143,7 +209,7 @@ export default function WorkHoursAndServices({ onBack }: WorkHoursAndServicesPro
       toast.error("Please enter a service name");
       return;
     }
-    setServices(prev => prev.map((service, i) => 
+    setServices(prev => prev.map((service, i) =>
       i === editingIndex ? editingService : service
     ));
     setEditingIndex(null);
@@ -248,12 +314,22 @@ export default function WorkHoursAndServices({ onBack }: WorkHoursAndServicesPro
                 <CardTitle>Services</CardTitle>
                 <CardDescription>Manage the services you offer</CardDescription>
               </div>
-              {!showAddForm && (
-                <Button size="sm" onClick={handleShowAddForm}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Service
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowProjectBuilder(true)}
+                >
+                  <Layers className="w-4 h-4 mr-1" />
+                  Project
                 </Button>
-              )}
+                {!showAddForm && (
+                  <Button size="sm" onClick={handleShowAddForm}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Service
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -294,6 +370,16 @@ export default function WorkHoursAndServices({ onBack }: WorkHoursAndServicesPro
                     </div>
 
                     <div className="space-y-2">
+                      <Label>Sittings</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={editingService.sittings || 1}
+                        onChange={(e) => setEditingService({ ...editingService, sittings: parseInt(e.target.value) || 1 })}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
                       <Label>Description (optional)</Label>
                       <Textarea
                         value={editingService.description}
@@ -323,6 +409,7 @@ export default function WorkHoursAndServices({ onBack }: WorkHoursAndServicesPro
                         <div className="flex gap-4 mt-1 text-sm text-muted-foreground">
                           <span>{service.duration} minutes</span>
                           <span>${service.price}</span>
+                          <span>{service.sittings || 1} sitting{(service.sittings || 1) > 1 ? 's' : ''}</span>
                         </div>
                         {service.description && (
                           <p className="mt-2 text-sm text-muted-foreground">{service.description}</p>
@@ -354,7 +441,7 @@ export default function WorkHoursAndServices({ onBack }: WorkHoursAndServicesPro
             {showAddForm && (
               <div className="p-4 border-2 border-dashed rounded-lg space-y-3">
                 <h3 className="font-semibold">New Service</h3>
-                
+
                 <div className="space-y-2">
                   <Label>Service Name</Label>
                   <Input
@@ -383,6 +470,16 @@ export default function WorkHoursAndServices({ onBack }: WorkHoursAndServicesPro
                       placeholder="100"
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Number of Sittings</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={newService.sittings || 1}
+                    onChange={(e) => setNewService({ ...newService, sittings: parseInt(e.target.value) || 1 })}
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -415,14 +512,84 @@ export default function WorkHoursAndServices({ onBack }: WorkHoursAndServicesPro
           </CardContent>
         </Card>
 
-        <Button 
-          className="w-full" 
+        <Button
+          className="w-full"
           onClick={handleSave}
           disabled={upsertMutation.isPending}
         >
           {upsertMutation.isPending ? "Saving..." : "Save Changes"}
         </Button>
       </main>
+
+      {/* Project Service Builder Dialog */}
+      <Dialog open={showProjectBuilder} onOpenChange={setShowProjectBuilder}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Project Service</DialogTitle>
+            <DialogDescription>Create a multi-sitting project package based on an existing service.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label>Service Name</Label>
+              <Input
+                placeholder="e.g., Full arm sleeve"
+                value={newProjectService.name}
+                onChange={(e) => setNewProjectService({ ...newProjectService, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Textarea
+                placeholder="Description of the project..."
+                rows={2}
+                value={newProjectService.description}
+                onChange={(e) => setNewProjectService({ ...newProjectService, description: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Base Service</Label>
+              <Select value={projectBaseServiceId} onValueChange={setProjectBaseServiceId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a service..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {services.map((service, index) => (
+                    <SelectItem key={index} value={index.toString()}>
+                      {service.name} (${service.price} / {service.duration}m)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Sittings Required</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={projectSittings}
+                  onChange={(e) => setProjectSittings(parseInt(e.target.value) || 1)}
+                />
+              </div>
+              <div>
+                <Label>Total Price ($)</Label>
+                <Input
+                  type="number"
+                  value={newProjectService.price}
+                  onChange={(e) => setNewProjectService({ ...newProjectService, price: parseFloat(e.target.value) || 0 })}
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Auto-calculated: ${services[parseInt(projectBaseServiceId || '0')]?.price || 0} x {projectSittings}
+                </p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowProjectBuilder(false)}>Cancel</Button>
+            <Button onClick={handleAddProjectService}>Add Project Service</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
