@@ -24,6 +24,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
     const [step, setStep] = useState<WizardStep>('service');
     const [selectedService, setSelectedService] = useState<any>(null);
     const [frequency, setFrequency] = useState<"consecutive" | "weekly" | "biweekly" | "monthly">("consecutive");
+    const [startDate] = useState(new Date());
 
     // -- Queries & Mutations --
 
@@ -39,7 +40,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
         sittings: selectedService?.sittings || 1,
         price: Number(selectedService?.price) || 0,
         frequency,
-        startDate: new Date(),
+        startDate,
     }, {
         enabled: isOpen && step === 'review' && !!selectedService,
         retry: false,
