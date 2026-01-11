@@ -756,9 +756,23 @@ export default function Chat() {
                 ) : (
                   <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
                     <p className="text-destructive font-semibold text-sm">Failed to calculate dates</p>
-                    <pre className="text-xs text-destructive mt-1 whitespace-pre-wrap overflow-auto">
-                      {JSON.stringify(availabilityError, null, 2)}
-                    </pre>
+                    <div className="text-xs font-mono mt-2 p-2 bg-black/10 rounded">
+                      <p>Status: {projectAvailability ? 'Has Data' : 'No Data'}</p>
+                      <p>Loading: {loadingAvailability ? 'Yes' : 'No'}</p>
+                      <p>Error: {JSON.stringify(availabilityError, Object.getOwnPropertyNames(availabilityError || {}), 2)}</p>
+                      <p>Service: {selectedService ? selectedService.name : 'NULL'}</p>
+                      <p>Step: {wizardStep}</p>
+                      <p>Q.Status: {trpc.appointments.findProjectAvailability.useQuery({
+                        conversationId,
+                        serviceName: selectedService?.name || '',
+                        serviceDuration: selectedService?.duration || 60,
+                        sittings: selectedService?.sittings || 1,
+                        frequency: projectFrequency,
+                        startDate: new Date(),
+                        price: selectedService?.price ? Number(selectedService.price) : 0,
+                      }, { enabled: false }).status}
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
