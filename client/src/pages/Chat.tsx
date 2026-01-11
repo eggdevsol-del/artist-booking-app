@@ -369,10 +369,10 @@ Once transfer is complete, please send a screenshot of remittance here in this m
           key={day}
           onClick={() => toggleDateSelection(date)}
           className={`h-12 rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${isSelected
-              ? "bg-primary text-primary-foreground"
-              : isToday
-                ? "bg-accent text-accent-foreground border-2 border-primary"
-                : "hover:bg-accent"
+            ? "bg-primary text-primary-foreground"
+            : isToday
+              ? "bg-accent text-accent-foreground border-2 border-primary"
+              : "hover:bg-accent"
             }`}
         >
           {day}
@@ -491,8 +491,8 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                 >
                   <div
                     className={`max-w-[75%] rounded-2xl px-4 py-2 overflow-hidden ${isOwn
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted"
                       }`}
                   >
                     {isImage ? (
@@ -608,7 +608,7 @@ Once transfer is complete, please send a screenshot of remittance here in this m
       {/* Fixed Bottom Input Area */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t">
         {/* Quick Actions + Book Now */}
-        {isArtist && quickActions && quickActions.length > 0 && (
+        {isArtist && (
           <div className="px-4 py-2 border-b bg-background">
             <div className="grid grid-cols-3 gap-2 mb-2">
               <Button
@@ -642,19 +642,21 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                 ✓ Confirm
               </Button>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              {quickActions.slice(0, 6).map((action) => (
-                <Button
-                  key={action.id}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => handleQuickAction(action)}
-                >
-                  {action.label}
-                </Button>
-              ))}
-            </div>
+            {quickActions && quickActions.length > 0 && (
+              <div className="grid grid-cols-3 gap-2">
+                {quickActions.slice(0, 6).map((action) => (
+                  <Button
+                    key={action.id}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => handleQuickAction(action)}
+                  >
+                    {action.label}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -769,8 +771,8 @@ Once transfer is complete, please send a screenshot of remittance here in this m
                     <Card
                       key={service.id}
                       className={`p-4 cursor-pointer transition-colors ${selectedService?.id === service.id
-                          ? "border-primary bg-primary/5"
-                          : "hover:border-primary/50"
+                        ? "border-primary bg-primary/5"
+                        : "hover:border-primary/50"
                         }`}
                       onClick={() => setSelectedService(service)}
                     >
