@@ -83,7 +83,11 @@ export default function Chat() {
     enabled: !!user && (user.role === "artist" || user.role === "admin"),
   });
 
-  const { data: projectAvailability, isLoading: loadingAvailability } = trpc.appointments.findProjectAvailability.useQuery(
+  const {
+    data: projectAvailability,
+    isLoading: loadingAvailability,
+    error: availabilityError
+  } = trpc.appointments.findProjectAvailability.useQuery(
     {
       conversationId,
       serviceName: selectedService?.name || '',
@@ -94,6 +98,8 @@ export default function Chat() {
     },
     {
       enabled: !!selectedService && !!projectStartDate && wizardStep === 'review',
+      // Don't retry on failure so we show error immediately
+      retry: false
     }
   );
 
@@ -753,7 +759,12 @@ export default function Chat() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-destructive">Failed to calculate dates.</p>
+                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                    <p className="text-destructive font-semibold text-sm">Failed to calculate dates</p>
+                    <p className="text-sm text-destructive mt-1">
+                      {availabilityError?.message || "Please check your Work Hours settings to ensure the service fits within your schedule."}
+                    </p>
+                  </div>
                 )}
               </div>
             )}

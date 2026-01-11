@@ -178,12 +178,30 @@ export const appointmentsRouter = router({
                 workSchedule = JSON.parse(artistSettings.workSchedule);
             } catch (e) {
                 console.error("Failed to parse work schedule");
+                throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Invalid work schedule format" });
+            }
+
+            if (!workSchedule || workSchedule.length === 0) {
+                throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Work hours not set up" });
+            }
+
+            // Validation: Check if service fits in ANY work day
+            const maxDailyMinutes = workSchedule.reduce((max, day) => {
+                if (!day.enabled) return max;
+                const [startH, startM] = day.startTime.split(":").map(Number);
+                const [endH, endM] = day.endTime.split(":").map(Number);
+                const minutes = (endH * 60 + endM) - (startH * 60 + startM);
+                return Math.max(max, minutes);
+            }, 0);
+
+            if (input.serviceDuration > maxDailyMinutes) {
+                throw new TRPCError({
+                    code: "PRECONDITION_FAILED",
+                    message: `Service duration (${input.serviceDuration} min) exceeds your longest work day (${maxDailyMinutes} min).`
+                });
             }
 
             // Fetch existing appointments for the artist relative to the start date
-            // Fetching a broad range to cover potential future dates
-            // A better approach would be fetching per day or week needed, but for simplicity we fetch a large range or check iteratively
-            // For efficiency, let's just fetch future appointments
             const existingAppointments = await db.getAppointmentsForUser(
                 conversation.artistId,
                 "artist",
@@ -192,6 +210,13 @@ export const appointmentsRouter = router({
 
             const suggestedDates: Date[] = [];
             let currentDateSearch = new Date(input.startDate);
+            // Ensure we start searching from the start date, or now if start date is past
+            if (currentDateSearch < new Date()) {
+                currentDateSearch = new Date();
+                currentDateSearch.setMinutes(Math.ceil(currentDateSearch.getMinutes() / 30) * 30);
+                currentDateSearch.setSeconds(0);
+                currentDateSearch.setMilliseconds(0);
+            }
 
             for (let i = 0; i < input.sittings; i++) {
                 // Find next available slot starting from currentDateSearch
@@ -205,7 +230,7 @@ export const appointmentsRouter = router({
                 if (!slot) {
                     throw new TRPCError({
                         code: "PRECONDITION_FAILED",
-                        message: `Could not find available slot for sitting ${i + 1}`,
+                        message: `Could not find available slot for sitting ${i + 1} within the next year. Check your calendar availability.`,
                     });
                 }
 
@@ -213,6 +238,8 @@ export const appointmentsRouter = router({
 
                 // Calculate next search date based on frequency
                 const nextDate = new Date(slot);
+                // Ensure we advance at least by the duration of the current appt + buffer, or simply the next day for consecutive
+
                 switch (input.frequency) {
                     case "consecutive":
                         nextDate.setDate(nextDate.getDate() + 1);
@@ -227,6 +254,9 @@ export const appointmentsRouter = router({
                         nextDate.setMonth(nextDate.getMonth() + 1);
                         break;
                 }
+
+                // Reset to start of day for broader search on the next target day
+                nextDate.setHours(0, 0, 0, 0);
                 currentDateSearch = nextDate;
             }
 
