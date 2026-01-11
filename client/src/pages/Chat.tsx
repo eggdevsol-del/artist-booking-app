@@ -335,6 +335,52 @@ export default function Chat() {
     toast.success("Dates confirmed!");
   };
 
+  const handleClientAcceptProposal = (message: any, metadata: any) => {
+    if (!metadata.proposedDates || !metadata.serviceName) return;
+
+    // Use metadata.dates or metadata.proposedDates (check what Backend sends)
+    // BookingService.calculateProjectDates sends: dates: suggestedDates
+    // bookProject adds metadata: dates: suggestedDates
+    // BUT Chat.tsx handleSendProjectDates used: proposedDates: projectAvailability.dates
+    // We need to handle BOTH cases or standardise.
+    // The "BookingWizard" creates `appointment_request` with `metadata.dates`.
+
+    const dates = metadata.dates || metadata.proposedDates || [];
+    if (!Array.isArray(dates) || dates.length === 0) {
+      toast.error("No dates found in proposal");
+      return;
+    }
+
+    const appointments = dates.map((dateStr: string) => {
+      const startTime = new Date(dateStr);
+      const duration = metadata.serviceDuration || 60; // Default 60 if missing
+
+      return {
+        startTime,
+        endTime: new Date(startTime.getTime() + duration * 60 * 1000),
+        title: metadata.serviceName,
+        description: "Project Booking (Client Accepted)",
+        serviceName: metadata.serviceName,
+        price: metadata.price || 0, // Should be per sitting
+        depositAmount: 0
+      };
+    });
+
+    bookProjectMutation.mutate({
+      conversationId,
+      appointments
+    }, {
+      onSuccess: () => {
+        // Send a confirmation text automatically
+        sendMessageMutation.mutate({
+          conversationId,
+          content: `I accept the project proposal for ${metadata.serviceName}.`,
+          messageType: "text"
+        });
+      }
+    });
+  };
+
   const handleArtistBookProject = (metadata: any) => {
     if (!metadata.confirmedDates || !metadata.serviceName) return;
 
@@ -501,63 +547,70 @@ export default function Chat() {
                   key={message.id}
                   className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
                 >
-                  <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-2 overflow-hidden ${isOwn
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
-                      }`}
-                  >
-                    {isImage ? (
-                      <div className="space-y-2">
-                        <img
-                          src={message.content}
-                          alt="Uploaded image"
-                          className="rounded-lg max-w-full h-auto cursor-pointer"
-                          onClick={() => window.open(message.content, "_blank")}
-                          style={{ maxHeight: "300px" }}
-                        />
-                      </div>
-                    ) : (
-                      <p className="text-sm break-words whitespace-pre-wrap overflow-wrap-anywhere">{message.content}</p>
-                    )}
-                    <p className="text-xs opacity-70 mt-1">
-                      {message.createdAt && new Date(message.createdAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-
-                    {/* Client View: Project Proposal Action */}
-                    {!isArtist && isProjectProposal && (
-                      <Button
-                        className="mt-2 w-full bg-background/20 hover:bg-background/30 text-inherit border-none"
-                        size="sm"
-                        onClick={() => {
-                          setClientConfirmMessageId(message.id);
-                          setClientConfirmMetadata(metadata);
-                          setClientConfirmDates(
-                            metadata.proposedDates.map((d: string) => ({ date: d, selected: true }))
-                          );
-                          setShowClientConfirmDialog(true);
+                  {isProjectProposal ? (
+                    <div className="max-w-[85%]">
+                      <ProjectProposalMessage
+                        metadata={metadata}
+                        isArtist={isArtist}
+                        isPendingAction={bookProjectMutation.isPending} // Using bookProject for accept
+                        onAccept={() => {
+                          // We need to trigger the confirmation.
+                          // Since the proposal ALREADY has the dates in metadata, we can just call handleArtistBookProject?
+                          // Wait, handleArtistBookProject was for ARTIST to confirm CLIENT'S selection.
+                          // Here CLIENT is accepting ARTIST'S proposal.
+                          // We need a NEW handler: handleClientAcceptProposal
+                          handleClientAcceptProposal(message, metadata);
                         }}
-                      >
-                        Review & Confirm
-                      </Button>
-                    )}
+                        onReject={() => {
+                          // Handle rejection (maybe just a message for now)
+                          sendMessageMutation.mutate({
+                            conversationId,
+                            content: "I'm sorry, those dates don't work for me.",
+                            messageType: "text"
+                          });
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-4 py-2 overflow-hidden ${isOwn
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted"
+                        }`}
+                    >
+                      {isImage ? (
+                        <div className="space-y-2">
+                          <img
+                            src={message.content}
+                            alt="Uploaded image"
+                            className="rounded-lg max-w-full h-auto cursor-pointer"
+                            onClick={() => window.open(message.content, "_blank")}
+                            style={{ maxHeight: "300px" }}
+                          />
+                        </div>
+                      ) : (
+                        <p className="text-sm break-words whitespace-pre-wrap overflow-wrap-anywhere">{message.content}</p>
+                      )}
+                      <p className="text-xs opacity-70 mt-1">
+                        {message.createdAt && new Date(message.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
 
-                    {/* Artist View: Confirm Booking Action */}
-                    {isArtist && isClientConfirmation && (
-                      <Button
-                        className="mt-2 w-full bg-background/20 hover:bg-background/30 text-inherit border-none"
-                        size="sm"
-                        onClick={() => handleArtistBookProject(metadata)}
-                        disabled={bookProjectMutation.isPending}
-                      >
-                        {bookProjectMutation.isPending ? "Booking..." : "Confirm & Book"}
-                      </Button>
-                    )}
-
-                  </div>
+                      {/* Artist View: Confirm Booking Action (Legacy/Other flow) */}
+                      {isArtist && isClientConfirmation && (
+                        <Button
+                          className="mt-2 w-full bg-background/20 hover:bg-background/30 text-inherit border-none"
+                          size="sm"
+                          onClick={() => handleArtistBookProject(metadata)}
+                          disabled={bookProjectMutation.isPending}
+                        >
+                          {bookProjectMutation.isPending ? "Booking..." : "Confirm & Book"}
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })

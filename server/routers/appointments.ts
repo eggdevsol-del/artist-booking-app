@@ -296,7 +296,7 @@ export const appointmentsRouter = router({
             return { dates: suggestedDates, totalCost };
         }),
 
-    bookProject: artistProcedure
+    bookProject: protectedProcedure
         .input(z.object({
             conversationId: z.number(),
             appointments: z.array(z.object({
@@ -312,6 +312,10 @@ export const appointmentsRouter = router({
         .mutation(async ({ ctx, input }) => {
             const conversation = await db.getConversationById(input.conversationId);
             if (!conversation) throw new TRPCError({ code: "NOT_FOUND", message: "Conversation not found" });
+
+            if (ctx.user.id !== conversation.artistId && ctx.user.id !== conversation.clientId) {
+                throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized to book for this conversation" });
+            }
 
             let createdCount = 0;
             for (const appt of input.appointments) {
