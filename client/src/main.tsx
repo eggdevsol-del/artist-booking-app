@@ -23,6 +23,8 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   // Clear auth token and redirect to login
   localStorage.removeItem("authToken");
   localStorage.removeItem("user");
+  sessionStorage.removeItem("authToken");
+  sessionStorage.removeItem("user");
   window.location.href = "/login";
 };
 
@@ -48,15 +50,15 @@ const trpcClient = trpc.createClient({
       url: "/api/trpc",
       transformer: superjson,
       fetch(input, init) {
-        // Get JWT token from localStorage
-        const token = localStorage.getItem("authToken");
-        
+        // Get JWT token from localStorage OR sessionStorage
+        const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
+
         // Add Authorization header if token exists
         const headers = {
           ...(init?.headers || {}),
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         };
-        
+
         return globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",

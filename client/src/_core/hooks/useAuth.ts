@@ -38,6 +38,11 @@ export function useAuth(options?: UseAuthOptions) {
     } finally {
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      // Also clear session storage just in case
+      sessionStorage.removeItem("authToken");
+      sessionStorage.removeItem("user");
     }
   }, [logoutMutation, utils]);
 

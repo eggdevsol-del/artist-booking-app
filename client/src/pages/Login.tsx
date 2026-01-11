@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, LogIn, Mail } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -14,24 +15,33 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: (data) => {
-      // Store JWT token in localStorage
-      localStorage.setItem("authToken", data.token);
-      
+      // Clear legacy/other storage first to avoid conflicts
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      sessionStorage.removeItem("authToken");
+      sessionStorage.removeItem("user");
+
+      const storage = rememberMe ? localStorage : sessionStorage;
+
+      // Store JWT token
+      storage.setItem("authToken", data.token);
+
       // Store user info
-      localStorage.setItem("user", JSON.stringify(data.user));
-      
+      storage.setItem("user", JSON.stringify(data.user));
+
       toast.success("Welcome back!");
-      
+
       // Redirect based on onboarding status
       if (!data.user.hasCompletedOnboarding) {
         setLocation("/role-selection");
       } else {
         setLocation("/conversations");
       }
-      
+
       setIsLoading(false);
     },
     onError: (error) => {
@@ -42,7 +52,7 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast.error("Please fill in all fields");
       return;
@@ -82,7 +92,7 @@ export default function Login() {
                 />
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -108,6 +118,21 @@ export default function Login() {
                   )}
                 </button>
               </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="remember"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked === true)}
+                disabled={isLoading}
+              />
+              <label
+                htmlFor="remember"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Remember me
+              </label>
             </div>
 
             <Button
