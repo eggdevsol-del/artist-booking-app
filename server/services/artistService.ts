@@ -1,0 +1,166 @@
+import { eq } from "drizzle-orm";
+import {
+    artistSettings,
+    InsertArtistSettings,
+    quickActionButtons,
+    InsertQuickActionButton,
+    notificationTemplates,
+    InsertNotificationTemplate,
+} from "../../drizzle/schema";
+import { getDb } from "./core";
+
+// ============================================================================
+// Artist Settings operations
+// ============================================================================
+
+export async function getArtistSettings(userId: string) {
+    const db = await getDb();
+    if (!db) return undefined;
+
+    const result = await db
+        .select()
+        .from(artistSettings)
+        .where(eq(artistSettings.userId, userId))
+        .limit(1);
+
+    return result.length > 0 ? result[0] : undefined;
+}
+
+export async function upsertArtistSettings(settings: InsertArtistSettings) {
+    const db = await getDb();
+    if (!db) return undefined;
+
+    const existing = await getArtistSettings(settings.userId);
+
+    if (existing) {
+        await db
+            .update(artistSettings)
+            .set({ ...settings, updatedAt: new Date() })
+            .where(eq(artistSettings.userId, settings.userId));
+    } else {
+        await db.insert(artistSettings).values(settings);
+    }
+
+    return getArtistSettings(settings.userId);
+}
+
+// ============================================================================
+// Quick Action Button operations
+// ============================================================================
+
+export async function getQuickActionButtons(userId: string) {
+    const db = await getDb();
+    if (!db) return [];
+
+    return db
+        .select()
+        .from(quickActionButtons)
+        .where(eq(quickActionButtons.userId, userId))
+        .orderBy(quickActionButtons.position);
+}
+
+export async function createQuickActionButton(button: InsertQuickActionButton) {
+    const db = await getDb();
+    if (!db) return undefined;
+
+    const result = await db.insert(quickActionButtons).values(button);
+
+    const inserted = await db
+        .select()
+        .from(quickActionButtons)
+        .where(eq(quickActionButtons.id, Number(result[0].insertId)))
+        .limit(1);
+
+    return inserted[0];
+}
+
+export async function updateQuickActionButton(
+    id: number,
+    updates: Partial<InsertQuickActionButton>
+) {
+    const db = await getDb();
+    if (!db) return undefined;
+
+    await db
+        .update(quickActionButtons)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(quickActionButtons.id, id));
+
+    const updated = await db
+        .select()
+        .from(quickActionButtons)
+        .where(eq(quickActionButtons.id, id))
+        .limit(1);
+
+    return updated[0];
+}
+
+export async function deleteQuickActionButton(id: number) {
+    const db = await getDb();
+    if (!db) return false;
+
+    await db.delete(quickActionButtons).where(eq(quickActionButtons.id, id));
+    return true;
+}
+
+// ============================================================================
+// Notification Template operations
+// ============================================================================
+
+export async function getNotificationTemplates(userId: string) {
+    const db = await getDb();
+    if (!db) return [];
+
+    return db
+        .select()
+        .from(notificationTemplates)
+        .where(eq(notificationTemplates.userId, userId));
+}
+
+export async function createNotificationTemplate(
+    template: InsertNotificationTemplate
+) {
+    const db = await getDb();
+    if (!db) return undefined;
+
+    const result = await db.insert(notificationTemplates).values(template);
+
+    const inserted = await db
+        .select()
+        .from(notificationTemplates)
+        .where(eq(notificationTemplates.id, Number(result[0].insertId)))
+        .limit(1);
+
+    return inserted[0];
+}
+
+export async function updateNotificationTemplate(
+    id: number,
+    updates: Partial<InsertNotificationTemplate>
+) {
+    const db = await getDb();
+    if (!db) return undefined;
+
+    await db
+        .update(notificationTemplates)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(notificationTemplates.id, id));
+
+    const updated = await db
+        .select()
+        .from(notificationTemplates)
+        .where(eq(notificationTemplates.id, id))
+        .limit(1);
+
+    return updated[0];
+}
+
+export async function deleteNotificationTemplate(id: number) {
+    const db = await getDb();
+    if (!db) return false;
+
+    await db
+        .delete(notificationTemplates)
+        .where(eq(notificationTemplates.id, id));
+    return true;
+}

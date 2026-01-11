@@ -1,0 +1,165 @@
+import { and, desc, eq, gte, lte } from "drizzle-orm";
+import { appointments, InsertAppointment, users } from "../../drizzle/schema";
+import { getDb } from "./core";
+
+// ============================================================================
+// Appointment operations
+// ============================================================================
+
+export async function createAppointment(appointment: InsertAppointment) {
+    const db = await getDb();
+    if (!db) return undefined;
+
+    const result = await db.insert(appointments).values(appointment);
+
+    const inserted = await db
+        .select()
+        .from(appointments)
+        .where(eq(appointments.id, Number(result[0].insertId)))
+        .limit(1);
+
+    return inserted[0];
+}
+
+export async function getAppointment(id: number) {
+    const db = await getDb();
+    if (!db) return undefined;
+
+    const result = await db
+        .select()
+        .from(appointments)
+        .where(eq(appointments.id, id))
+        .limit(1);
+
+    return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateAppointment(
+    id: number,
+    updates: Partial<InsertAppointment>
+) {
+    const db = await getDb();
+    if (!db) return undefined;
+
+    await db
+        .update(appointments)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(appointments.id, id));
+
+    return getAppointment(id);
+}
+
+export async function deleteAppointment(id: number) {
+    const db = await getDb();
+    if (!db) return false;
+
+    await db.delete(appointments).where(eq(appointments.id, id));
+    return true;
+}
+
+export async function getAppointmentsForUser(
+    userId: string,
+    role: string,
+    startDate?: Date,
+    endDate?: Date
+) {
+    const db = await getDb();
+    if (!db) return [];
+
+    const conditions = [
+        role === "artist"
+            ? eq(appointments.artistId, userId)
+            : eq(appointments.clientId, userId),
+    ];
+
+    if (startDate) {
+        conditions.push(gte(appointments.startTime, startDate));
+    }
+
+    if (endDate) {
+        conditions.push(lte(appointments.startTime, endDate));
+    }
+
+    // Join with users table to get client/artist names
+    const results = await db
+        .select({
+            id: appointments.id,
+            conversationId: appointments.conversationId,
+            artistId: appointments.artistId,
+            clientId: appointments.clientId,
+            title: appointments.title,
+            description: appointments.description,
+            startTime: appointments.startTime,
+            endTime: appointments.endTime,
+            status: appointments.status,
+            serviceName: appointments.serviceName,
+            price: appointments.price,
+            depositAmount: appointments.depositAmount,
+            depositPaid: appointments.depositPaid,
+            confirmationSent: appointments.confirmationSent,
+            reminderSent: appointments.reminderSent,
+            followUpSent: appointments.followUpSent,
+            createdAt: appointments.createdAt,
+            updatedAt: appointments.updatedAt,
+            clientName: users.name,
+            clientEmail: users.email,
+        })
+        .from(appointments)
+        .leftJoin(users, eq(appointments.clientId, users.id))
+        .where(and(...conditions))
+        .orderBy(appointments.startTime);
+
+    return results;
+}
+
+export async function getAppointmentsByConversation(conversationId: number) {
+    const db = await getDb();
+    if (!db) return [];
+
+    return db
+        .select()
+        .from(appointments)
+        .where(eq(appointments.conversationId, conversationId))
+        .orderBy(desc(appointments.startTime));
+}
+
+export async function getPendingAppointmentsByConversation(conversationId: number) {
+    const db = await getDb();
+    if (!db) return [];
+
+    return db
+        .select()
+        .from(appointments)
+        .where(
+            and(
+                eq(appointments.conversationId, conversationId),
+                eq(appointments.status, "pending")
+            )
+        );
+}
+
+export async function confirmAppointments(conversationId: number, paymentProof?: string) {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+
+    const updateData: any = {
+        status: "confirmed",
+        depositPaid: true,
+        confirmationSent: false, // Will be set to true after notification is sent
+        updatedAt: new Date(),
+    };
+
+    if (paymentProof) {
+        updateData.paymentProof = paymentProof;
+    }
+
+    return db
+        .update(appointments)
+        .set(updateData)
+        .where(
+            and(
+                eq(appointments.conversationId, conversationId),
+                eq(appointments.status, "pending")
+            )
+        );
+}

@@ -43,3 +43,13 @@ export const adminProcedure = t.procedure.use(
     });
   }),
 );
+
+export const artistProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== "artist" && ctx.user.role !== "admin") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Artist access required",
+    });
+  }
+  return next({ ctx });
+});
