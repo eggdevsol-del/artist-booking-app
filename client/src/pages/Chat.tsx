@@ -94,7 +94,10 @@ export default function Chat() {
       serviceDuration: selectedService?.duration || 60,
       sittings: selectedService?.sittings || 1,
       frequency: projectFrequency,
-      startDate: projectStartDate || new Date(),
+      // Always start searching from today
+      startDate: new Date(),
+      // Ensure price is a number
+      price: selectedService?.price ? Number(selectedService.price) : 0,
     },
     {
       enabled: !!selectedService && !!projectStartDate && wizardStep === 'review',
@@ -666,7 +669,7 @@ export default function Chat() {
           <DialogHeader className="px-6 py-4 border-b">
             <DialogTitle>
               {wizardStep === 'service' && "Select Service"}
-              {wizardStep === 'frequency' && "Select Frequency & Start Date"}
+              {wizardStep === 'frequency' && "Select Frequency"}
               {wizardStep === 'review' && "Review Dates"}
             </DialogTitle>
           </DialogHeader>
@@ -697,7 +700,7 @@ export default function Chat() {
               </div>
             )}
 
-            {/* Step 2: Frequency & Date */}
+            {/* Step 2: Frequency */}
             {wizardStep === 'frequency' && (
               <div className="space-y-6">
                 <div className="space-y-3">
@@ -722,21 +725,9 @@ export default function Chat() {
                   </RadioGroup>
                 </div>
 
-                <div className="space-y-3">
-                  <Label>Start Date</Label>
-                  <div className="flex items-center justify-between mb-2">
-                    <Button variant="ghost" size="sm" onClick={prevMonth}>&lt;</Button>
-                    <span className="font-medium">{currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
-                    <Button variant="ghost" size="sm" onClick={nextMonth}>&gt;</Button>
-                  </div>
-                  <div className="grid grid-cols-7 gap-1 text-center mb-1">
-                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-                      <span key={d} className="text-xs text-muted-foreground">{d}</span>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-7 gap-1">
-                    {renderCalendar()}
-                  </div>
+                <div className="p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground flex items-center">
+                  <CalendarIcon className="w-4 h-4 mr-2" />
+                  <span>The system will automatically find the earliest available slots starting from today.</span>
                 </div>
               </div>
             )}
@@ -788,7 +779,6 @@ export default function Chat() {
 
             {wizardStep === 'frequency' && (
               <Button
-                disabled={!projectStartDate}
                 onClick={() => setWizardStep('review')}
               >
                 Find Dates
