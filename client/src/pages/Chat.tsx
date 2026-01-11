@@ -762,16 +762,6 @@ export default function Chat() {
                       <p>Error: {JSON.stringify(availabilityError, Object.getOwnPropertyNames(availabilityError || {}), 2)}</p>
                       <p>Service: {selectedService ? selectedService.name : 'NULL'}</p>
                       <p>Step: {wizardStep}</p>
-                      <p>Q.Status: {trpc.appointments.findProjectAvailability.useQuery({
-                        conversationId,
-                        serviceName: selectedService?.name || '',
-                        serviceDuration: selectedService?.duration || 60,
-                        sittings: selectedService?.sittings || 1,
-                        frequency: projectFrequency,
-                        startDate: new Date(),
-                        price: selectedService?.price ? Number(selectedService.price) : 0,
-                      }, { enabled: false }).status}
-                      </p>
                     </div>
                   </div>
                 )}
