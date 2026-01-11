@@ -130,6 +130,22 @@ export const appointmentsRouter = router({
             }
 
             return db.deleteAppointment(input);
+            return db.deleteAppointment(input);
+        }),
+
+    deleteAllForClient: protectedProcedure
+        .input(z.object({
+            clientId: z.string()
+        }))
+        .mutation(async ({ input, ctx }) => {
+            if (ctx.user.role !== "artist" && ctx.user.role !== "admin") {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "Only artists can delete all bookings for a client",
+                });
+            }
+
+            return db.deleteAppointmentsForClient(ctx.user.id, input.clientId);
         }),
 
     confirmDeposit: artistProcedure
