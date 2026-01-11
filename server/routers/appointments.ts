@@ -259,26 +259,6 @@ export const appointmentsRouter = router({
                     });
                 }
 
-                // Strictly enforce that the FIRST sitting must be on the selected Start Date
-                if (i === 0) {
-                    const slotDate = new Date(slot);
-                    const userRequestedStart = new Date(input.startDate);
-                    const isFutureStart = userRequestedStart >= new Date();
-
-                    if (isFutureStart) {
-                        const sameDay = slotDate.getDate() === userRequestedStart.getDate() &&
-                            slotDate.getMonth() === userRequestedStart.getMonth() &&
-                            slotDate.getFullYear() === userRequestedStart.getFullYear();
-
-                        if (!sameDay) {
-                            throw new TRPCError({
-                                code: "PRECONDITION_FAILED",
-                                message: `The selected start date is unavailable. It may be fully booked or the service duration (${input.serviceDuration} min) does not fit within the available hours.`,
-                            });
-                        }
-                    }
-                }
-
                 suggestedDates.push(slot);
 
                 // Add to existing appointments to prevent overlap with consecutive sittings
