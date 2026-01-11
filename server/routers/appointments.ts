@@ -256,6 +256,40 @@ export const appointmentsRouter = router({
                     });
                 }
 
+                // Strictly enforce that the FIRST sitting must be on the selected Start Date
+                // We compare the YYYY-MM-DD parts.
+                if (i === 0) {
+                    const slotDate = new Date(slot);
+                    // Use input.startDate for comparison as currentDateSearch might have been adjusted if it was in the past
+                    // But here we care about the user's intent.
+                    // Actually, if the user picks a date in the past, currentDateSearch becomes today/now.
+                    // If user picks valid future date, currentDateSearch starts at that date.
+
+                    // We should check against the *intended* start date if it's in the future.
+                    // If input.startDate is in the past, then the user effectively asked for "ASAP starting today", so any slot today is valid.
+                    // If input.startDate is in the future, we want the slot to be on that specific date.
+
+                    const userRequestedStart = new Date(input.startDate);
+                    const isFutureStart = userRequestedStart >= new Date();
+
+                    if (isFutureStart) {
+                        const slotDateString = slotDate.toLocaleDateString();
+                        const requestDateString = userRequestedStart.toLocaleDateString();
+
+                        // We can also check day/month/year parts to be locale-safe
+                        const sameDay = slotDate.getDate() === userRequestedStart.getDate() &&
+                            slotDate.getMonth() === userRequestedStart.getMonth() &&
+                            slotDate.getFullYear() === userRequestedStart.getFullYear();
+
+                        if (!sameDay) {
+                            throw new TRPCError({
+                                code: "PRECONDITION_FAILED",
+                                message: `The selected start date is unavailable or fully booked. Please select a new start date.`,
+                            });
+                        }
+                    }
+                }
+
                 suggestedDates.push(slot);
 
                 // Add to existing appointments to prevent overlap with consecutive sittings
