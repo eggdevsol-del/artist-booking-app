@@ -233,7 +233,8 @@
   .liquid-glass,
   .glass-card,
   .card,
-  [data-slot="card"] {
+  [data-slot="card"],
+  .floating-nav {
     @apply backdrop-blur-[20px] shadow-lg rounded-[2rem];
 
     /* Milky / Smoky Glass Surface */
@@ -252,7 +253,7 @@
 
   /* Specific override for the floating nav pill to make it stand out */
   .floating-nav {
-    @apply liquid-glass;
+    /* @apply liquid-glass; Removed to fix build error */
     background: rgba(20, 20, 30, 0.4);
     /* Slightly darker/denser */
     backdrop-filter: blur(25px) saturate(150%);
