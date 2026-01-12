@@ -50,6 +50,7 @@ export const messagesRouter = router({
                     .enum(["text", "system", "appointment_request", "appointment_confirmed", "image"])
                     .default("text"),
                 metadata: z.string().optional(),
+                consultationId: z.number().optional(),
             })
         )
         .mutation(async ({ input, ctx }) => {
@@ -105,17 +106,28 @@ export const messagesRouter = router({
 
                 // Auto-update consultation status if artist replies
                 if (ctx.user.id === conversation.artistId) {
-                    try {
-                        const pendingConsultations = await db.getConsultationsForUser(ctx.user.id, "artist");
-                        const relevantConsultation = pendingConsultations.find(
-                            c => c.clientId === conversation.clientId && c.status === "pending"
-                        );
-
-                        if (relevantConsultation) {
-                            await db.updateConsultation(relevantConsultation.id, { status: "responded" });
+                    if (input.consultationId) {
+                        try {
+                            // If explicit ID provided, use it
+                            await db.updateConsultation(input.consultationId, { status: "responded" });
+                        } catch (err) {
+                            console.error("Failed to auto-update provided consultation ID:", err);
                         }
-                    } catch (err) {
-                        console.error("Failed to auto-update consultation status:", err);
+                    } else {
+                        // Fallback: find key pending consultations for this client
+                        try {
+                            const pendingConsultations = await db.getConsultationsForUser(ctx.user.id, "artist");
+                            const relevantConsultations = pendingConsultations.filter(
+                                c => c.clientId === conversation.clientId && c.status === "pending"
+                            );
+
+                            // Update ALL pending consultations for this client to responded
+                            for (const consult of relevantConsultations) {
+                                await db.updateConsultation(consult.id, { status: "responded" });
+                            }
+                        } catch (err) {
+                            console.error("Failed to auto-update consultation status:", err);
+                        }
                     }
                 }
             }
