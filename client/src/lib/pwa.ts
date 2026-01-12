@@ -1,27 +1,20 @@
+import { registerSW } from 'virtual:pwa-register';
+
 /**
  * Register service worker for PWA functionality
  */
 export async function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
-    try {
-      const registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/',
-      });
-      
-      console.log('[PWA] Service Worker registered successfully:', registration);
-      
-      // Check for updates periodically
-      setInterval(() => {
-        registration.update();
-      }, 60000); // Check every minute
-      
-      return registration;
-    } catch (error) {
-      console.error('[PWA] Service Worker registration failed:', error);
-      return null;
-    }
+    const updateSW = registerSW({
+      onNeedRefresh() {
+        console.log('[PWA] New content available, auto-updating...');
+      },
+      onOfflineReady() {
+        console.log('[PWA] App ready to work offline');
+      },
+    });
+    return updateSW;
   }
-  return null;
 }
 
 /**
