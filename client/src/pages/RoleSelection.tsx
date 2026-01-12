@@ -12,22 +12,42 @@ export default function RoleSelection() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(true);
   const setRoleMutation = trpc.auth.setRole.useMutation();
+  const syncUserMutation = trpc.auth.syncUser.useMutation();
 
   useEffect(() => {
-    if (!loading && !user) {
+    // Attempt to sync user immediately on mount
+    const sync = async () => {
+      try {
+        await syncUserMutation.mutateAsync();
+        setIsSyncing(false);
+      } catch (e) {
+        console.error("Sync failed", e);
+        // Don't block here, let useAuth handle the redirect if still null
+        setIsSyncing(false);
+      }
+    };
+    sync();
+  }, []);
+
+  useEffect(() => {
+    if (loading || isSyncing) return;
+
+    if (!user) {
+      // If after loading and syncing we still have no user, go home
       setLocation("/");
-    } else if (user && user.hasCompletedOnboarding) {
+    } else if (user.hasCompletedOnboarding) {
       // If user has completed onboarding, they've already chosen their role
       setLocation("/conversations");
     }
-  }, [user, loading, setLocation]);
+  }, [user, loading, isSyncing, setLocation]);
 
   const handleRoleSelect = async (role: "artist" | "client") => {
     try {
       await setRoleMutation.mutateAsync(role);
       toast.success(`Welcome! You're now registered as ${role === "artist" ? "an artist" : "a client"}`);
-      
+
       // Show onboarding for clients only
       if (role === "client") {
         setShowOnboarding(true);
@@ -35,6 +55,7 @@ export default function RoleSelection() {
         setLocation("/conversations");
       }
     } catch (error) {
+      console.error("Set Role Error:", error);
       toast.error("Failed to set role. Please try again.");
     }
   };
@@ -44,10 +65,10 @@ export default function RoleSelection() {
     setLocation("/complete-profile");
   };
 
-  if (loading) {
+  if (loading || isSyncing) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-primary text-lg">Loading...</div>
+        <div className="animate-pulse text-primary text-lg">Initializing...</div>
       </div>
     );
   }

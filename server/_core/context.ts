@@ -1,9 +1,10 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
-import type { User } from "../../drizzle/schema";
 import { users } from "../../drizzle/schema";
+import { type InferSelectModel, eq } from "drizzle-orm";
 import { getDb } from "../db";
-import { eq } from "drizzle-orm";
 import { createClerkClient } from "@clerk/backend";
+
+type User = InferSelectModel<typeof users>;
 
 // Ensure key is present or log warning (it might be missing in build step)
 if (!process.env.CLERK_SECRET_KEY) {
@@ -35,6 +36,7 @@ export async function createContext(
       if (requestState.isSignedIn) {
         const authObj = requestState.toAuth();
         const clerkUserId = (authObj as any).userId;
+        console.log(`[Auth] Processing request for Clerk User ID: ${clerkUserId}`);
 
         if (clerkUserId) {
           const database = await getDb();
@@ -44,18 +46,23 @@ export async function createContext(
             const [existingUser] = await database.select().from(users).where(eq(users.clerkId, clerkUserId));
 
             if (existingUser) {
+              console.log(`[Auth] Found existing user: ${existingUser.id}`);
               user = existingUser;
             } else {
+              console.log(`[Auth] User not found by clerkId, fetching details from Clerk...`);
               const clerkUser = await clerk.users.getUser(clerkUserId);
               const primaryEmail = clerkUser.emailAddresses.find(e => e.id === clerkUser.primaryEmailAddressId)?.emailAddress;
+              console.log(`[Auth] Clerk User Email: ${primaryEmail}`);
 
               if (primaryEmail) {
                 const [userByEmail] = await database.select().from(users).where(eq(users.email, primaryEmail));
 
                 if (userByEmail) {
+                  console.log(`[Auth] Found user by email (${userByEmail.id}). Linking clerkId...`);
                   await database.update(users).set({ clerkId: clerkUserId }).where(eq(users.id, userByEmail.id));
                   user = { ...userByEmail, clerkId: clerkUserId };
                 } else {
+                  console.log(`[Auth] Creating new user for ${primaryEmail}`);
                   const newUser = {
                     id: clerkUserId,
                     clerkId: clerkUserId,
@@ -70,6 +77,8 @@ export async function createContext(
                   // Simple return of created user since we know values
                   user = newUser as User;
                 }
+              } else {
+                console.warn("[Auth] No primary email found for Clerk user");
               }
             }
           }
