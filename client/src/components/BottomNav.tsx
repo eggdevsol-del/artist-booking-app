@@ -4,11 +4,11 @@ import { Calendar, MessageCircle, Settings } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 export default function BottomNav() {
-    const path = useLocation();
+    const [location] = useLocation();
 
     const isActive = (p: string) => {
-        if (p === "/" && path === "/") return true;
-        if (p !== "/" && path.startsWith(p)) return true;
+        if (p === "/" && location === "/") return true;
+        if (p !== "/" && location.startsWith(p)) return true;
         return false;
     };
 
