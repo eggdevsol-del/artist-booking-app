@@ -4,13 +4,17 @@ import { Calendar, MessageCircle, Settings } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 export default function BottomNav() {
-    const [location] = useLocation();
+    const path = useLocation();
 
-    const isActive = (path: string) => location === path;
+    const isActive = (p: string) => {
+        if (p === "/" && path === "/") return true;
+        if (p !== "/" && path.startsWith(p)) return true;
+        return false;
+    };
 
     return (
-        <nav className="mobile-bottom-nav glass-card border-t-0 rounded-t-[2.5rem] pb-safe">
-            <div className="flex items-center justify-around px-4 py-3">
+        <nav className="fixed bottom-6 inset-x-6 z-50 floating-nav rounded-[2.5rem] pb-0">
+            <div className="flex items-center justify-around px-2 py-3">
                 <Link href="/conversations">
                     <Button
                         variant="ghost"

@@ -43,85 +43,102 @@
 }
 
 :root {
-  /* Ice / Glass Theme Palette */
+  /* Liquid Glass Theme Palette */
   --radius: 2rem;
+  /* Soft, large rounding */
 
-  /* Deep Ocean / Space Background Base */
-  --background: oklch(0.15 0.05 210);
-  /* Deep Teal/Blue base */
+  /* Deep Liquid Night Background */
+  --background: oklch(0.12 0.05 260);
+  /* Deep Indigo Base */
   --foreground: oklch(0.98 0 0);
-  /* Pure White text */
+  /* White Text */
 
-  /* Glassy Cards: Clear Ice */
+  /* Liquid Glass Cards */
   --card: oklch(1 0 0 / 0.05);
-  /* White with very low opacity */
+  /* Ultra-transparent white */
   --card-foreground: oklch(0.98 0 0);
 
-  --popover: oklch(0.15 0.05 210 / 0.85);
-  /* Dark Teal Blur */
+  --popover: oklch(0.12 0.05 260 / 0.85);
   --popover-foreground: oklch(0.98 0 0);
 
-  /* Primary: Pure White / Cyan Glow (Replaces Purple) */
-  --primary: oklch(0.90 0.05 200);
-  /* Bright Cyan/White */
-  --primary-foreground: oklch(0.15 0.05 210);
+  /* Primary: Soft Violet Glow */
+  --primary: oklch(0.70 0.15 280);
+  --primary-foreground: oklch(1 0 0);
 
-  /* Secondary: Subtle Blue/Teal */
-  --secondary: oklch(0.85 0.10 200 / 0.1);
+  --secondary: oklch(0.85 0.05 260 / 0.1);
   --secondary-foreground: oklch(0.98 0 0);
 
-  --muted: oklch(1 0 0 / 0.1);
-  --muted-foreground: oklch(0.70 0.02 200);
+  --muted: oklch(1 0 0 / 0.05);
+  --muted-foreground: oklch(0.70 0.02 260);
 
-  --accent: oklch(0.85 0.10 200);
-  /* Cyan Accent */
+  --accent: oklch(0.65 0.20 280);
   --accent-foreground: oklch(1 0 0);
 
   --destructive: oklch(0.60 0.22 25);
   --destructive-foreground: oklch(1 0 0);
 
-  /* Border: CRITICAL - Ice White Edge */
-  --border: oklch(1 0 0 / 0.3);
-  /* Translucent White */
-  --input: oklch(1 0 0 / 0.2);
-  --ring: oklch(0.85 0.10 200);
-  /* Cyan Ring */
+  /* Border: Very Soft Glow */
+  --border: oklch(1 0 0 / 0.15);
+  --input: oklch(1 0 0 / 0.1);
+  --ring: oklch(0.70 0.15 280);
+
+  /* Chart Colors (example, adjust as needed for theme) */
+  --chart-1: oklch(0.70 0.15 280);
+  /* Primary */
+  --chart-2: oklch(0.65 0.20 280);
+  /* Accent */
+  --chart-3: oklch(0.80 0.05 260);
+  /* Lighter secondary */
+  --chart-4: oklch(0.90 0.02 200);
+  /* Soft teal */
+  --chart-5: oklch(0.75 0.10 340);
+  /* Muted rose */
 
   /* Sidebar */
-  --sidebar: oklch(0.15 0.05 210 / 0.6);
+  --sidebar: oklch(0.12 0.05 260 / 0.6);
   --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.90 0.05 200);
-  --sidebar-primary-foreground: oklch(0.15 0.05 210);
+  --sidebar-primary: oklch(0.70 0.15 280);
+  --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(1 0 0 / 0.1);
   --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(1 0 0 / 0.2);
-  --sidebar-ring: oklch(0.90 0.05 200);
+  --sidebar-border: oklch(1 0 0 / 0.15);
+  --sidebar-ring: oklch(0.70 0.15 280);
 }
 
 .dark {
-  /* 
-     Force the exact same look in dark mode
-     This theme DOES NOT HAVE a "Light Mode" - it is always Dark Glass.
-  */
-  --background: oklch(0.15 0.05 210);
+  /* Force consistency - this is a dark-only theme */
+  --background: oklch(0.12 0.05 260);
   --foreground: oklch(0.98 0 0);
   --card: oklch(1 0 0 / 0.05);
   --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.15 0.05 210 / 0.85);
+  --popover: oklch(0.12 0.05 260 / 0.85);
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.90 0.05 200);
-  --primary-foreground: oklch(0.15 0.05 210);
-  --secondary: oklch(0.85 0.10 200 / 0.1);
+  --primary: oklch(0.70 0.15 280);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.85 0.05 260 / 0.1);
   --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(1 0 0 / 0.1);
-  --muted-foreground: oklch(0.70 0.02 200);
-  --accent: oklch(0.85 0.10 200);
+  --muted: oklch(1 0 0 / 0.05);
+  --muted-foreground: oklch(0.70 0.02 260);
+  --accent: oklch(0.65 0.20 280);
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.60 0.22 25);
   --destructive-foreground: oklch(1 0 0);
-  --border: oklch(1 0 0 / 0.3);
-  --input: oklch(1 0 0 / 0.2);
-  --ring: oklch(0.85 0.10 200);
+  --border: oklch(1 0 0 / 0.15);
+  --input: oklch(1 0 0 / 0.1);
+  --ring: oklch(0.70 0.15 280);
+  --chart-1: oklch(0.70 0.15 280);
+  --chart-2: oklch(0.65 0.20 280);
+  --chart-3: oklch(0.80 0.05 260);
+  --chart-4: oklch(0.90 0.02 200);
+  --chart-5: oklch(0.75 0.10 340);
+  --sidebar: oklch(0.12 0.05 260 / 0.6);
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.70 0.15 280);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(1 0 0 / 0.1);
+  --sidebar-accent-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(1 0 0 / 0.15);
+  --sidebar-ring: oklch(0.70 0.15 280);
 }
 
 @layer base {
@@ -133,61 +150,23 @@
     @apply bg-background text-foreground;
 
     /* 
-       RECOVERY: High-Fidelity "Deep Ocean" Gradient
-       Matches the reference: Dark blue abyss with a top-right Cyan light source.
+       LIQUID NIGHT GRADIENT
+       - Deep Indigo/Violet base
+       - Subtle top-right glow (Moonlight/Streetlight feel)
     */
     background:
-      radial-gradient(circle at 100% 0%, #22d3ee 0%, transparent 25%),
-      /* Vivid Cyan light top-right */
-      radial-gradient(circle at 100% 0%, #0891b2 20%, transparent 50%),
-      /* Teal spill */
-      radial-gradient(circle at 0% 100%, #1e1b4b 0%, transparent 50%),
-      /* Deep Indigo bottom-left */
+      radial-gradient(circle at 100% 0%, #4c1d95 0%, transparent 40%),
+      /* Violet Glow */
+      radial-gradient(circle at 0% 100%, #312e81 0%, transparent 40%),
+      /* Indigo Depth */
       #0f172a;
-    /* Slate 900 Base (Deep Blue/Black) */
+    /* Slate 900 Base */
 
     background-attachment: fixed;
     height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     touch-action: manipulation;
-  }
-
-  /* 
-     RECOVERY: Pure "Vision OS" Glass
-     - Removed "cloudy" gradients.
-     - Pure white rim.
-     - Heavy blur.
-  */
-  .glass-card,
-  .card,
-  [data-slot="card"] {
-    @apply backdrop-blur-[30px] shadow-2xl;
-
-    /* The Surface: Almost invisible, just enough to tint */
-    background: rgba(255, 255, 255, 0.03);
-
-    /* The Edge: Sharp, bright white bevel */
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.1) inset,
-      /* Inner sharp rim */
-      0 20px 40px rgba(0, 0, 0, 0.4);
-    /* Deep ambient shadow */
-
-    /* 
-       Top Reflection: 
-       A subtle linear gradient on the border-image would be nice, but simple top-border brightness works best 
-       for clean CSS.
-    */
-    border-top-color: rgba(255, 255, 255, 0.5);
-    border-left-color: rgba(255, 255, 255, 0.3);
-  }
-
-  /* Apply specific rounding to default cards */
-  .card,
-  [data-slot="card"] {
-    @apply rounded-[2rem];
   }
 
   button:not(:disabled),
@@ -245,6 +224,42 @@
     }
   }
 
+  /* 
+     LIQUID GLASS VARIANT
+     - Soft, milky transparency
+     - Floating feel
+     - Subtle white borders
+  */
+  .liquid-glass,
+  .glass-card,
+  .card,
+  [data-slot="card"] {
+    @apply backdrop-blur-[20px] shadow-lg rounded-[2rem];
+
+    /* Milky / Smoky Glass Surface */
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+
+    /* Soft Glow Border */
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    /* Subtle top light */
+
+    /* Smooth Shadow */
+    box-shadow:
+      0 8px 32px -4px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+  }
+
+  /* Specific override for the floating nav pill to make it stand out */
+  .floating-nav {
+    @apply liquid-glass;
+    background: rgba(20, 20, 30, 0.4);
+    /* Slightly darker/denser */
+    backdrop-filter: blur(25px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.8);
+  }
+
   /* Mobile-first utilities */
   .mobile-container {
     @apply w-full mx-auto p-0;
@@ -261,7 +276,7 @@
   }
 
   .mobile-bottom-nav {
-    @apply fixed bottom-0 left-0 right-0 z-50 border-t border-border;
+    @apply fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border;
     padding-bottom: env(safe-area-inset-bottom);
   }
 
