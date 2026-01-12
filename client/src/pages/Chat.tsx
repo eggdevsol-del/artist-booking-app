@@ -670,12 +670,12 @@ export default function Chat() {
               <p className="text-muted-foreground">No messages yet</p>
             </div>
           )}
-          <div ref={bottomRef} />
+          <div ref={bottomRef} className="pb-64" />
         </div>
       </ScrollArea>
 
-      {/* Fixed Bottom Input Area */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t">
+      {/* Fixed Bottom Input Area - Lifted above Bottom Nav */}
+      <div className="fixed bottom-[88px] left-0 right-0 z-[60] bg-background border-t shadow-sm">
         {isArtist && (
           <div className="px-4 py-2 border-b bg-background">
             <div className="grid grid-cols-3 gap-2 mb-2">
