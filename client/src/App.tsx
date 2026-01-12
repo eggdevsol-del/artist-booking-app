@@ -1,3 +1,4 @@
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 import { Toaster } from "@/components/ui/sonner";
 import InstallPrompt from "./components/InstallPrompt";
 import IOSInstallPrompt from "./components/IOSInstallPrompt";
@@ -21,20 +22,16 @@ import WorkHours from "./pages/WorkHours";
 import QuickActionsManagement from "./pages/QuickActionsManagement";
 import CompleteProfile from "./pages/CompleteProfile";
 import Clients from "./pages/Clients";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
 
 function Router() {
   const [location] = useLocation();
-  const hideBottomNavPaths = ["/", "/login", "/signup", "/role-selection", "/complete-profile"];
+  const hideBottomNavPaths = ["/", "/role-selection", "/complete-profile"];
   const shouldShowBottomNav = !hideBottomNavPaths.includes(location) && !location.startsWith("/404");
 
   return (
     <div className="min-h-screen bg-background pb-16">
       <Switch>
         <Route path="/" component={Home} />
-        <Route path="/login" component={Login} />
-        <Route path="/signup" component={Signup} />
         <Route path="/role-selection" component={RoleSelection} />
         <Route path="/conversations" component={Conversations} />
         <Route path="/chat/:id" component={Chat} />
@@ -66,6 +63,14 @@ function App() {
         <Toaster />
         <InstallPrompt />
         <IOSInstallPrompt />
+        <header className="fixed top-0 right-0 z-[100] p-4 flex justify-end">
+          <SignedOut>
+            <SignInButton mode="modal" />
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+        </header>
         <Router />
       </TooltipProvider>
     </ThemeProvider>
