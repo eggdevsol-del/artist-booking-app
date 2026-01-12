@@ -147,7 +147,7 @@ export default function Chat() {
         messageType: newMessage.messageType || "text",
         metadata: newMessage.metadata || null,
         readBy: null,
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(),
       };
 
       utils.messages.list.setData(
@@ -600,10 +600,10 @@ export default function Chat() {
                 <div
                   key={message.id}
                   id={`message-${message.id}`}
-                  className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
+                  className={`flex ${isProjectProposal ? "justify-center w-full" : (isOwn ? "justify-end" : "justify-start")}`}
                 >
                   {isProjectProposal ? (
-                    <div className="max-w-[85%]">
+                    <div className="w-full flex justify-center">
                       <ProjectProposalMessage
                         metadata={metadata}
                         isArtist={isArtist}
