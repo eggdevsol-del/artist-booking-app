@@ -46,6 +46,7 @@ export default function Chat() {
   const [clientConfirmMessageId, setClientConfirmMessageId] = useState<number | null>(null);
   const [clientConfirmDates, setClientConfirmDates] = useState<{ date: string, selected: boolean }[]>([]);
   const [clientConfirmMetadata, setClientConfirmMetadata] = useState<any>(null);
+  const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
 
   // Get consultation ID from URL if present
   const searchParams = new URLSearchParams(window.location.search);
@@ -876,13 +877,14 @@ export default function Chat() {
               <TabsContent value="media">
                 {/* Media sent by the Client */}
                 <div className="grid grid-cols-3 gap-2">
-                  {messages?.filter(m => m.senderId === otherUserId && (m.messageType === 'image' || m.messageType === 'video')).map(m => (
+                  {messages?.filter(m => m.senderId === otherUserId && (m.messageType === 'image' || m.messageType === 'video') && !failedImages.has(m.id)).map(m => (
                     <div key={m.id} className="aspect-square rounded-md overflow-hidden bg-muted relative group">
                       {m.messageType === 'image' ? (
                         <img
                           src={m.content}
                           alt="Client media"
                           className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                          onError={() => setFailedImages(prev => new Set(prev).add(m.id))}
                           onClick={() => {
                             setShowClientInfo(false); // Close dialog
                             const el = document.getElementById(`message-${m.id}`);
@@ -905,13 +907,14 @@ export default function Chat() {
               <TabsContent value="content">
                 {/* Content sent by the Artist (Me) */}
                 <div className="grid grid-cols-3 gap-2">
-                  {messages?.filter(m => m.senderId === user?.id && (m.messageType === 'image' || m.messageType === 'video')).map(m => (
+                  {messages?.filter(m => m.senderId === user?.id && (m.messageType === 'image' || m.messageType === 'video') && !failedImages.has(m.id)).map(m => (
                     <div key={m.id} className="aspect-square rounded-md overflow-hidden bg-muted relative">
                       {m.messageType === 'image' ? (
                         <img
                           src={m.content}
                           alt="Artist content"
                           className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                          onError={() => setFailedImages(prev => new Set(prev).add(m.id))}
                           onClick={() => {
                             setShowClientInfo(false); // Close dialog
                             const el = document.getElementById(`message-${m.id}`);
