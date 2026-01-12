@@ -4,6 +4,7 @@ import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
+import path from "path";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -45,18 +46,21 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
-  
+
+  // Serve static uploads
+  app.use("/uploads", express.static(path.join(process.cwd(), "server", "uploads")));
+
   // File serving endpoint - handle full paths with subdirectories
   app.get("/api/files/*", async (req, res) => {
     try {
       // Get the full path after /api/files/
-      const key = req.params[0];
+      const key = (req.params as any)[0];
       const file = await storageGetData(key);
-      
+
       if (!file) {
         return res.status(404).json({ error: "File not found" });
       }
-      
+
       res.setHeader("Content-Type", file.mimeType);
       res.setHeader("Cache-Control", "public, max-age=31536000");
       res.send(file.data);
@@ -90,7 +94,7 @@ async function startServer() {
   // In development, find an available port
   const preferredPort = parseInt(process.env.PORT || "3000");
   let port = preferredPort;
-  
+
   if (process.env.NODE_ENV === "development") {
     port = await findAvailablePort(preferredPort);
     if (port !== preferredPort) {

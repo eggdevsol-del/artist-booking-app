@@ -2,6 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { trpc } from "@/lib/trpc";
@@ -807,41 +808,110 @@ return (
 
     {/* Existing Client Info Dialog */}
     <Dialog open={showClientInfo} onOpenChange={setShowClientInfo}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md h-[400px] flex flex-col">
         <DialogHeader>
           <DialogTitle>Client Information</DialogTitle>
-          <DialogDescription>Contact details and booking information</DialogDescription>
+          <DialogDescription>Contact details and shared media</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <User className="w-5 h-5 text-muted-foreground" />
-            <div>
-              <p className="text-sm font-medium">Full Name</p>
-              <p className="text-sm text-muted-foreground">{otherUserId}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Mail className="w-5 h-5 text-muted-foreground" />
-            <div>
-              <p className="text-sm font-medium">Email</p>
-              <p className="text-sm text-muted-foreground">client@example.com</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Phone className="w-5 h-5 text-muted-foreground" />
-            <div>
-              <p className="text-sm font-medium">Phone</p>
-              <p className="text-sm text-muted-foreground">+1 234 567 8900</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Cake className="w-5 h-5 text-muted-foreground" />
-            <div>
-              <p className="text-sm font-medium">Birthday</p>
-              <p className="text-sm text-muted-foreground">January 1, 1990</p>
-            </div>
-          </div>
-        </div>
+
+        <Tabs defaultValue="info" className="flex-1 overflow-hidden flex flex-col">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="info">Info</TabsTrigger>
+            <TabsTrigger value="media">Media</TabsTrigger>
+            <TabsTrigger value="content">Content</TabsTrigger>
+          </TabsList>
+
+          <ScrollArea className="flex-1 mt-2">
+            <TabsContent value="info" className="space-y-4">
+              <div className="flex items-center gap-3">
+                <User className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Full Name</p>
+                  <p className="text-sm text-muted-foreground">{conversation?.otherUser?.name || "Unknown"}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Mail className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Email</p>
+                  <p className="text-sm text-muted-foreground">{conversation?.otherUser?.email || "No email"}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Phone className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Phone</p>
+                  <p className="text-sm text-muted-foreground">{conversation?.otherUser?.phone || "No phone"}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Cake className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Birthday</p>
+                  <p className="text-sm text-muted-foreground">
+                    {conversation?.otherUser?.birthday
+                      ? format(new Date(conversation.otherUser.birthday), 'MMMM do, yyyy')
+                      : "Not set"}
+                  </p>
+                </div>
+              </div>
+              {conversation?.otherUser?.bio && (
+                <div className="pt-2">
+                  <p className="text-sm font-medium mb-1">Bio</p>
+                  <p className="text-sm text-muted-foreground bg-muted p-2 rounded-md">
+                    {conversation.otherUser.bio}
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="media">
+              {/* Media sent by the Client */}
+              <div className="grid grid-cols-3 gap-2">
+                {messages?.filter(m => m.senderId === otherUserId && (m.messageType === 'image' || m.messageType === 'video')).map(m => (
+                  <div key={m.id} className="aspect-square rounded-md overflow-hidden bg-muted relative group">
+                    {m.messageType === 'image' ? (
+                      <img
+                        src={m.content}
+                        alt="Client media"
+                        className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => window.open(m.content, "_blank")}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs">Video</div>
+                    )}
+                  </div>
+                ))}
+                {(!messages || messages.filter(m => m.senderId === otherUserId && (m.messageType === 'image' || m.messageType === 'video')).length === 0) && (
+                  <p className="col-span-3 text-center text-sm text-muted-foreground py-8">No media shared</p>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="content">
+              {/* Content sent by the Artist (Me) */}
+              <div className="grid grid-cols-3 gap-2">
+                {messages?.filter(m => m.senderId === user?.id && (m.messageType === 'image' || m.messageType === 'video')).map(m => (
+                  <div key={m.id} className="aspect-square rounded-md overflow-hidden bg-muted relative">
+                    {m.messageType === 'image' ? (
+                      <img
+                        src={m.content}
+                        alt="Artist content"
+                        className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => window.open(m.content, "_blank")}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs">Video</div>
+                    )}
+                  </div>
+                ))}
+                {(!messages || messages.filter(m => m.senderId === user?.id && (m.messageType === 'image' || m.messageType === 'video')).length === 0) && (
+                  <p className="col-span-3 text-center text-sm text-muted-foreground py-8">No content sent</p>
+                )}
+              </div>
+            </TabsContent>
+          </ScrollArea>
+        </Tabs>
       </DialogContent>
     </Dialog>
   </div>

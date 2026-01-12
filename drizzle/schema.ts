@@ -37,6 +37,10 @@ export const users = mysqlTable("users", {
   facebookId: varchar("facebookId", { length: 255 }),
   facebookName: varchar("facebookName", { length: 255 }),
 
+
+  // Personal Info
+  birthday: datetime("birthday"),
+
   // Onboarding
   hasCompletedOnboarding: boolean("hasCompletedOnboarding").default(false),
 });
@@ -112,6 +116,7 @@ export const messages = mysqlTable("messages", {
     "appointment_request",
     "appointment_confirmed",
     "image",
+    "video",
   ])
     .default("text")
     .notNull(),

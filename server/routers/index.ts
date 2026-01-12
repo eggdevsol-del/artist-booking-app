@@ -9,6 +9,7 @@ import { notificationTemplatesRouter } from "./notificationTemplates";
 import { policiesRouter } from "./policies";
 import { quickActionsRouter } from "./quickActions";
 import { systemRouter } from "./system";
+import { uploadRouter } from "./upload";
 
 import { bookingRouter } from "./booking";
 
@@ -24,6 +25,7 @@ export const appRouter = router({
     consultations: consultationsRouter,
     policies: policiesRouter,
     quickActions: quickActionsRouter,
+    upload: uploadRouter,
 });
 
 export type AppRouter = typeof appRouter;
