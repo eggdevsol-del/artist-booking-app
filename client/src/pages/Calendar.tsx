@@ -12,7 +12,7 @@ import {
   ChevronRight,
   Plus,
 } from "lucide-react";
-import BottomNav from "@/components/BottomNav";
+
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -657,8 +657,7 @@ export default function Calendar() {
         </DialogContent>
       </Dialog>
 
-      {/* Bottom Navigation */}
-      <BottomNav />
+
     </div>
   );
 }

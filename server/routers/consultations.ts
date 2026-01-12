@@ -30,7 +30,7 @@ export const consultationsRouter = router({
             z.object({
                 id: z.number(),
                 status: z
-                    .enum(["pending", "scheduled", "completed", "cancelled"])
+                    .enum(["pending", "responded", "scheduled", "completed", "cancelled"])
                     .optional(),
                 conversationId: z.number().optional(),
             })

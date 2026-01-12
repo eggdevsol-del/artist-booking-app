@@ -332,6 +332,7 @@ export const consultations = mysqlTable("consultations", {
 
   status: mysqlEnum("status", [
     "pending",
+    "responded",
     "scheduled",
     "completed",
     "cancelled",

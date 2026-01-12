@@ -102,6 +102,22 @@ export const messagesRouter = router({
                 ).catch(err => {
                     console.error('[Push] Failed to send new message notification:', err);
                 });
+
+                // Auto-update consultation status if artist replies
+                if (ctx.user.id === conversation.artistId) {
+                    try {
+                        const pendingConsultations = await db.getConsultationsForUser(ctx.user.id, "artist");
+                        const relevantConsultation = pendingConsultations.find(
+                            c => c.clientId === conversation.clientId && c.status === "pending"
+                        );
+
+                        if (relevantConsultation) {
+                            await db.updateConsultation(relevantConsultation.id, { status: "responded" });
+                        }
+                    } catch (err) {
+                        console.error("Failed to auto-update consultation status:", err);
+                    }
+                }
             }
 
             // Send appointment confirmation notification

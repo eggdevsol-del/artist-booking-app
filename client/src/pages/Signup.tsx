@@ -23,15 +23,15 @@ export default function Signup() {
     onSuccess: (data) => {
       // Store JWT token in localStorage
       localStorage.setItem("authToken", data.token);
-      
+
       // Store user info
       localStorage.setItem("user", JSON.stringify(data.user));
-      
+
       toast.success("Account created successfully!");
-      
+
       // Redirect based on role
-      setLocation(role === "artist" ? "/conversations" : "/client-dashboard");
-      
+      setLocation(role === "artist" ? "/conversations" : "/conversations");
+
       setIsLoading(false);
     },
     onError: (error) => {
@@ -42,7 +42,7 @@ export default function Signup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name || !email || !password || !confirmPassword) {
       toast.error("Please fill in all fields");
       return;
@@ -109,7 +109,7 @@ export default function Signup() {
                 />
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -171,11 +171,10 @@ export default function Signup() {
                 <button
                   type="button"
                   onClick={() => setRole("artist")}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    role === "artist"
+                  className={`p-4 rounded-lg border-2 transition-all ${role === "artist"
                       ? "border-primary bg-primary/5 shadow-sm"
                       : "border-border hover:border-primary/50"
-                  }`}
+                    }`}
                   disabled={isLoading}
                 >
                   <div className="text-center">
@@ -189,11 +188,10 @@ export default function Signup() {
                 <button
                   type="button"
                   onClick={() => setRole("client")}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    role === "client"
+                  className={`p-4 rounded-lg border-2 transition-all ${role === "client"
                       ? "border-primary bg-primary/5 shadow-sm"
                       : "border-border hover:border-primary/50"
-                  }`}
+                    }`}
                   disabled={isLoading}
                 >
                   <div className="text-center">

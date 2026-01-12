@@ -16,7 +16,7 @@ export default function Consultations() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
   const [showNewDialog, setShowNewDialog] = useState(false);
-  
+
   // Form state
   const [selectedArtistId, setSelectedArtistId] = useState("");
   const [subject, setSubject] = useState("");
@@ -81,6 +81,8 @@ export default function Consultations() {
     switch (status) {
       case "pending":
         return "bg-yellow-500";
+      case "responded":
+        return "bg-indigo-500";
       case "scheduled":
         return "bg-blue-500";
       case "completed":
@@ -197,7 +199,18 @@ export default function Consultations() {
           </div>
         ) : consultations && consultations.length > 0 ? (
           consultations.map((consultation) => (
-            <Card key={consultation.id} className="overflow-hidden">
+            <Card
+              key={consultation.id}
+              className="overflow-hidden cursor-pointer hover:bg-accent/5 transition-colors"
+              onClick={() => {
+                if (consultation.conversationId) {
+                  setLocation(`/chat/${consultation.conversationId}`);
+                } else {
+                  // Fallback to conversations list if no direct link (should be rare)
+                  setLocation("/conversations");
+                }
+              }}
+            >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -213,7 +226,7 @@ export default function Consultations() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-muted-foreground">{consultation.description}</p>
-                
+
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   {consultation.preferredDate && (
                     <div className="flex items-center gap-1">

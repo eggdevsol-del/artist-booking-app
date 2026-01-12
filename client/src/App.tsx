@@ -2,8 +2,9 @@ import { Toaster } from "@/components/ui/sonner";
 import InstallPrompt from "./components/InstallPrompt";
 import IOSInstallPrompt from "./components/IOSInstallPrompt";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import BottomNav from "@/components/BottomNav";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
@@ -24,43 +25,50 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 
 function Router() {
+  const [location] = useLocation();
+  const hideBottomNavPaths = ["/", "/login", "/signup", "/role-selection", "/complete-profile"];
+  const shouldShowBottomNav = !hideBottomNavPaths.includes(location) && !location.startsWith("/404");
+
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/login" component={Login} />
-      <Route path="/signup" component={Signup} />
-      <Route path="/role-selection" component={RoleSelection} />
-      <Route path="/conversations" component={Conversations} />
-      <Route path="/chat/:id" component={Chat} />
-      <Route path="/calendar" component={Calendar} />
-      <Route path="/settings" component={Settings} />
-      <Route path="/consultations" component={Consultations} />
-      <Route path="/policies" component={Policies} />
-       <Route path="/policy-management" component={PolicyManagement} />
-      <Route path="/notifications-management" component={NotificationsManagement} />
-      <Route path="/work-hours" component={WorkHours} />
-      <Route path="/quick-actions" component={QuickActionsManagement} />
-      <Route path="/complete-profile" component={CompleteProfile} />
-      <Route path="/clients" component={Clients} />
-      <Route path="/404" component={NotFound} />
-      <Route component={NotFound} />
-    </Switch>
+    <div className="min-h-screen bg-background pb-16">
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/login" component={Login} />
+        <Route path="/signup" component={Signup} />
+        <Route path="/role-selection" component={RoleSelection} />
+        <Route path="/conversations" component={Conversations} />
+        <Route path="/chat/:id" component={Chat} />
+        <Route path="/calendar" component={Calendar} />
+        <Route path="/settings" component={Settings} />
+        <Route path="/consultations" component={Consultations} />
+        <Route path="/policies" component={Policies} />
+        <Route path="/policy-management" component={PolicyManagement} />
+        <Route path="/notifications-management" component={NotificationsManagement} />
+        <Route path="/work-hours" component={WorkHours} />
+        <Route path="/quick-actions" component={QuickActionsManagement} />
+        <Route path="/complete-profile" component={CompleteProfile} />
+        <Route path="/clients" component={Clients} />
+        <Route path="/404" component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
+      {shouldShowBottomNav && <BottomNav />}
+    </div>
   );
 }
 
 function App() {
   return (
-      <ThemeProvider
-        defaultTheme="dark"
-        switchable
-      >
-        <TooltipProvider>
-          <Toaster />
-          <InstallPrompt />
-          <IOSInstallPrompt />
-          <Router />
-        </TooltipProvider>
-      </ThemeProvider>
+    <ThemeProvider
+      defaultTheme="dark"
+      switchable
+    >
+      <TooltipProvider>
+        <Toaster />
+        <InstallPrompt />
+        <IOSInstallPrompt />
+        <Router />
+      </TooltipProvider>
+    </ThemeProvider>
   );
 }
 

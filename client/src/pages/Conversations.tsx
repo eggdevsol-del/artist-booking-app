@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { Calendar, ChevronRight, MessageCircle, Settings, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import BottomNav from "@/components/BottomNav";
+
 
 export default function Conversations() {
   const { user, loading } = useAuth();
@@ -205,8 +205,7 @@ export default function Conversations() {
         )}
       </main>
 
-      {/* Bottom Navigation */}
-      <BottomNav />
+
     </div>
   );
 }
