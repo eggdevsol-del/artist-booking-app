@@ -32,7 +32,7 @@ export const authRouter = router({
         .mutation(async ({ ctx, input }) => {
             return db.updateUserProfile(ctx.user.id, {
                 role: input,
-                hasCompletedOnboarding: true
+                hasCompletedOnboarding: 1
             });
         }),
     linkInstagram: protectedProcedure

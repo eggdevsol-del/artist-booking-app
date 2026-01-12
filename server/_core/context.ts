@@ -63,7 +63,7 @@ export async function createContext(
                     name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || "New User",
                     role: "client" as const,
                     loginMethod: "clerk",
-                    hasCompletedOnboarding: false
+                    hasCompletedOnboarding: 0
                   };
 
                   await database.insert(users).values(newUser);
