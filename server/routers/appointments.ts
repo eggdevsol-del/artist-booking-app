@@ -251,6 +251,11 @@ export const appointmentsRouter = router({
                 searchStart
             );
 
+            const busySlots = existingAppointments.map(a => ({
+                startTime: a.startTime,
+                endTime: a.endTime
+            }));
+
             const suggestedDates: Date[] = [];
             let currentDateSearch = new Date(input.startDate);
             // Ensure we start searching from the start date, or now if start date is past
@@ -270,7 +275,7 @@ export const appointmentsRouter = router({
                     currentDateSearch,
                     input.serviceDuration,
                     workSchedule,
-                    existingAppointments
+                    busySlots
                 );
 
                 if (!slot) {
@@ -283,7 +288,7 @@ export const appointmentsRouter = router({
                 suggestedDates.push(slot);
 
                 // Add to existing appointments to prevent overlap with consecutive sittings
-                existingAppointments.push({
+                busySlots.push({
                     startTime: new Date(slot),
                     endTime: new Date(slot.getTime() + input.serviceDuration * 60000)
                 });
@@ -351,9 +356,42 @@ export const appointmentsRouter = router({
                 createdCount++;
             }
 
+            // Auto-send deposit info if enabled
+            const artistSettings = await db.getArtistSettings(conversation.artistId);
+            if (artistSettings) {
+                await sendDepositMessage(input.conversationId, conversation.artistId, artistSettings);
+            }
+
+
             return { success: true, count: createdCount };
         }),
 });
+
+// Helper function to send deposit info
+async function sendDepositMessage(
+    conversationId: number,
+    artistId: string,
+    artistSettings: any
+) {
+    if (!artistSettings?.autoSendDepositInfo) return;
+
+    // Default message content
+    let content = "To secure your booking, please pay the deposit using the details below:\n\n";
+
+    if (artistSettings.businessName) content += `Business: ${artistSettings.businessName}\n`;
+    if (artistSettings.bsb) content += `BSB: ${artistSettings.bsb}\n`;
+    if (artistSettings.accountNumber) content += `Account: ${artistSettings.accountNumber}\n`;
+    if (artistSettings.depositAmount) content += `Amount: $${artistSettings.depositAmount}\n`;
+
+    content += "\nPlease send a screenshot of the payment receipt once transferred.";
+
+    await db.createMessage({
+        conversationId,
+        senderId: artistId,
+        content,
+        messageType: "text",
+    });
+}
 
 // Helper to parse time strings like "14:30" or "02:30 PM"
 function parseTime(timeStr: string): { hour: number; minute: number } | null {

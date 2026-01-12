@@ -45,7 +45,7 @@ export function ProjectProposalMessage({
     const timeDisplay = `${hours} Hrs${minutes > 0 ? ` / ${minutes} min` : ''}`;
 
     return (
-        <Card className="w-full max-w-[340px] border-none bg-[#1a1a1a] text-white shadow-xl overflow-hidden">
+        <Card className="w-[85%] max-w-[420px] border-none bg-[#1a1a1a] text-white shadow-xl overflow-hidden text-sm">
             {/* Header / Status */}
             <div className="p-5 pb-2 flex items-center justify-between">
                 <div className="space-y-1">
@@ -61,15 +61,15 @@ export function ProjectProposalMessage({
 
             <CardContent className="p-5 pt-2 grid gap-5">
                 {/* Stats Row */}
-                <div className="bg-[#242424] rounded-xl p-3 flex items-center justify-between text-sm mx-auto w-full">
-                    <div className="flex-1 text-center border-r border-gray-700">
-                        <span className="block font-semibold text-gray-200">${totalCost}</span>
+                <div className="bg-[#242424] rounded-xl p-3 grid grid-cols-3 divide-x divide-gray-700 items-center justify-center mx-auto w-full">
+                    <div className="text-center px-2 flex items-center justify-center h-full">
+                        <span className="block font-semibold text-gray-200 text-sm whitespace-nowrap">${totalCost}</span>
                     </div>
-                    <div className="flex-[1.5] text-center border-r border-gray-700 px-2">
-                        <span className="block font-medium text-gray-400 text-xs">{timeDisplay} / {totalMinutes} min</span>
+                    <div className="text-center px-2 flex items-center justify-center h-full">
+                        <span className="block font-medium text-gray-400 text-sm whitespace-nowrap leading-tight">{timeDisplay}</span>
                     </div>
-                    <div className="flex-1 text-center">
-                        <span className="block font-medium text-gray-400 text-xs">{sittings} Sittings</span>
+                    <div className="text-center px-2 flex items-center justify-center h-full">
+                        <span className="block font-medium text-gray-400 text-sm whitespace-nowrap">{sittings} Sittings</span>
                     </div>
                 </div>
 
