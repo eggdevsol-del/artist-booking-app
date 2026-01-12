@@ -16,6 +16,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ProjectProposalMessage } from "@/components/chat/ProjectProposalMessage";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { ChevronUp, Zap } from "lucide-react";
 
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
@@ -678,61 +680,87 @@ export default function Chat() {
 
       {/* Fixed Bottom Input Area - Lifted above Bottom Nav */}
       {/* Fixed Bottom Input Area - Lifted above Bottom Nav */}
-      <div className="fixed bottom-[80px] left-0 right-0 z-[60] bg-background border-t shadow-sm">
+      {/* Fixed Bottom Input Area */}
+      <div className="fixed bottom-0 left-0 right-0 z-[60] bg-background border-t shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.1)]">
         {isArtist && (
-          <div className="px-4 py-2 border-b bg-background">
-            <div className="grid grid-cols-3 gap-2 mb-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={() => setShowBookingCalendar(true)}
-              >
-                <CalendarIcon className="w-4 h-4 mr-1" />
-                Book Now
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs"
-                onClick={() => {
-                  setShowProjectWizard(true);
-                  setWizardStep('service');
-                }}
-              >
-                <CalendarIcon className="w-4 h-4 mr-1" />
-                Book Project
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                className="text-xs"
-                onClick={() => {
-                  if (conversationId) {
-                    // This could be updated to confirm project bookings too depending on implementation
-                    toast.info("Use the 'Confirm & Book' button in the chat bubble for projects.");
-                  }
-                }}
-              >
-                ✓ Confirm
-              </Button>
-            </div>
-            {quickActions && quickActions.length > 0 && (
-              <div className="grid grid-cols-3 gap-2">
-                {quickActions.slice(0, 6).map((action) => (
-                  <Button
-                    key={action.id}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => handleQuickAction(action)}
-                  >
-                    {action.label}
-                  </Button>
-                ))}
+          <Sheet>
+            <SheetTrigger asChild>
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-32 h-6 bg-background rounded-t-xl border-t border-x flex items-center justify-center cursor-pointer hover:bg-accent/50 transition-colors shadow-sm">
+                <ChevronUp className="w-4 h-4 text-muted-foreground" />
               </div>
-            )}
-          </div>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[60vh] rounded-t-[20px] pb-safe-bottom">
+              <SheetHeader className="mb-4">
+                <SheetTitle className="text-center text-sm font-semibold uppercase tracking-wider text-muted-foreground">Quick Actions</SheetTitle>
+              </SheetHeader>
+
+              <div className="grid gap-6 px-2">
+                {/* Core Booking Actions */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                    <CalendarIcon className="w-3 h-3" /> Booking Tools
+                  </h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Button
+                      variant="outline"
+                      className="h-20 flex-col gap-2 hover:border-primary hover:bg-primary/5"
+                      onClick={() => setShowBookingCalendar(true)}
+                    >
+                      <CalendarIcon className="w-6 h-6 text-primary" />
+                      <span className="text-xs">Book Now</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-20 flex-col gap-2 hover:border-primary hover:bg-primary/5"
+                      onClick={() => {
+                        setShowProjectWizard(true);
+                        setWizardStep('service');
+                      }}
+                    >
+                      <div className="relative">
+                        <CalendarIcon className="w-6 h-6 text-primary" />
+                        <span className="absolute -top-1 -right-1 text-[8px] bg-primary text-primary-foreground px-1 rounded-full">PRO</span>
+                      </div>
+                      <span className="text-xs">Project</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-20 flex-col gap-2 hover:border-primary hover:bg-primary/5"
+                      onClick={() => {
+                        if (conversationId) {
+                          toast.info("Use the 'Confirm & Book' button in the chat bubble for projects.");
+                        }
+                      }}
+                    >
+                      <Check className="w-6 h-6 text-green-500" />
+                      <span className="text-xs">Confirm</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Quick Responses */}
+                {quickActions && quickActions.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                      <Zap className="w-3 h-3" /> Saved Responses
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      {quickActions.map((action) => (
+                        <Button
+                          key={action.id}
+                          variant="secondary"
+                          className="justify-start h-auto py-3 px-4 text-xs text-left whitespace-normal leading-relaxed"
+                          onClick={() => handleQuickAction(action)}
+                        >
+                          {action.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
         )}
 
         {/* Message Input */}
