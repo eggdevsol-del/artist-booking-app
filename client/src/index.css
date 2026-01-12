@@ -273,11 +273,11 @@
   }
 
   .mobile-header {
-    @apply sticky top-0 z-50 bg-background border-b border-border;
+    @apply sticky top-0 z-50 bg-background/60 backdrop-blur-md border-b border-border;
   }
 
   .mobile-bottom-nav {
-    @apply fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border;
+    @apply fixed bottom-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-md border-t border-border;
     padding-bottom: env(safe-area-inset-bottom);
   }
 
