@@ -6,7 +6,6 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import { ClerkProvider } from "@clerk/clerk-react";
 import App from "./App";
-import { getLoginUrl } from "./const";
 import "./index.css";
 import { registerServiceWorker } from "./lib/pwa";
 import { initializeOneSignal } from "./lib/onesignal";
@@ -15,18 +14,9 @@ const queryClient = new QueryClient();
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
-  if (typeof window === "undefined") return;
-
-  const isUnauthorized = error.message === UNAUTHED_ERR_MSG;
-
-  if (!isUnauthorized) return;
-
-  // Clear auth token and redirect to login
-  localStorage.removeItem("authToken");
-  localStorage.removeItem("user");
-  sessionStorage.removeItem("authToken");
-  sessionStorage.removeItem("user");
-  window.location.href = "/login";
+  // Let Clerk handle redirects or UI states
+  // We can just log it for now, or assume the SignedOut component handles the UI
+  console.warn("Unauthorized TRPC call", error);
 };
 
 queryClient.getQueryCache().subscribe(event => {
@@ -50,21 +40,12 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
-      fetch(input, init) {
-        // Get JWT token from localStorage OR sessionStorage
-        const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
-
-        // Add Authorization header if token exists
-        const headers = {
-          ...(init?.headers || {}),
+      async headers() {
+        // @ts-ignore - Clerk attaches to window
+        const token = await window.Clerk?.session?.getToken();
+        return {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         };
-
-        return globalThis.fetch(input, {
-          ...(init ?? {}),
-          credentials: "include",
-          headers,
-        });
       },
     }),
   ],
