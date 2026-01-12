@@ -675,7 +675,7 @@ export default function Chat() {
       </ScrollArea>
 
       {/* Fixed Bottom Input Area - Lifted above Bottom Nav */}
-      <div className="fixed bottom-[88px] left-0 right-0 z-[60] bg-background border-t shadow-sm">
+      <div className="fixed bottom-[83px] left-0 right-0 z-[60] bg-background border-t shadow-sm">
         {isArtist && (
           <div className="px-4 py-2 border-b bg-background">
             <div className="grid grid-cols-3 gap-2 mb-2">
