@@ -101,7 +101,7 @@ export async function getArtists() {
             instagramUsername: users.instagramUsername,
         })
         .from(users)
-        .where(or(eq(users.role, 'artist'), eq(users.role, 'admin')));
+        .where(eq(users.role, 'artist'));
 
     return result;
 }
