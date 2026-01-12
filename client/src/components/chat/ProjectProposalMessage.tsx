@@ -45,7 +45,7 @@ export function ProjectProposalMessage({
     const timeDisplay = `${hours} Hrs${minutes > 0 ? ` / ${minutes} min` : ''}`;
 
     return (
-        <Card className="w-[340px] border-none bg-[#1a1a1a] text-white shadow-xl overflow-hidden">
+        <Card className="w-full max-w-[340px] border-none bg-[#1a1a1a] text-white shadow-xl overflow-hidden">
             {/* Header / Status */}
             <div className="p-5 pb-2 flex items-center justify-between">
                 <div className="space-y-1">
