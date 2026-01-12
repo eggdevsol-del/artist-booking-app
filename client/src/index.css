@@ -43,72 +43,85 @@
 }
 
 :root {
-  /* Glassmorphism / Vision OS Inspired Theme */
+  /* Ice / Glass Theme Palette */
   --radius: 2rem;
 
-  /* Lighter, deeper background for contrast */
-  --background: oklch(0.10 0.01 260);
+  /* Deep Ocean / Space Background Base */
+  --background: oklch(0.15 0.05 210);
+  /* Deep Teal/Blue base */
   --foreground: oklch(0.98 0 0);
+  /* Pure White text */
 
-  /* Glassy Cards: MORE transparent (0.4 -> 0.15) for the blur to work */
-  --card: oklch(0.20 0.02 260 / 0.15);
+  /* Glassy Cards: Clear Ice */
+  --card: oklch(1 0 0 / 0.05);
+  /* White with very low opacity */
   --card-foreground: oklch(0.98 0 0);
 
-  --popover: oklch(0.12 0.02 260 / 0.60);
+  --popover: oklch(0.15 0.05 210 / 0.85);
+  /* Dark Teal Blur */
   --popover-foreground: oklch(0.98 0 0);
 
-  --primary: oklch(0.65 0.20 280);
-  --primary-foreground: oklch(1 0 0);
+  /* Primary: Pure White / Cyan Glow (Replaces Purple) */
+  --primary: oklch(0.90 0.05 200);
+  /* Bright Cyan/White */
+  --primary-foreground: oklch(0.15 0.05 210);
 
-  --secondary: oklch(1 0 0 / 0.1);
+  /* Secondary: Subtle Blue/Teal */
+  --secondary: oklch(0.85 0.10 200 / 0.1);
   --secondary-foreground: oklch(0.98 0 0);
 
-  --muted: oklch(1 0 0 / 0.05);
-  --muted-foreground: oklch(0.70 0 0);
+  --muted: oklch(1 0 0 / 0.1);
+  --muted-foreground: oklch(0.70 0.02 200);
 
-  --accent: oklch(0.60 0.20 280);
+  --accent: oklch(0.85 0.10 200);
+  /* Cyan Accent */
   --accent-foreground: oklch(1 0 0);
 
   --destructive: oklch(0.60 0.22 25);
   --destructive-foreground: oklch(1 0 0);
 
-  /* Border: Stronger white opacity (0.15 -> 0.25) for edge pop */
-  --border: oklch(1 0 0 / 0.25);
-  --input: oklch(1 0 0 / 0.15);
-  --ring: oklch(0.60 0.20 280);
+  /* Border: CRITICAL - Ice White Edge */
+  --border: oklch(1 0 0 / 0.3);
+  /* Translucent White */
+  --input: oklch(1 0 0 / 0.2);
+  --ring: oklch(0.85 0.10 200);
+  /* Cyan Ring */
 
   /* Sidebar */
-  --sidebar: oklch(0.10 0.01 260 / 0.6);
+  --sidebar: oklch(0.15 0.05 210 / 0.6);
   --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.60 0.20 280);
-  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-primary: oklch(0.90 0.05 200);
+  --sidebar-primary-foreground: oklch(0.15 0.05 210);
   --sidebar-accent: oklch(1 0 0 / 0.1);
   --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(1 0 0 / 0.15);
-  --sidebar-ring: oklch(0.60 0.20 280);
+  --sidebar-border: oklch(1 0 0 / 0.2);
+  --sidebar-ring: oklch(0.90 0.05 200);
 }
 
 .dark {
-  /* Mirroring the root values to ensure consistency */
-  --background: oklch(0.10 0.01 260);
+  /* 
+     Force the exact same look in dark mode
+     This theme DOES NOT HAVE a "Light Mode" - it is always Dark Glass.
+  */
+  --background: oklch(0.15 0.05 210);
   --foreground: oklch(0.98 0 0);
-  --card: oklch(0.20 0.02 260 / 0.15);
+  --card: oklch(1 0 0 / 0.05);
   --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.12 0.02 260 / 0.60);
+  --popover: oklch(0.15 0.05 210 / 0.85);
   --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.65 0.20 280);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(1 0 0 / 0.1);
+  --primary: oklch(0.90 0.05 200);
+  --primary-foreground: oklch(0.15 0.05 210);
+  --secondary: oklch(0.85 0.10 200 / 0.1);
   --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(1 0 0 / 0.05);
-  --muted-foreground: oklch(0.70 0 0);
-  --accent: oklch(0.65 0.20 280);
+  --muted: oklch(1 0 0 / 0.1);
+  --muted-foreground: oklch(0.70 0.02 200);
+  --accent: oklch(0.85 0.10 200);
   --accent-foreground: oklch(1 0 0);
   --destructive: oklch(0.60 0.22 25);
   --destructive-foreground: oklch(1 0 0);
-  --border: oklch(1 0 0 / 0.25);
-  --input: oklch(1 0 0 / 0.15);
-  --ring: oklch(0.65 0.20 280);
+  --border: oklch(1 0 0 / 0.3);
+  --input: oklch(1 0 0 / 0.2);
+  --ring: oklch(0.85 0.10 200);
 }
 
 @layer base {
@@ -118,67 +131,72 @@
 
   body {
     @apply bg-background text-foreground;
+
     /* 
-      Updated Background: Brighter, richer Cyan/Teal gradient to match reference.
-      The previous "Dark Void" prevented the glass effect from looking like glass.
+       EXACT REFERENCE GRADIENT RECREATION
+       - Base: Deep Oceanic Blue
+       - Top Right: Cyan Light
+       - Bottom Left: Subtle Deep Blue/Purple
     */
     background-image:
-      radial-gradient(circle at 50% 0%, oklch(0.40 0.15 240 / 0.8) 0%, transparent 60%),
-      /* Bright Top-Center Light */
-      radial-gradient(circle at 100% 0%, oklch(0.35 0.15 200 / 0.5) 0%, transparent 50%),
-      /* Teal Top-Right */
-      radial-gradient(circle at 0% 100%, oklch(0.30 0.10 280 / 0.5) 0%, transparent 50%),
-      /* Purple Bottom-Left */
-      linear-gradient(to bottom, oklch(0.15 0.05 240), oklch(0.10 0.05 260));
-    /* Deep base layer */
+      radial-gradient(circle at 100% 0%, oklch(0.60 0.15 210 / 0.4) 0%, transparent 50%),
+      /* Bright Cyan Top Right */
+      radial-gradient(circle at 0% 0%, oklch(0.40 0.15 240 / 0.3) 0%, transparent 50%),
+      /* Blue Top Left */
+      radial-gradient(circle at 50% 100%, oklch(0.30 0.10 260 / 0.4) 0%, transparent 60%);
+    /* Deep Blue Bottom */
+
+    background-color: oklch(0.15 0.05 210);
+    /* Fallback Base */
     background-attachment: fixed;
     height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     touch-action: manipulation;
   }
+}
 
-  /* 
+/* 
      Enhanced Glass Card v2:
      - Much lighter background (ice look)
      - Stronger top border reflection
      - Deeper shadow for lift
   */
-  /* 
+/* 
      Enhanced Glass Card v2:
      - Much lighter background (ice look)
      - Stronger top border reflection
      - Deeper shadow for lift
   */
-  .glass-card,
-  .card,
-  [data-slot="card"] {
-    @apply backdrop-blur-3xl border border-white/20 shadow-2xl;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
-    backdrop-filter: blur(20px) saturate(180%);
-    box-shadow:
-      0 8px 32px 0 rgba(0, 0, 0, 0.6),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-  }
+.glass-card,
+.card,
+[data-slot="card"] {
+  @apply backdrop-blur-3xl border border-white/20 shadow-2xl;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    0 8px 32px 0 rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
 
-  /* Apply specific rounding to default cards */
-  .card,
-  [data-slot="card"] {
-    @apply rounded-[2rem];
-  }
+/* Apply specific rounding to default cards */
+.card,
+[data-slot="card"] {
+  @apply rounded-[2rem];
+}
 
-  button:not(:disabled),
-  [role="button"]:not([aria-disabled="true"]),
-  [type="button"]:not(:disabled),
-  [type="submit"]:not(:disabled),
-  [type="reset"]:not(:disabled),
-  a[href],
-  select:not(:disabled),
-  input[type="checkbox"]:not(:disabled),
-  input[type="radio"]:not(:disabled) {
-    @apply cursor-pointer;
-  }
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+[type="button"]:not(:disabled),
+[type="submit"]:not(:disabled),
+[type="reset"]:not(:disabled),
+a[href],
+select:not(:disabled),
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled) {
+  @apply cursor-pointer;
+}
 }
 
 @layer components {
