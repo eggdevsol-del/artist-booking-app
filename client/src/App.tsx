@@ -12,7 +12,7 @@ import Chat from "./pages/Chat";
 import Calendar from "./pages/Calendar";
 import Settings from "./pages/Settings";
 import Conversations from "./pages/Conversations";
-import RoleSelection from "./pages/RoleSelection";
+
 import Consultations from "./pages/Consultations";
 import Policies from "./pages/Policies";
 import PolicyManagement from "./pages/PolicyManagement";
@@ -26,7 +26,7 @@ import Signup from "./pages/Signup";
 
 function Router() {
   const [location] = useLocation();
-  const hideBottomNavPaths = ["/", "/login", "/signup", "/role-selection", "/complete-profile"];
+  const hideBottomNavPaths = ["/", "/login", "/signup", "/complete-profile"];
   const shouldShowBottomNav = !hideBottomNavPaths.includes(location) && !location.startsWith("/404");
 
   return (
@@ -35,7 +35,7 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/login" component={Login} />
         <Route path="/signup" component={Signup} />
-        <Route path="/role-selection" component={RoleSelection} />
+
         <Route path="/conversations" component={Conversations} />
         <Route path="/chat/:id" component={Chat} />
         <Route path="/calendar" component={Calendar} />
