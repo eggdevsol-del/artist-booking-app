@@ -47,8 +47,16 @@ async function startServer() {
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
 
+  // Ensure upload directory exists
+  const uploadDir = path.join(process.cwd(), "server", "uploads");
+  const fs = require('fs');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+    console.log('[Server] Created uploads directory at:', uploadDir);
+  }
+
   // Serve static uploads
-  app.use("/uploads", express.static(path.join(process.cwd(), "server", "uploads")));
+  app.use("/uploads", express.static(uploadDir));
 
   // File serving endpoint - handle full paths with subdirectories
   app.get("/api/files/*", async (req, res) => {

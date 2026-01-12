@@ -596,6 +596,7 @@ export default function Chat() {
               return (
                 <div
                   key={message.id}
+                  id={`message-${message.id}`}
                   className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
                 >
                   {isProjectProposal ? (
@@ -675,7 +676,8 @@ export default function Chat() {
       </ScrollArea>
 
       {/* Fixed Bottom Input Area - Lifted above Bottom Nav */}
-      <div className="fixed bottom-[83px] left-0 right-0 z-[60] bg-background border-t shadow-sm">
+      {/* Fixed Bottom Input Area - Lifted above Bottom Nav */}
+      <div className="fixed bottom-[80px] left-0 right-0 z-[60] bg-background border-t shadow-sm">
         {isArtist && (
           <div className="px-4 py-2 border-b bg-background">
             <div className="grid grid-cols-3 gap-2 mb-2">
@@ -881,7 +883,13 @@ export default function Chat() {
                           src={m.content}
                           alt="Client media"
                           className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                          onClick={() => window.open(m.content, "_blank")}
+                          onClick={() => {
+                            setShowClientInfo(false); // Close dialog
+                            const el = document.getElementById(`message-${m.id}`);
+                            if (el) {
+                              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                          }}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-xs">Video</div>
@@ -904,7 +912,13 @@ export default function Chat() {
                           src={m.content}
                           alt="Artist content"
                           className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                          onClick={() => window.open(m.content, "_blank")}
+                          onClick={() => {
+                            setShowClientInfo(false); // Close dialog
+                            const el = document.getElementById(`message-${m.id}`);
+                            if (el) {
+                              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                          }}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-xs">Video</div>
