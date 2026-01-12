@@ -203,7 +203,7 @@ export default function ComponentsShowcase() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground">
       <main className="container max-w-6xl mx-auto">
         <div className="space-y-2 justify-between flex">
           <h2 className="text-3xl font-bold tracking-tight mb-6">
@@ -452,9 +452,8 @@ export default function ComponentsShowcase() {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className={`w-full justify-start text-left font-normal ${
-                          !datePickerDate && "text-muted-foreground"
-                        }`}
+                        className={`w-full justify-start text-left font-normal ${!datePickerDate && "text-muted-foreground"
+                          }`}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {datePickerDate ? (
@@ -521,14 +520,14 @@ export default function ComponentsShowcase() {
                       >
                         {selectedFramework
                           ? [
-                              { value: "react", label: "React" },
-                              { value: "vue", label: "Vue" },
-                              { value: "angular", label: "Angular" },
-                              { value: "svelte", label: "Svelte" },
-                              { value: "nextjs", label: "Next.js" },
-                              { value: "nuxt", label: "Nuxt" },
-                              { value: "remix", label: "Remix" },
-                            ].find(fw => fw.value === selectedFramework)?.label
+                            { value: "react", label: "React" },
+                            { value: "vue", label: "Vue" },
+                            { value: "angular", label: "Angular" },
+                            { value: "svelte", label: "Svelte" },
+                            { value: "nextjs", label: "Next.js" },
+                            { value: "nuxt", label: "Nuxt" },
+                            { value: "remix", label: "Remix" },
+                          ].find(fw => fw.value === selectedFramework)?.label
                           : "Select framework..."}
                         <CalendarIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -561,11 +560,10 @@ export default function ComponentsShowcase() {
                                 }}
                               >
                                 <Check
-                                  className={`mr-2 h-4 w-4 ${
-                                    selectedFramework === framework.value
+                                  className={`mr-2 h-4 w-4 ${selectedFramework === framework.value
                                       ? "opacity-100"
                                       : "opacity-0"
-                                  }`}
+                                    }`}
                                 />
                                 {framework.label}
                               </CommandItem>

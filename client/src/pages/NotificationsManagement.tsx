@@ -152,7 +152,7 @@ export default function NotificationsManagement() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background pb-safe">
+    <div className="min-h-screen flex flex-col pb-safe">
       <header className="mobile-header px-4 py-4">
         <div className="flex items-center gap-3">
           <Button
@@ -338,21 +338,21 @@ export default function NotificationsManagement() {
             {(formData.templateType === "reminder" ||
               formData.templateType === "follow_up" ||
               formData.templateType === "preparation") && (
-              <div className="space-y-2">
-                <Label htmlFor="timing">Send Timing</Label>
-                <Input
-                  id="timing"
-                  value={formData.timing}
-                  onChange={(e) =>
-                    setFormData({ ...formData, timing: e.target.value })
-                  }
-                  placeholder="1 hour before / 24 hours after"
-                />
-                <p className="text-xs text-muted-foreground">
-                  E.g., "1 hour before", "24 hours after", "2 days before"
-                </p>
-              </div>
-            )}
+                <div className="space-y-2">
+                  <Label htmlFor="timing">Send Timing</Label>
+                  <Input
+                    id="timing"
+                    value={formData.timing}
+                    onChange={(e) =>
+                      setFormData({ ...formData, timing: e.target.value })
+                    }
+                    placeholder="1 hour before / 24 hours after"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    E.g., "1 hour before", "24 hours after", "2 days before"
+                  </p>
+                </div>
+              )}
 
             <div className="flex items-center justify-between">
               <Label htmlFor="enabled">Enabled</Label>
@@ -374,8 +374,8 @@ export default function NotificationsManagement() {
                 {createMutation.isPending || updateMutation.isPending
                   ? "Saving..."
                   : editingTemplate
-                  ? "Update"
-                  : "Create"}
+                    ? "Update"
+                    : "Create"}
               </Button>
               <Button
                 variant="outline"

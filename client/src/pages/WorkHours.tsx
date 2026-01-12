@@ -232,7 +232,7 @@ export default function WorkHours() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="h-screen flex flex-col overflow-hidden">
       <header className="mobile-header px-4 py-4 flex-shrink-0">
         <div className="flex items-center gap-3">
           <Button

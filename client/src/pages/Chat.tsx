@@ -543,7 +543,7 @@ export default function Chat() {
   const otherUserName = conversation.otherUser?.name || "Unknown User";
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="mobile-header px-4 py-3 border-b">
         <div className="flex items-center gap-3">
@@ -681,11 +681,11 @@ export default function Chat() {
       {/* Fixed Bottom Input Area - Lifted above Bottom Nav */}
       {/* Fixed Bottom Input Area - Lifted above Bottom Nav */}
       {/* Fixed Bottom Input Area */}
-      <div className="fixed bottom-0 left-0 right-0 z-[60] bg-background border-t shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.1)]">
+      <div className="fixed bottom-0 left-0 right-0 z-[60] bg-background/20 backdrop-blur-xl border-t border-white/10 shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.1)]">
         {isArtist && (
           <Sheet>
             <SheetTrigger asChild>
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-32 h-6 bg-background rounded-t-xl border-t border-x flex items-center justify-center cursor-pointer hover:bg-accent/50 transition-colors shadow-sm">
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-32 h-6 bg-background/40 backdrop-blur-md rounded-t-xl border-t border-x flex items-center justify-center cursor-pointer hover:bg-accent/50 transition-colors shadow-sm">
                 <ChevronUp className="w-4 h-4 text-muted-foreground" />
               </div>
             </SheetTrigger>
@@ -764,7 +764,7 @@ export default function Chat() {
         )}
 
         {/* Message Input */}
-        <div className="px-4 py-3 bg-background pb-safe-bottom">
+        <div className="px-4 py-3 bg-transparent pb-safe-bottom">
           <div className="flex items-center gap-2">
             <input
               ref={fileInputRef}

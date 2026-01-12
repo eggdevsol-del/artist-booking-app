@@ -147,7 +147,7 @@ export default function QuickActionsManagement() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col">
       <header className="mobile-header px-4 py-4">
         <div className="flex items-center gap-3">
           <Button
@@ -315,11 +315,10 @@ export default function QuickActionsManagement() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span
-                        className={`text-xs px-2 py-1 rounded-full ${
-                          action.enabled
+                        className={`text-xs px-2 py-1 rounded-full ${action.enabled
                             ? "bg-accent/20 text-accent"
                             : "bg-muted text-muted-foreground"
-                        }`}
+                          }`}
                       >
                         {action.enabled ? "Active" : "Disabled"}
                       </span>

@@ -252,7 +252,7 @@ export default function WorkHoursAndServices({ onBack }: WorkHoursAndServicesPro
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background pb-20">
+    <div className="min-h-screen flex flex-col pb-20">
       <header className="mobile-header px-4 py-4 border-b">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={onBack}>

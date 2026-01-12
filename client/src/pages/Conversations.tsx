@@ -70,7 +70,7 @@ export default function Conversations() {
   const isArtist = user?.role === "artist" || user?.role === "admin";
 
   return (
-    <div className="min-h-screen flex flex-col bg-background pb-20">
+    <div className="min-h-screen flex flex-col pb-20">
       {/* Header */}
       <header className="mobile-header px-4 py-4">
         <div className="flex items-center justify-between">

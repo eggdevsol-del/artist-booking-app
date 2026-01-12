@@ -118,7 +118,7 @@ export default function Clients() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col">
       <header className="mobile-header px-4 py-4">
         <div className="flex items-center gap-3">
           <Button

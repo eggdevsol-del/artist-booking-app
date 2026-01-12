@@ -99,9 +99,9 @@ export default function Consultations() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-background border-b">
+      <header className="sticky top-0 z-10 border-b">
         <div className="flex items-center justify-between p-4">
           <h1 className="text-2xl font-bold">Consultations</h1>
           <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>

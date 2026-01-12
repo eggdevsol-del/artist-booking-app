@@ -109,7 +109,7 @@ export default function PolicyManagement() {
   // Policy editor view
   if (selectedType) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="min-h-screen flex flex-col">
         <header className="mobile-header px-4 py-4">
           <div className="flex items-center gap-3">
             <Button
@@ -196,7 +196,7 @@ export default function PolicyManagement() {
   const policyTypesList: PolicyType[] = ["deposit", "design", "reschedule", "cancellation"];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col">
       <header className="mobile-header px-4 py-4">
         <div className="flex items-center gap-3">
           <Button

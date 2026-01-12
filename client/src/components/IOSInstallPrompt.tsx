@@ -23,7 +23,7 @@ export default function IOSInstallPrompt() {
     const dismissed = localStorage.getItem('ios-install-dismissed');
     const dismissedTime = dismissed ? parseInt(dismissed) : 0;
     const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
-    
+
     // Show again after 24 hours
     if (dismissedTime > oneDayAgo) {
       return;
@@ -56,7 +56,7 @@ export default function IOSInstallPrompt() {
 
   return (
     <div className="fixed bottom-20 left-4 right-4 z-50 md:left-auto md:right-4 md:w-96">
-      <Card className="shadow-lg border-2 border-primary/20 bg-background/95 backdrop-blur">
+      <Card className="shadow-lg border-2 border-primary/20 bg-background/20 backdrop-blur-xl">
         <CardHeader className="relative pb-3">
           <Button
             variant="ghost"
@@ -130,15 +130,15 @@ export default function IOSInstallPrompt() {
           </div>
 
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              className="flex-1" 
+            <Button
+              variant="outline"
+              className="flex-1"
               onClick={handleDismiss}
             >
               Maybe Later
             </Button>
-            <Button 
-              className="flex-1" 
+            <Button
+              className="flex-1"
               onClick={handleLearnMore}
             >
               Got It!
