@@ -681,7 +681,7 @@ export default function Chat() {
       {/* Fixed Bottom Input Area - Lifted above Bottom Nav */}
       {/* Fixed Bottom Input Area - Lifted above Bottom Nav */}
       {/* Fixed Bottom Input Area */}
-      <div className="fixed bottom-0 left-0 right-0 z-[60] bg-background/20 backdrop-blur-xl border-t border-white/10 shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.1)]">
+      <div className="fixed bottom-28 left-4 right-4 z-[60] bg-background/40 backdrop-blur-xl border border-white/10 shadow-lg rounded-[2rem]">
         {isArtist && (
           <Sheet>
             <SheetTrigger asChild>
@@ -764,7 +764,7 @@ export default function Chat() {
         )}
 
         {/* Message Input */}
-        <div className="px-4 py-3 bg-transparent pb-safe-bottom">
+        <div className="px-4 py-3 bg-transparent">
           <div className="flex items-center gap-2">
             <input
               ref={fileInputRef}
