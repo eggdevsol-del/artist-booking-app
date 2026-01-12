@@ -248,8 +248,8 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
     return (
         <Dialog open={isOpen} onOpenChange={(v) => !v && handleClose()}>
-            <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
+            <DialogContent className="sm:max-w-[500px] max-h-[85vh] flex flex-col p-0 gap-0">
+                <DialogHeader className="p-6 pb-2">
                     <DialogTitle>
                         {step === 'service' && "Select Service"}
                         {step === 'frequency' && "Select Frequency"}
@@ -258,7 +258,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                     </DialogTitle>
                 </DialogHeader>
 
-                <div className="py-2">
+                <div className="py-2 px-6 overflow-y-auto flex-1">
                     {step === 'service' && renderServiceStep()}
                     {step === 'frequency' && renderFrequencyStep()}
                     {step === 'review' && renderReviewStep()}
@@ -266,7 +266,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                 </div>
 
                 {step !== 'success' && (
-                    <DialogFooter className="flex justify-between sm:justify-between px-0">
+                    <DialogFooter className="flex justify-between sm:justify-between p-6 pt-2">
                         {step !== 'service' ? (
                             <Button variant="ghost" onClick={() => setStep(prev => prev === 'review' ? 'frequency' : 'service')}>
                                 Back
