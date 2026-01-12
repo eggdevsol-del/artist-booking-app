@@ -133,21 +133,19 @@
     @apply bg-background text-foreground;
 
     /* 
-       EXACT REFERENCE GRADIENT RECREATION
-       - Base: Deep Oceanic Blue
-       - Top Right: Cyan Light
-       - Bottom Left: Subtle Deep Blue/Purple
+       RECOVERY: High-Fidelity "Deep Ocean" Gradient
+       Matches the reference: Dark blue abyss with a top-right Cyan light source.
     */
-    background-image:
-      radial-gradient(circle at 100% 0%, oklch(0.60 0.15 210 / 0.4) 0%, transparent 50%),
-      /* Bright Cyan Top Right */
-      radial-gradient(circle at 0% 0%, oklch(0.40 0.15 240 / 0.3) 0%, transparent 50%),
-      /* Blue Top Left */
-      radial-gradient(circle at 50% 100%, oklch(0.30 0.10 260 / 0.4) 0%, transparent 60%);
-    /* Deep Blue Bottom */
+    background:
+      radial-gradient(circle at 100% 0%, #22d3ee 0%, transparent 25%),
+      /* Vivid Cyan light top-right */
+      radial-gradient(circle at 100% 0%, #0891b2 20%, transparent 50%),
+      /* Teal spill */
+      radial-gradient(circle at 0% 100%, #1e1b4b 0%, transparent 50%),
+      /* Deep Indigo bottom-left */
+      #0f172a;
+    /* Slate 900 Base (Deep Blue/Black) */
 
-    background-color: oklch(0.15 0.05 210);
-    /* Fallback Base */
     background-attachment: fixed;
     height: 100vh;
     -webkit-font-smoothing: antialiased;
@@ -156,38 +154,34 @@
   }
 
   /* 
-     Enhanced Glass Card v2:
-     - Much lighter background (ice look)
-     - Stronger top border reflection
-     - Deeper shadow for lift
+     RECOVERY: Pure "Vision OS" Glass
+     - Removed "cloudy" gradients.
+     - Pure white rim.
+     - Heavy blur.
   */
   .glass-card,
   .card,
   [data-slot="card"] {
-    @apply backdrop-blur-3xl shadow-2xl;
+    @apply backdrop-blur-[30px] shadow-2xl;
+
+    /* The Surface: Almost invisible, just enough to tint */
+    background: rgba(255, 255, 255, 0.03);
+
+    /* The Edge: Sharp, bright white bevel */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+      /* Inner sharp rim */
+      0 20px 40px rgba(0, 0, 0, 0.4);
+    /* Deep ambient shadow */
 
     /* 
-      Advanced "Thick Glass" Effect:
-      1. Gradient Border: White on top (0.4), fading to transparent.
-      2. Background: Linear gradient from White/10% top to White/2% bottom.
-      3. Box Shadow: Strong inner white highlight for the "beveled edge" look.
+       Top Reflection: 
+       A subtle linear gradient on the border-image would be nice, but simple top-border brightness works best 
+       for clean CSS.
     */
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    border-top: 1px solid rgba(255, 255, 255, 0.5);
-    /* Strong top lighting */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-
-    backdrop-filter: blur(24px) saturate(220%);
-    /* Boost saturation for "vibrant" pass-through */
-
-    box-shadow:
-      0 12px 40px -8px rgba(0, 0, 0, 0.4),
-      /* Deep drop shadow */
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
-      /* Sharp top inner edge */
-      inset 0 0 20px -10px rgba(255, 255, 255, 0.1);
-    /* Inner glow */
+    border-top-color: rgba(255, 255, 255, 0.5);
+    border-left-color: rgba(255, 255, 255, 0.3);
   }
 
   /* Apply specific rounding to default cards */
