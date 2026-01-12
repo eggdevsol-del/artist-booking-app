@@ -118,27 +118,49 @@
 
   body {
     @apply bg-background text-foreground;
-    /* Boosted gradients for visibility behind glass */
+    /* 
+      Updated Background: Brighter, richer Cyan/Teal gradient to match reference.
+      The previous "Dark Void" prevented the glass effect from looking like glass.
+    */
     background-image:
-      radial-gradient(at 0% 0%, oklch(0.20 0.10 260 / 0.7) 0px, transparent 60%),
-      radial-gradient(at 100% 0%, oklch(0.20 0.10 320 / 0.6) 0px, transparent 60%),
-      radial-gradient(at 100% 100%, oklch(0.20 0.10 240 / 0.6) 0px, transparent 60%);
+      radial-gradient(circle at 50% 0%, oklch(0.40 0.15 240 / 0.8) 0%, transparent 60%),
+      /* Bright Top-Center Light */
+      radial-gradient(circle at 100% 0%, oklch(0.35 0.15 200 / 0.5) 0%, transparent 50%),
+      /* Teal Top-Right */
+      radial-gradient(circle at 0% 100%, oklch(0.30 0.10 280 / 0.5) 0%, transparent 50%),
+      /* Purple Bottom-Left */
+      linear-gradient(to bottom, oklch(0.15 0.05 240), oklch(0.10 0.05 260));
+    /* Deep base layer */
     background-attachment: fixed;
+    height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     touch-action: manipulation;
   }
 
-  /* Enhanced Glass Card: Add inner glow */
+  /* 
+     Enhanced Glass Card v2:
+     - Much lighter background (ice look)
+     - Stronger top border reflection
+     - Deeper shadow for lift
+  */
   .glass-card {
-    @apply backdrop-blur-2xl bg-card border border-border shadow-2xl;
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    @apply backdrop-blur-3xl border border-white/20 shadow-2xl;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+    backdrop-filter: blur(20px) saturate(180%);
+    box-shadow:
+      0 8px 32px 0 rgba(0, 0, 0, 0.6),
+      /* Deep lift shadow */
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+      /* Top bright edge */
+      inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    /* General thin border */
   }
 
+  /* Apply to all cards */
   .card,
   [data-slot="card"] {
-    @apply backdrop-blur-xl bg-card border border-border shadow-lg;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    @apply glass-card rounded-[2rem];
   }
 
   button:not(:disabled),
