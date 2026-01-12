@@ -9,7 +9,7 @@ export default function BottomNav() {
     const isActive = (path: string) => location === path;
 
     return (
-        <nav className="mobile-bottom-nav">
+        <nav className="mobile-bottom-nav glass-card border-t-0 rounded-t-[2.5rem] pb-safe">
             <div className="flex items-center justify-around px-4 py-3">
                 <Link href="/conversations">
                     <Button
