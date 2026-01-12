@@ -1,4 +1,5 @@
 import "dotenv/config";
+import fs from "fs";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
@@ -49,7 +50,6 @@ async function startServer() {
 
   // Ensure upload directory exists
   const uploadDir = path.join(process.cwd(), "server", "uploads");
-  const fs = require('fs');
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
     console.log('[Server] Created uploads directory at:', uploadDir);
