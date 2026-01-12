@@ -60,6 +60,20 @@ export const appointmentsRouter = router({
             })
         )
         .mutation(async ({ input }) => {
+            // Check for overlap
+            const isOverlapping = await db.checkAppointmentOverlap(
+                input.artistId,
+                input.startTime,
+                input.endTime
+            );
+
+            if (isOverlapping) {
+                throw new TRPCError({
+                    code: "CONFLICT",
+                    message: "This slot is already booked."
+                });
+            }
+
             return db.createAppointment({
                 ...input,
                 status: "pending",
@@ -340,6 +354,20 @@ export const appointmentsRouter = router({
 
             let createdCount = 0;
             for (const appt of input.appointments) {
+                // Check for overlap
+                const isOverlapping = await db.checkAppointmentOverlap(
+                    conversation.artistId,
+                    appt.startTime,
+                    appt.endTime
+                );
+
+                if (isOverlapping) {
+                    throw new TRPCError({
+                        code: "CONFLICT",
+                        message: `The slot ${appt.startTime.toLocaleString()} - ${appt.endTime.toLocaleTimeString()} is no longer available.`
+                    });
+                }
+
                 await db.createAppointment({
                     conversationId: input.conversationId,
                     artistId: conversation.artistId,

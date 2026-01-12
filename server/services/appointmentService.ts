@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lte } from "drizzle-orm";
+import { and, desc, eq, gte, lte, gt, lt, ne } from "drizzle-orm";
 import { appointments, InsertAppointment, users } from "../../drizzle/schema";
 import { getDb } from "./core";
 
@@ -174,4 +174,44 @@ export async function deleteAppointmentsForClient(artistId: string, clientId: st
         )
     );
     return true;
+}
+
+export async function checkAppointmentOverlap(
+    artistId: string,
+    startTime: Date,
+    endTime: Date,
+    excludeAppointmentId?: number
+) {
+    const db = await getDb();
+    if (!db) return false;
+
+    // Overlap logic: (StartA < EndB) and (EndA > StartB)
+    // New appointment: startTime, endTime
+    // Existing: appointments.startTime, appointments.endTime
+
+    // Condition:
+    // appointments.artistId === artistId
+    // AND appointments.startTime < endTime
+    // AND appointments.endTime > startTime
+    // AND appointments.status != 'cancelled'
+
+    // We use 'lt' and 'gt' which need to be imported
+    const conditions = [
+        eq(appointments.artistId, artistId),
+        lt(appointments.startTime, endTime as unknown as string),
+        gt(appointments.endTime, startTime as unknown as string),
+        ne(appointments.status, "cancelled")
+    ];
+
+    if (excludeAppointmentId) {
+        conditions.push(ne(appointments.id, excludeAppointmentId));
+    }
+
+    const conflicts = await db
+        .select({ id: appointments.id })
+        .from(appointments)
+        .where(and(...conditions))
+        .limit(1);
+
+    return conflicts.length > 0;
 }
