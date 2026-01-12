@@ -1,47 +1,89 @@
-import { useUser, useClerk } from "@clerk/clerk-react";
-import { useCallback, useMemo } from "react";
+import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
+import { TRPCClientError } from "@trpc/client";
+import { useCallback, useEffect, useMemo } from "react";
 
-export function useAuth() {
-  const { user, isLoaded, isSignedIn } = useUser();
-  const { signOut } = useClerk();
+type UseAuthOptions = {
+  redirectOnUnauthenticated?: boolean;
+  redirectPath?: string;
+};
+
+export function useAuth(options?: UseAuthOptions) {
+  const { redirectOnUnauthenticated = false, redirectPath = getLoginUrl() } =
+    options ?? {};
   const utils = trpc.useUtils();
 
-  // We optionally fetch the DB user to match fields, but the primary auth state comes from Clerk
   const meQuery = trpc.auth.me.useQuery(undefined, {
-    enabled: !!isSignedIn && isLoaded,
     retry: false,
     refetchOnWindowFocus: false,
   });
 
+  const logoutMutation = trpc.auth.logout.useMutation({
+    onSuccess: () => {
+      utils.auth.me.setData(undefined, null);
+    },
+  });
+
   const logout = useCallback(async () => {
-    await signOut();
-    utils.invalidate();
-    // Clear local storage hacks from legacy auth
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("user");
-  }, [signOut, utils]);
+    try {
+      await logoutMutation.mutateAsync();
+    } catch (error: unknown) {
+      if (
+        error instanceof TRPCClientError &&
+        error.data?.code === "UNAUTHORIZED"
+      ) {
+        return;
+      }
+      throw error;
+    } finally {
+      utils.auth.me.setData(undefined, null);
+      await utils.auth.me.invalidate();
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+      // Also clear session storage just in case
+      sessionStorage.removeItem("authToken");
+      sessionStorage.removeItem("user");
+    }
+  }, [logoutMutation, utils]);
 
-  return useMemo(() => {
-    // Merge Clerk User with DB User (meQuery.data), preferring DB user for role/id
-    const dbUser = meQuery.data;
-
-    // Construct a compatible user object
-    const finalUser = dbUser ? dbUser : (user ? {
-      id: user.id,
-      email: user.primaryEmailAddress?.emailAddress,
-      name: user.fullName,
-      role: "client", // Default until DB syncs
-      hasCompletedOnboarding: 0 // Default
-    } : null);
-
+  const state = useMemo(() => {
+    localStorage.setItem(
+      "manus-runtime-user-info",
+      JSON.stringify(meQuery.data)
+    );
     return {
-      user: finalUser as any, // Cast to match expected User type if needed
-      loading: !isLoaded || (isSignedIn && meQuery.isLoading),
-      error: meQuery.error ?? null,
-      isAuthenticated: !!isSignedIn,
-      refresh: () => meQuery.refetch(),
-      logout,
+      user: meQuery.data ?? null,
+      loading: meQuery.isLoading || logoutMutation.isPending,
+      error: meQuery.error ?? logoutMutation.error ?? null,
+      isAuthenticated: Boolean(meQuery.data),
     };
-  }, [user, isLoaded, isSignedIn, meQuery.data, meQuery.isLoading, meQuery.error, logout]);
+  }, [
+    meQuery.data,
+    meQuery.error,
+    meQuery.isLoading,
+    logoutMutation.error,
+    logoutMutation.isPending,
+  ]);
+
+  useEffect(() => {
+    if (!redirectOnUnauthenticated) return;
+    if (meQuery.isLoading || logoutMutation.isPending) return;
+    if (state.user) return;
+    if (typeof window === "undefined") return;
+    if (window.location.pathname === redirectPath) return;
+
+    window.location.href = redirectPath
+  }, [
+    redirectOnUnauthenticated,
+    redirectPath,
+    logoutMutation.isPending,
+    meQuery.isLoading,
+    state.user,
+  ]);
+
+  return {
+    ...state,
+    refresh: () => meQuery.refetch(),
+    logout,
+  };
 }

@@ -4,8 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
-import { ClerkProvider } from "@clerk/clerk-react";
 import App from "./App";
+import { getLoginUrl } from "./const";
 import "./index.css";
 import { registerServiceWorker } from "./lib/pwa";
 import { initializeOneSignal } from "./lib/onesignal";
@@ -14,9 +14,18 @@ const queryClient = new QueryClient();
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
-  // Let Clerk handle redirects or UI states
-  // We can just log it for now, or assume the SignedOut component handles the UI
-  console.warn("Unauthorized TRPC call", error);
+  if (typeof window === "undefined") return;
+
+  const isUnauthorized = error.message === UNAUTHED_ERR_MSG;
+
+  if (!isUnauthorized) return;
+
+  // Clear auth token and redirect to login
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("user");
+  sessionStorage.removeItem("authToken");
+  sessionStorage.removeItem("user");
+  window.location.href = "/login";
 };
 
 queryClient.getQueryCache().subscribe(event => {
@@ -40,34 +49,30 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
-      async headers() {
-        // @ts-ignore - Clerk attaches to window
-        const token = await window.Clerk?.session?.getToken();
-        return {
+      fetch(input, init) {
+        // Get JWT token from localStorage OR sessionStorage
+        const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
+
+        // Add Authorization header if token exists
+        const headers = {
+          ...(init?.headers || {}),
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         };
+
+        return globalThis.fetch(input, {
+          ...(init ?? {}),
+          credentials: "include",
+          headers,
+        });
       },
     }),
   ],
 });
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
-
-if (!PUBLISHABLE_KEY) {
-  throw new Error("Missing Clerk Publishable Key")
-}
-
 createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
     <QueryClientProvider client={queryClient}>
-      <ClerkProvider
-        publishableKey={PUBLISHABLE_KEY}
-        afterSignOutUrl="/"
-        signInForceRedirectUrl="/role-selection"
-        signUpForceRedirectUrl="/role-selection"
-      >
-        <App />
-      </ClerkProvider>
+      <App />
     </QueryClientProvider>
   </trpc.Provider>
 );

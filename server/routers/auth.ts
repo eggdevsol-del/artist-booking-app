@@ -32,7 +32,7 @@ export const authRouter = router({
         .mutation(async ({ ctx, input }) => {
             return db.updateUserProfile(ctx.user.id, {
                 role: input,
-                hasCompletedOnboarding: 1
+                hasCompletedOnboarding: true
             });
         }),
     linkInstagram: protectedProcedure
@@ -54,16 +54,5 @@ export const authRouter = router({
     listArtists: publicProcedure.query(async () => {
         // Get all users with artist or admin role
         return db.getArtists();
-    }),
-    syncUser: publicProcedure.mutation(async ({ ctx }) => {
-        // If ctx.user is already present, sync worked in context
-        if (ctx.user) {
-            return { success: true, user: ctx.user, method: "context" };
-        }
-
-        // If not, we can try to "force" it or just report failure
-        // In a perfect world, we'd retry logic here, but for now let's see if just calling this endpoint
-        // (which triggers context) is enough to "wake up" the sync
-        throw new Error("Failed to sync user. Please ensure you are logged in.");
     }),
 });
