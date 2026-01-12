@@ -164,13 +164,30 @@
   .glass-card,
   .card,
   [data-slot="card"] {
-    @apply backdrop-blur-3xl border border-white/20 shadow-2xl;
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
-    backdrop-filter: blur(20px) saturate(180%);
+    @apply backdrop-blur-3xl shadow-2xl;
+
+    /* 
+      Advanced "Thick Glass" Effect:
+      1. Gradient Border: White on top (0.4), fading to transparent.
+      2. Background: Linear gradient from White/10% top to White/2% bottom.
+      3. Box Shadow: Strong inner white highlight for the "beveled edge" look.
+    */
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-top: 1px solid rgba(255, 255, 255, 0.5);
+    /* Strong top lighting */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+    backdrop-filter: blur(24px) saturate(220%);
+    /* Boost saturation for "vibrant" pass-through */
+
     box-shadow:
-      0 8px 32px 0 rgba(0, 0, 0, 0.6),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+      0 12px 40px -8px rgba(0, 0, 0, 0.4),
+      /* Deep drop shadow */
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+      /* Sharp top inner edge */
+      inset 0 0 20px -10px rgba(255, 255, 255, 0.1);
+    /* Inner glow */
   }
 
   /* Apply specific rounding to default cards */
