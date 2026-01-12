@@ -29,6 +29,13 @@
       "when": 1768136486585,
       "tag": "0003_rare_mephisto",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1768182548989,
+      "tag": "0004_rich_sheva_callister",
+      "breakpoints": true
     }
   ]
 }
