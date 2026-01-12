@@ -14,6 +14,7 @@ export const artistSettingsRouter = router({
             bsb: null,
             accountNumber: null,
             depositAmount: null,
+            autoSendDepositInfo: false,
             workSchedule: JSON.stringify({}),
             services: JSON.stringify([]),
             createdAt: new Date(),
@@ -28,6 +29,7 @@ export const artistSettingsRouter = router({
                 bsb: z.string().optional(),
                 accountNumber: z.string().optional(),
                 depositAmount: z.number().optional(),
+                autoSendDepositInfo: z.boolean().optional(),
                 workSchedule: z.string(),
                 services: z.string(),
             })

@@ -70,6 +70,16 @@ export default function Settings() {
     },
   });
 
+  const uploadImageMutation = trpc.upload.uploadImage.useMutation({
+    onSuccess: () => {
+      toast.success("Image uploaded successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to upload image: " + error.message);
+      setUploadingAvatar(false);
+    },
+  });
+
   const { data: artistSettings } = trpc.artistSettings.get.useQuery(undefined, {
     enabled: !!user && (user.role === "artist" || user.role === "admin"),
   });
@@ -78,7 +88,7 @@ export default function Settings() {
     enabled: !!user && (user.role === "artist" || user.role === "admin"),
   });
 
-  const { data: notificationTemplates } = trpc.notificationTemplates.list.useQuery(undefined, {
+  const { data: notificationTemplates } = trpc.notifications.list.useQuery(undefined, {
     enabled: !!user && (user.role === "artist" || user.role === "admin"),
   });
 
@@ -141,28 +151,32 @@ export default function Settings() {
     }
 
     setUploadingAvatar(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const base64Data = e.target?.result as string;
 
-      if (!response.ok) {
-        throw new Error('Upload failed');
+      try {
+        const result = await uploadImageMutation.mutateAsync({
+          fileName: file.name,
+          fileData: base64Data,
+          contentType: file.type,
+        });
+
+        setProfileAvatar(result.url);
+        setUploadingAvatar(false);
+      } catch (error) {
+        // Error handled in mutation callback
+        console.error(error);
       }
+    };
 
-      const data = await response.json();
-      setProfileAvatar(data.url);
-      toast.success('Profile picture uploaded');
-    } catch (error) {
-      toast.error('Failed to upload image');
-      console.error('Upload error:', error);
-    } finally {
+    reader.onerror = () => {
+      toast.error("Failed to read image file");
       setUploadingAvatar(false);
-    }
+    };
+
+    reader.readAsDataURL(file);
   };
 
   if (loading) {
@@ -413,7 +427,7 @@ export default function Settings() {
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-4 mobile-scroll space-y-4">
+        <main className="flex-1 px-4 py-4 pb-24 mobile-scroll space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Personal Information</CardTitle>
