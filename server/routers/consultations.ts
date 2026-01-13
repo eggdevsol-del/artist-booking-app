@@ -33,6 +33,7 @@ export const consultationsRouter = router({
                     .enum(["pending", "responded", "scheduled", "completed", "cancelled"])
                     .optional(),
                 conversationId: z.number().optional(),
+                viewed: z.number().optional(),
             })
         )
         .mutation(async ({ input, ctx }) => {
