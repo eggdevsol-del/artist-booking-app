@@ -86,6 +86,9 @@ export const conversationsRouter = router({
         .input(z.number())
         .mutation(async ({ input, ctx }) => {
             await db.markMessagesAsRead(input, ctx.user.id);
+            if (ctx.user.role === 'artist') {
+                await db.markConsultationAsViewed(input);
+            }
             return { success: true };
         }),
     pinConsultation: protectedProcedure

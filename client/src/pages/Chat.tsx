@@ -558,7 +558,7 @@ export default function Chat() {
   const otherUserName = conversation.otherUser?.name || "Unknown User";
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-[100dvh] flex flex-col overflow-hidden">
       {/* Header */}
       <header className="mobile-header px-4 py-3 border-b">
         <div className="flex items-center gap-3">

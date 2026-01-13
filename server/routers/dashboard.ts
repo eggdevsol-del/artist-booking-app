@@ -46,7 +46,8 @@ export const dashboardRouter = router({
                 .where(
                     and(
                         eq(schema.consultations.artistId, user.id),
-                        eq(schema.consultations.status, 'pending')
+                        eq(schema.consultations.status, 'pending'),
+                        eq(schema.consultations.viewed, 0)
                     )
                 );
 

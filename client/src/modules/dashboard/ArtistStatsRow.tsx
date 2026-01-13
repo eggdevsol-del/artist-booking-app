@@ -10,6 +10,8 @@ interface ArtistStatsRowProps {
     };
 }
 
+import { Link } from "wouter";
+
 export function ArtistStatsRow({ stats }: ArtistStatsRowProps) {
     return (
         <div className="grid grid-cols-2 gap-3 mb-6">
@@ -19,12 +21,14 @@ export function ArtistStatsRow({ stats }: ArtistStatsRowProps) {
                 icon={Calendar}
                 className="col-span-1 bg-blue-500/10"
             />
-            <StatCard
-                label="Requests"
-                value={stats.pendingRequests}
-                icon={MessageSquare}
-                className="col-span-1 bg-orange-500/10"
-            />
+            <Link to="/conversations">
+                <StatCard
+                    label="Requests"
+                    value={stats.pendingRequests}
+                    icon={MessageSquare}
+                    className="col-span-1 bg-orange-500/10 hover:bg-orange-500/20 cursor-pointer transition-colors"
+                />
+            </Link>
             <StatCard
                 label="Total Revenue"
                 value={`$${(stats.totalRevenue).toLocaleString()}`}

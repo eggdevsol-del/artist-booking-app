@@ -88,6 +88,7 @@ export const consultations = mysqlTable("consultations", {
 	description: text().notNull(),
 	preferredDate: datetime({ mode: 'string' }),
 	status: mysqlEnum(['pending', 'responded', 'scheduled', 'completed', 'cancelled', 'archived']).default('pending').notNull(),
+	viewed: tinyint().default(0),
 	createdAt: timestamp({ mode: 'string' }).default(sql`(now())`),
 	updatedAt: timestamp({ mode: 'string' }).default(sql`(now())`),
 },

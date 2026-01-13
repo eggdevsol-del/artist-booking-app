@@ -88,10 +88,17 @@ export async function archiveOldConsultations() {
     await db
         .update(consultations)
         .set({ status: 'archived' })
-        .where(
-            and(
-                eq(consultations.status, 'pending'),
-                lt(consultations.createdAt, thirtyDaysAgo.toISOString()) // Assuming createdAt is string compatible or date object
+    lt(consultations.createdAt, thirtyDaysAgo.toISOString()) // Assuming createdAt is string compatible or date object
             )
         );
+}
+
+export async function markConsultationAsViewed(conversationId: number) {
+    const db = await getDb();
+    if (!db) return;
+
+    await db
+        .update(consultations)
+        .set({ viewed: 1 })
+        .where(eq(consultations.conversationId, conversationId));
 }
