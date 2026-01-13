@@ -116,7 +116,7 @@ export default function Settings() {
       setAccountNumber(artistSettings.accountNumber || "");
       setAccountNumber(artistSettings.accountNumber || "");
       setDepositAmount(artistSettings.depositAmount?.toString() || "");
-      setAutoSendDepositInfo(artistSettings.autoSendDepositInfo || false);
+      setAutoSendDepositInfo(!!artistSettings.autoSendDepositInfo);
     }
   }, [artistSettings]);
 
