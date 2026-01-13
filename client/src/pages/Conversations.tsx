@@ -9,6 +9,68 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
 
+function SwipeableConsultationCard({ consult, onClick, onDelete }: { consult: any, onClick: () => void, onDelete: (id: number, e: any) => void }) {
+  const x = useMotionValue(0);
+  const opacity = useTransform(x, [0, 100], [1, 0]);
+  const bgOpacity = useTransform(x, [0, 100], [0, 1]);
+  const [isDragged, setIsDragged] = useState(false);
+
+  return (
+    <div className="relative overflow-hidden rounded-xl">
+      {/* Background for Delete Action */}
+      <motion.div
+        style={{ opacity: bgOpacity }}
+        className="absolute inset-0 bg-destructive/20 flex items-center justify-start pl-4 z-0"
+      >
+        <Trash2 className="w-6 h-6 text-destructive" />
+      </motion.div>
+
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={{ right: 0.5, left: 0 }}
+        onDragStart={() => setIsDragged(true)}
+        onDragEnd={(_, info) => {
+          setIsDragged(false);
+          if (info.offset.x > 100) {
+            onDelete(consult.id, {} as any);
+          }
+        }}
+        style={{ x }}
+        className="relative z-10 bg-card"
+      >
+        <Card
+          className="p-4 cursor-pointer hover:bg-accent/5 transition-colors border-l-4 border-l-primary"
+          onClick={() => {
+            if (!isDragged && x.get() < 10) {
+              onClick();
+            }
+          }}
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                {/* We need to pass viewedConsultations here or handle it differently. 
+                    For now, reusing the prop wouldn't work directly inside this extracted component. 
+                    Let's simplify and just show the content. Logic can stay in parent or be passed down. 
+                */}
+                <h3 className="font-semibold text-foreground mb-1">{consult.subject}</h3>
+              </div>
+              <p className="text-sm text-muted-foreground line-clamp-2">{consult.description}</p>
+              {consult.preferredDate && !isNaN(new Date(consult.preferredDate as any).getTime()) && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Preferred: {new Date(consult.preferredDate as any).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0 ml-2" />
+          </div>
+        </Card>
+      </motion.div>
+    </div>
+  );
+}
+
 export default function Conversations() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
@@ -95,67 +157,7 @@ export default function Conversations() {
   };
 
 
-  function SwipeableConsultationCard({ consult, onClick, onDelete }: { consult: any, onClick: () => void, onDelete: (id: number, e: any) => void }) {
-    const x = useMotionValue(0);
-    const opacity = useTransform(x, [0, 100], [1, 0]);
-    const bgOpacity = useTransform(x, [0, 100], [0, 1]);
-    const [isDragged, setIsDragged] = useState(false);
 
-    return (
-      <div className="relative overflow-hidden rounded-xl">
-        {/* Background for Delete Action */}
-        <motion.div
-          style={{ opacity: bgOpacity }}
-          className="absolute inset-0 bg-destructive/20 flex items-center justify-start pl-4 z-0"
-        >
-          <Trash2 className="w-6 h-6 text-destructive" />
-        </motion.div>
-
-        <motion.div
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={{ right: 0.5, left: 0 }}
-          onDragStart={() => setIsDragged(true)}
-          onDragEnd={(_, info) => {
-            setIsDragged(false);
-            if (info.offset.x > 100) {
-              onDelete(consult.id, {} as any);
-            }
-          }}
-          style={{ x }}
-          className="relative z-10 bg-card"
-        >
-          <Card
-            className="p-4 cursor-pointer hover:bg-accent/5 transition-colors border-l-4 border-l-primary"
-            onClick={() => {
-              if (!isDragged && x.get() < 10) {
-                onClick();
-              }
-            }}
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  {/* We need to pass viewedConsultations here or handle it differently. 
-                    For now, reusing the prop wouldn't work directly inside this extracted component. 
-                    Let's simplify and just show the content. Logic can stay in parent or be passed down. 
-                */}
-                  <h3 className="font-semibold text-foreground mb-1">{consult.subject}</h3>
-                </div>
-                <p className="text-sm text-muted-foreground line-clamp-2">{consult.description}</p>
-                {consult.preferredDate && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Preferred: {new Date(consult.preferredDate as any).toLocaleDateString()}
-                  </p>
-                )}
-              </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0 ml-2" />
-            </div>
-          </Card>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col pb-20">
@@ -273,7 +275,12 @@ export default function Conversations() {
                       {conv.otherUser?.name || "Unknown User"}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {new Date((conv.lastMessageAt || conv.createdAt) as any).toLocaleDateString()}
+                      {(() => {
+                        const dateStr = conv.lastMessageAt || conv.createdAt;
+                        if (!dateStr) return "";
+                        const date = new Date(dateStr as any);
+                        return isNaN(date.getTime()) ? "" : date.toLocaleDateString();
+                      })()}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">

@@ -66,7 +66,9 @@ function App() {
         <Toaster />
         <InstallPrompt />
         <IOSInstallPrompt />
-        <Router />
+        <ErrorBoundary>
+          <Router />
+        </ErrorBoundary>
       </TooltipProvider>
     </ThemeProvider>
   );
