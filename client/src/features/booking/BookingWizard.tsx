@@ -285,6 +285,11 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
     return (
         <Dialog open={isOpen} onOpenChange={(v) => !v && handleClose()}>
             <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col p-1 gap-0 border border-white/10 bg-background/95 backdrop-blur-[20px] shadow-2xl rounded-[2.5rem] overflow-hidden text-white outline-none">
+                {/* BUILD PROOF MARKER - TEMPORARY DEBUG */}
+                <div className="bg-red-600 text-white p-4 text-center font-bold text-lg z-[9999] shrink-0">
+                    BOOKING WIZARD BUILD PROOF v{__APP_VERSION__}
+                </div>
+
                 <DialogHeader className="p-8 pb-2 shrink-0 border-b border-white/5">
                     <DialogTitle className="text-2xl font-bold tracking-tight text-center">
                         {step === 'service' && "Select Service"}
