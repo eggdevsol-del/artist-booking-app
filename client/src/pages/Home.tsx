@@ -5,6 +5,7 @@ import { APP_LOGO, APP_TITLE, getLoginUrl } from "@/const";
 import { Calendar, MessageCircle, Sparkles, Users } from "lucide-react";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
+import { APP_VERSION } from "@/version";
 
 export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
@@ -125,8 +126,9 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="py-6 px-4 text-center text-sm text-muted-foreground">
+      <footer className="py-6 px-4 text-center text-sm text-muted-foreground flex flex-col gap-2">
         <p>© 2025 {APP_TITLE}. Beautiful appointments made simple.</p>
+        <p className="text-xs opacity-50">v{APP_VERSION}</p>
       </footer>
 
 
