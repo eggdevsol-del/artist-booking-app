@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 type WizardStep = 'service' | 'frequency' | 'review' | 'success';
 
@@ -53,8 +54,12 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
     const sendMessageMutation = trpc.messages.send.useMutation({
         onSuccess: () => {
             utils.messages.list.invalidate({ conversationId });
-            setStep('success');
+            toast.success("Proposal Sent Successfully");
+            handleClose();
             onBookingSuccess();
+        },
+        onError: (err) => {
+            toast.error("Failed to send proposal: " + err.message);
         }
     });
 
@@ -110,32 +115,32 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
     const renderServiceStep = () => (
         <div className="space-y-4">
-            <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground pl-1">Select Service</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-white/40 pl-1">Select Service</p>
             <ScrollArea className="h-[350px] pr-4 -mr-4">
                 <div className="grid grid-cols-1 gap-3 pr-4">
                     {artistServices.map(service => (
                         <div
                             key={service.id}
-                            className={`group relative p-4 cursor-pointer transition-all duration-300 rounded-2xl border ${selectedService?.id === service.id
-                                ? 'bg-primary/10 border-primary/50 ring-1 ring-primary/20'
-                                : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10'
+                            className={`group relative p-5 cursor-pointer transition-all duration-300 rounded-2xl border backdrop-blur-md ${selectedService?.id === service.id
+                                ? 'bg-gradient-to-br from-primary/20 to-primary/5 border-primary/50 shadow-[0_0_20px_rgba(var(--primary),0.15)] ring-1 ring-primary/30'
+                                : 'bg-gradient-to-br from-white/10 to-white/5 border-white/10 hover:border-white/20 hover:from-white/15 hover:to-white/10 shadow-lg'
                                 }`}
                             onClick={() => setSelectedService(service)}
                         >
-                            <div className="flex justify-between items-start mb-2">
-                                <h4 className={`font-bold text-base transition-colors ${selectedService?.id === service.id ? 'text-primary' : 'text-white'}`}>
+                            <div className="flex justify-between items-start mb-3">
+                                <h4 className={`font-bold text-lg transition-colors ${selectedService?.id === service.id ? 'text-primary' : 'text-white'}`}>
                                     {service.name}
                                 </h4>
-                                <span className={`font-mono text-sm font-bold ${selectedService?.id === service.id ? 'text-primary' : 'text-white/70'}`}>
+                                <span className={`font-mono text-base font-bold ${selectedService?.id === service.id ? 'text-primary' : 'text-white/80'}`}>
                                     ${service.price}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-4 text-xs">
-                                <span className={`flex items-center gap-1.5 ${selectedService?.id === service.id ? 'text-primary/80' : 'text-white/40'}`}>
+                            <div className="flex items-center gap-4 text-xs font-medium">
+                                <span className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${selectedService?.id === service.id ? 'bg-primary/10 text-primary' : 'bg-black/20 text-white/60'}`}>
                                     <Clock className="w-3.5 h-3.5" />
                                     {service.duration} mins
                                 </span>
-                                <span className={`flex items-center gap-1.5 ${selectedService?.id === service.id ? 'text-primary/80' : 'text-white/40'}`}>
+                                <span className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${selectedService?.id === service.id ? 'bg-primary/10 text-primary' : 'bg-black/20 text-white/60'}`}>
                                     <Layers className="w-3.5 h-3.5" />
                                     {service.sittings || 1} sitting{(service.sittings || 1) > 1 ? 's' : ''}
                                 </span>
@@ -143,7 +148,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
                             {selectedService?.id === service.id && (
                                 <div className="absolute right-4 bottom-4">
-                                    <CheckCircle2 className="w-5 h-5 text-primary animate-in zoom-in spin-in-90 duration-300" />
+                                    <CheckCircle2 className="w-6 h-6 text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)] animate-in zoom-in spin-in-90 duration-300" />
                                 </div>
                             )}
                         </div>
@@ -155,21 +160,21 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
     const renderFrequencyStep = () => (
         <div className="space-y-6 pt-2">
-            <div className="bg-white/5 border border-white/5 p-4 rounded-2xl flex items-center justify-between">
+            <div className="bg-gradient-to-r from-white/10 to-white/5 border border-white/10 p-5 rounded-3xl flex items-center justify-between shadow-lg backdrop-blur-md">
                 <div>
-                    <h4 className="font-bold text-white text-sm">{selectedService?.name}</h4>
-                    <p className="text-xs text-white/50 mt-0.5">
+                    <h4 className="font-bold text-white text-base">{selectedService?.name}</h4>
+                    <p className="text-sm text-white/50 mt-0.5">
                         {selectedService?.sittings || 1} sittings • {selectedService?.duration} mins each
                     </p>
                 </div>
                 <div className="text-right">
-                    <span className="block font-mono font-bold text-primary">${selectedService?.price}</span>
-                    <span className="text-[10px] text-white/30 uppercase tracking-wider">Per Session</span>
+                    <span className="block font-mono font-bold text-xl text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.3)]">${selectedService?.price}</span>
+                    <span className="text-[10px] text-white/30 uppercase tracking-wider font-bold">Per Session</span>
                 </div>
             </div>
 
             <div className="space-y-4">
-                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground pl-1">Frequency</Label>
+                <Label className="text-xs font-bold uppercase tracking-widest text-white/40 pl-1">Frequency</Label>
                 <RadioGroup value={frequency} onValueChange={(v: any) => setFrequency(v)} className="grid grid-cols-1 gap-3">
                     {[
                         { id: 'consecutive', label: 'Consecutive Days', sub: 'Best for intensive projects' },
@@ -177,25 +182,27 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                         { id: 'biweekly', label: 'Bi-Weekly', sub: 'Every two weeks' },
                         { id: 'monthly', label: 'Monthly', sub: 'Once a month' }
                     ].map((opt) => (
-                        <div key={opt.id} className={`group relative flex items-center space-x-3 border p-4 rounded-2xl cursor-pointer transition-all duration-200 ${frequency === opt.id
-                            ? 'bg-primary/10 border-primary/50 ring-1 ring-primary/20'
-                            : 'bg-white/5 border-white/5 hover:bg-white/10'
+                        <div key={opt.id} className={`group relative flex items-center space-x-4 border p-4 rounded-2xl cursor-pointer transition-all duration-300 backdrop-blur-sm ${frequency === opt.id
+                            ? 'bg-gradient-to-r from-primary/20 to-primary/5 border-primary/50 shadow-[0_0_15px_rgba(var(--primary),0.1)]'
+                            : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10'
                             }`}
                             onClick={() => setFrequency(opt.id as any)}
                         >
-                            <RadioGroupItem value={opt.id} id={opt.id} className="border-white/20 text-primary" />
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${frequency === opt.id ? 'border-primary' : 'border-white/20'}`}>
+                                {frequency === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_5px_rgba(var(--primary),0.8)]" />}
+                            </div>
                             <div className="flex-1">
-                                <Label htmlFor={opt.id} className="text-sm font-bold text-white cursor-pointer block">{opt.label}</Label>
-                                <p className="text-[10px] text-white/50 mt-0.5">{opt.sub}</p>
+                                <Label htmlFor={opt.id} className={`text-sm font-bold cursor-pointer block transition-colors ${frequency === opt.id ? 'text-white' : 'text-white/80'}`}>{opt.label}</Label>
+                                <p className="text-xs text-white/40 mt-0.5 font-medium">{opt.sub}</p>
                             </div>
                         </div>
                     ))}
                 </RadioGroup>
             </div>
 
-            <div className="flex items-start gap-3 p-4 bg-blue-500/10 text-blue-400 rounded-2xl border border-blue-500/10 mb-2">
-                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <p className="text-xs leading-relaxed opacity-90">Auto-scheduler will find the best available slots starting from today based on your calendar.</p>
+            <div className="flex items-start gap-3 p-4 bg-blue-500/10 text-blue-300 rounded-2xl border border-blue-500/10 mb-2 backdrop-blur-md">
+                <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0 text-blue-400" />
+                <p className="text-xs leading-relaxed opacity-90 font-medium">Auto-scheduler will find the best available slots starting from today based on your calendar availability.</p>
             </div>
         </div>
     );
@@ -213,7 +220,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
             )}
 
             {availabilityError && (
-                <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl">
+                <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl backdrop-blur-md">
                     <h5 className="font-bold text-red-500 flex items-center gap-2 mb-2 text-sm">
                         <AlertCircle className="w-4 h-4" />
                         Calculation Failed
@@ -232,32 +239,32 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
             {availability && (
                 <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex flex-col items-center justify-center text-center group hover:bg-white/10 transition-colors">
+                        <div className="p-4 bg-gradient-to-br from-white/10 to-white/5 rounded-3xl border border-white/10 flex flex-col items-center justify-center text-center backdrop-blur-md shadow-lg">
                             <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">Total Cost</span>
-                            <span className="text-2xl font-bold text-white tracking-tight">${availability.totalCost}</span>
+                            <span className="text-2xl font-bold text-white tracking-tight drop-shadow-md">${availability.totalCost}</span>
                         </div>
-                        <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex flex-col items-center justify-center text-center group hover:bg-white/10 transition-colors">
+                        <div className="p-4 bg-gradient-to-br from-white/10 to-white/5 rounded-3xl border border-white/10 flex flex-col items-center justify-center text-center backdrop-blur-md shadow-lg">
                             <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">Sittings</span>
-                            <span className="text-2xl font-bold text-white tracking-tight">{selectedService?.sittings || 1}</span>
+                            <span className="text-2xl font-bold text-white tracking-tight drop-shadow-md">{selectedService?.sittings || 1}</span>
                         </div>
                     </div>
 
-                    <div className="border border-white/10 rounded-2xl overflow-hidden bg-white/[0.02]">
-                        <div className="bg-white/5 p-3 px-4 border-b border-white/10 flex items-center justify-between">
+                    <div className="border border-white/10 rounded-3xl overflow-hidden bg-white/[0.02] backdrop-blur-sm shadow-inner">
+                        <div className="bg-white/5 p-4 border-b border-white/10 flex items-center justify-between">
                             <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">Proposed Schedule</span>
-                            <span className="text-[10px] font-bold bg-primary/20 text-primary px-2 py-0.5 rounded-full">{availability.dates.length} Dates</span>
+                            <span className="text-[10px] font-bold bg-primary/20 text-primary px-2.5 py-1 rounded-full shadow-sm border border-primary/10">{availability.dates.length} Dates</span>
                         </div>
                         <ScrollArea className="h-[220px]">
-                            <div className="p-2 space-y-1">
+                            <div className="p-3 space-y-2">
                                 {availability.dates.map((date: string | Date, i: number) => (
-                                    <div key={i} className="flex items-center gap-3 p-3 hover:bg-white/5 rounded-xl transition-colors group">
-                                        <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white/40 font-mono text-xs group-hover:text-primary group-hover:bg-primary/10 transition-colors">
+                                    <div key={i} className="flex items-center gap-4 p-3 hover:bg-white/5 rounded-2xl transition-colors group border border-transparent hover:border-white/5">
+                                        <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/40 font-mono text-xs font-bold group-hover:text-primary group-hover:bg-primary/10 transition-colors">
                                             {String(i + 1).padStart(2, '0')}
                                         </div>
                                         <div className="flex-1">
                                             <p className="text-sm font-bold text-white/90">{format(new Date(date), "EEEE, MMMM do")}</p>
                                         </div>
-                                        <div className="text-xs font-mono text-primary/80 bg-primary/5 px-2 py-1 rounded-md border border-primary/10">
+                                        <div className="text-xs font-mono font-medium text-primary/90 bg-primary/5 px-2.5 py-1.5 rounded-lg border border-primary/10">
                                             {format(new Date(date), "h:mm a")}
                                         </div>
                                     </div>
