@@ -123,7 +123,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                             key={service.id}
                             className={`group relative p-6 cursor-pointer transition-all duration-300 rounded-[2rem] border ${selectedService?.id === service.id
                                 ? 'bg-[#5b4eff]/10 border-[#5b4eff] shadow-[0_0_30px_rgba(91,78,255,0.15)]'
-                                : 'bg-[#1a1a1a] border-white/5 hover:border-white/10 hover:bg-[#222]'
+                                : 'bg-[#1a1a1a]/80 backdrop-blur-sm border-white/5 hover:border-white/10 hover:bg-[#222]/90'
                                 }`}
                             onClick={() => setSelectedService(service)}
                         >
@@ -160,7 +160,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
     const renderFrequencyStep = () => (
         <div className="space-y-6 pt-2">
-            <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-[2rem] flex items-center justify-between">
+            <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-white/10 p-6 rounded-[2rem] flex items-center justify-between">
                 <div>
                     <h4 className="font-bold text-white text-lg">{selectedService?.name}</h4>
                     <p className="text-sm text-white/50 mt-1">
@@ -184,7 +184,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                     ].map((opt) => (
                         <div key={opt.id} className={`group relative flex items-center space-x-4 border p-5 rounded-[1.5rem] cursor-pointer transition-all duration-300 ${frequency === opt.id
                             ? 'bg-[#5b4eff]/10 border-[#5b4eff] shadow-[0_0_15px_rgba(91,78,255,0.1)]'
-                            : 'bg-[#1a1a1a] border-white/5 hover:bg-[#222]'
+                            : 'bg-[#1a1a1a]/80 backdrop-blur-sm border-white/5 hover:bg-[#222]/90'
                             }`}
                             onClick={() => setFrequency(opt.id as any)}
                         >
@@ -276,7 +276,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                     The project proposal has been sent to the client.
                 </p>
             </div>
-            <Button onClick={handleClose} className="w-full h-14 rounded-lg text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 mt-4">
+            <Button onClick={handleClose} className="w-full h-14 rounded-full text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 mt-4">
                 Return to Chat
             </Button>
         </div>
@@ -284,8 +284,8 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
     return (
         <Dialog open={isOpen} onOpenChange={(v) => !v && handleClose()}>
-            <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col p-1 gap-0 border border-white/10 bg-background shadow-2xl rounded-xl overflow-hidden text-white outline-none">
-                <DialogHeader className="p-8 pb-2 shrink-0">
+            <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col p-1 gap-0 border border-white/10 bg-background/95 backdrop-blur-[20px] shadow-2xl rounded-[2.5rem] overflow-hidden text-white outline-none">
+                <DialogHeader className="p-8 pb-2 shrink-0 border-b border-white/5">
                     <DialogTitle className="text-2xl font-bold tracking-tight text-center">
                         {step === 'service' && "Select Service"}
                         {step === 'frequency' && "Select Frequency"}
@@ -320,7 +320,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                 <Button
                                     disabled={!selectedService}
                                     onClick={() => setStep('frequency')}
-                                    className="rounded-lg px-8 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/25 disabled:opacity-50 disabled:shadow-none transition-all"
+                                    className="rounded-full px-8 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/25 disabled:opacity-50 disabled:shadow-none transition-all"
                                 >
                                     Next
                                 </Button>
@@ -329,7 +329,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                             {step === 'frequency' && (
                                 <Button
                                     onClick={() => setStep('review')}
-                                    className="rounded-lg px-8 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/25 transition-all"
+                                    className="rounded-full px-8 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/25 transition-all"
                                 >
                                     Find Dates
                                 </Button>
@@ -339,7 +339,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                 <Button
                                     disabled={!availability || sendMessageMutation.isPending}
                                     onClick={handleConfirmBooking}
-                                    className="rounded-lg px-8 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/30 transition-all w-full sm:w-auto"
+                                    className="rounded-full px-8 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/30 transition-all w-full sm:w-auto"
                                 >
                                     {sendMessageMutation.isPending ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : null}
                                     Send Proposal
