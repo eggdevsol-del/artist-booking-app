@@ -763,7 +763,6 @@ export default function Chat() {
             <SheetContent
               side="bottom"
               className="rounded-t-[2.5rem] border-t-0 p-0 bg-background/80 backdrop-blur-[20px] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)] max-h-[85vh] overflow-hidden flex flex-col gap-0"
-              hideClose
             >
               <div className="w-12 h-1 bg-muted/50 rounded-full mx-auto mt-3 mb-5 shrink-0" />
 
