@@ -872,7 +872,7 @@ export default function Chat() {
             </Button>
           </div>
         </div>
-      </div> >
+      </div>
 
       {/* Book Project Wizard */}
       < BookingWizard
