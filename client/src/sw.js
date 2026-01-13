@@ -7,7 +7,8 @@ clientsClaim();
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 
-const CACHE_NAME = 'artist-booking-v1';
+// Use app version for cache name to invalidate cache on updates
+const CACHE_NAME = `artist-booking-v${self.__APP_VERSION__ || '1'}`;
 const urlsToCache = [
   '/',
   '/manifest.json',
