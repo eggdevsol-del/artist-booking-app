@@ -12,6 +12,9 @@ import Chat from "./pages/Chat";
 import Calendar from "./pages/Calendar";
 import Settings from "./pages/Settings";
 import Conversations from "./pages/Conversations";
+import Dashboard from "./pages/Dashboard";
+import Portfolio from "./pages/Portfolio";
+import Wallet from "./pages/Wallet";
 
 import Consultations from "./pages/Consultations";
 import Policies from "./pages/Policies";
@@ -39,6 +42,12 @@ function Router() {
         <Route path="/conversations" component={Conversations} />
         <Route path="/chat/:id" component={Chat} />
         <Route path="/calendar" component={Calendar} />
+
+        <Route path="/dashboard" component={Dashboard} />
+        <Route path="/portfolio" component={Portfolio} />
+        <Route path="/explore" component={Portfolio} />
+        <Route path="/wallet" component={Wallet} />
+
         <Route path="/settings" component={Settings} />
         <Route path="/consultations" component={Consultations} />
         <Route path="/policies" component={Policies} />

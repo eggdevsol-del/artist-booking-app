@@ -294,6 +294,15 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
   /* Touch-friendly tap targets */
   .tap-target {
     @apply min-h-[44px] min-w-[44px] flex items-center justify-center;

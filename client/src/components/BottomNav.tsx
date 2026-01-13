@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Calendar, MessageCircle, Settings } from "lucide-react";
+import { Calendar, Image, LayoutDashboard, MessageCircle, Settings, Wallet } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 export default function BottomNav() {
@@ -12,50 +12,41 @@ export default function BottomNav() {
         return false;
     };
 
+    const navItems = [
+        { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { path: "/conversations", label: "Messages", icon: MessageCircle },
+        { path: "/calendar", label: "Calendar", icon: Calendar },
+        { path: "/portfolio", label: "Portfolio", icon: Image },
+        { path: "/wallet", label: "Wallet", icon: Wallet },
+        { path: "/settings", label: "Settings", icon: Settings },
+    ];
+
     return (
-        <nav className="fixed bottom-6 inset-x-6 z-50 floating-nav rounded-[2.5rem] pb-0">
-            <div className="flex items-center justify-around px-2 py-3">
-                <Link href="/conversations">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                            "flex-col h-auto py-2 gap-1 hover:bg-transparent",
-                            isActive("/conversations") ? "text-primary" : "text-muted-foreground"
-                        )}
-                    >
-                        <MessageCircle className="w-6 h-6" />
-                        <span className="text-xs font-medium">Messages</span>
-                    </Button>
-                </Link>
-
-                <Link href="/calendar">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                            "flex-col h-auto py-2 gap-1 hover:bg-transparent",
-                            isActive("/calendar") ? "text-primary" : "text-muted-foreground"
-                        )}
-                    >
-                        <Calendar className="w-6 h-6" />
-                        <span className="text-xs font-medium">Calendar</span>
-                    </Button>
-                </Link>
-
-                <Link href="/settings">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                            "flex-col h-auto py-2 gap-1 hover:bg-transparent",
-                            isActive("/settings") ? "text-primary" : "text-muted-foreground"
-                        )}
-                    >
-                        <Settings className="w-6 h-6" />
-                        <span className="text-xs font-medium">Settings</span>
-                    </Button>
-                </Link>
+        <nav className="fixed bottom-6 inset-x-6 z-50 floating-nav rounded-[2.5rem] pb-0 overflow-hidden">
+            <div className="flex items-center px-4 py-3 overflow-x-auto gap-2 no-scrollbar scroll-smooth snap-x">
+                {navItems.map((item) => {
+                    const active = isActive(item.path);
+                    return (
+                        <Link key={item.path} href={item.path}>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className={cn(
+                                    "flex-col h-auto py-2 px-3 gap-1 hover:bg-transparent min-w-[70px] snap-center shrink-0 transition-all duration-300",
+                                    active ? "text-primary scale-105" : "text-muted-foreground opacity-70 hover:opacity-100"
+                                )}
+                            >
+                                <item.icon className={cn("w-6 h-6 mb-0.5", active && "fill-current/20")} />
+                                <span className={cn("text-[10px] font-medium transition-all", active ? "font-bold" : "font-normal")}>
+                                    {item.label}
+                                </span>
+                                {active && (
+                                    <span className="h-1 w-1 rounded-full bg-primary absolute bottom-1" />
+                                )}
+                            </Button>
+                        </Link>
+                    )
+                })}
             </div>
         </nav>
     );

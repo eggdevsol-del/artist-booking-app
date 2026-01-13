@@ -12,6 +12,9 @@ import { systemRouter } from "./system";
 import { uploadRouter } from "./upload";
 
 import { bookingRouter } from "./booking";
+import { dashboardRouter } from "./dashboard";
+import { portfolioRouter } from "./portfolio";
+import { walletRouter } from "./wallet";
 
 export const appRouter = router({
     auth: authRouter,
@@ -26,6 +29,9 @@ export const appRouter = router({
     policies: policiesRouter,
     quickActions: quickActionsRouter,
     upload: uploadRouter,
+    dashboard: dashboardRouter,
+    portfolio: portfolioRouter,
+    wallet: walletRouter,
 });
 
 export type AppRouter = typeof appRouter;

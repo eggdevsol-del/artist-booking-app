@@ -209,6 +209,27 @@ export const policies = mysqlTable("policies", {
 		primaryKey({ columns: [table.id], name: "policies_id" }),
 	]);
 
+export const portfolios = mysqlTable("portfolios", {
+	id: int().autoincrement().notNull(),
+	artistId: varchar({ length: 64 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+	imageUrl: text().notNull(),
+	description: text(),
+	createdAt: timestamp({ mode: 'string' }).default(sql`(now())`),
+	updatedAt: timestamp({ mode: 'string' }).default(sql`(now())`),
+}, (table) => [
+	primaryKey({ columns: [table.id], name: "portfolios_id" }),
+]);
+
+export const portfolioLikes = mysqlTable("portfolio_likes", {
+	id: int().autoincrement().notNull(),
+	portfolioId: int().notNull().references(() => portfolios.id, { onDelete: "cascade" }),
+	userId: varchar({ length: 64 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+	createdAt: timestamp({ mode: 'string' }).default(sql`(now())`),
+}, (table) => [
+	primaryKey({ columns: [table.id], name: "portfolio_likes_id" }),
+	unique("user_portfolio_like").on(table.userId, table.portfolioId),
+]);
+
 export const pushSubscriptions = mysqlTable("pushSubscriptions", {
 	id: int().autoincrement().notNull(),
 	userId: varchar({ length: 64 }).notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -276,6 +297,32 @@ export const users = mysqlTable("users", {
 		primaryKey({ columns: [table.id], name: "users_id" }),
 	]);
 
+export const voucherTemplates = mysqlTable("voucher_templates", {
+	id: int().autoincrement().notNull(),
+	artistId: varchar({ length: 64 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+	name: varchar({ length: 255 }).notNull(),
+	value: int().notNull(), // stored in cents
+	description: text(),
+	createdAt: timestamp({ mode: 'string' }).default(sql`(now())`),
+	updatedAt: timestamp({ mode: 'string' }).default(sql`(now())`),
+}, (table) => [
+	primaryKey({ columns: [table.id], name: "voucher_templates_id" }),
+]);
+
+export const issuedVouchers = mysqlTable("issued_vouchers", {
+	id: int().autoincrement().notNull(),
+	templateId: int().notNull().references(() => voucherTemplates.id, { onDelete: "cascade" }),
+	artistId: varchar({ length: 64 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+	clientId: varchar({ length: 64 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+	code: varchar({ length: 50 }).notNull().unique(),
+	status: mysqlEnum(['active', 'redeemed', 'expired']).default('active').notNull(),
+	expiresAt: timestamp({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default(sql`(now())`),
+	redeemedAt: timestamp({ mode: 'string' }),
+}, (table) => [
+	primaryKey({ columns: [table.id], name: "issued_vouchers_id" }),
+	index("idx_voucher_code").on(table.code),
+]);
 
 
 export type InsertConsultation = InferInsertModel<typeof consultations>;
@@ -283,3 +330,6 @@ export type SelectConsultation = InferSelectModel<typeof consultations>;
 export type InsertConversation = InferInsertModel<typeof conversations>;
 export type InsertMessage = InferInsertModel<typeof messages>;
 export type InsertSocialMessageSync = InferInsertModel<typeof socialMessageSync>;
+export type InsertPortfolio = InferInsertModel<typeof portfolios>;
+export type InsertVoucherTemplate = InferInsertModel<typeof voucherTemplates>;
+export type InsertIssuedVoucher = InferInsertModel<typeof issuedVouchers>;
