@@ -115,6 +115,11 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
     const renderServiceStep = () => (
         <div className="space-y-4 pt-2">
+            {/* UNMISTAKABLE VISUAL CHANGE - LARGE HEADER */}
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-8 rounded-3xl text-center mb-6">
+                <h2 className="text-4xl font-black text-white mb-2">📋 CHOOSE YOUR SERVICE</h2>
+                <p className="text-white/90 text-lg">Step 1 of 3 - Select a service package</p>
+            </div>
             <p className="text-xs font-bold uppercase tracking-widest text-[#5b4eff]/80 mb-4 pl-1">SELECT SERVICE</p>
             <ScrollArea className="h-[380px] pr-4 -mr-4">
                 <div className="grid grid-cols-1 gap-4 pr-4">
