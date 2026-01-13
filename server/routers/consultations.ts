@@ -5,7 +5,20 @@ import * as db from "../db";
 
 export const consultationsRouter = router({
     list: protectedProcedure.query(async ({ ctx }) => {
-        return db.getConsultationsForUser(ctx.user.id, ctx.user.role);
+        const consultations = await db.getConsultationsForUser(ctx.user.id, ctx.user.role);
+
+        // Enrich with user details
+        const enriched = await Promise.all(consultations.map(async (c) => {
+            const artist = await db.getUser(c.artistId);
+            const client = await db.getUser(c.clientId);
+            return {
+                ...c,
+                artist,
+                client
+            };
+        }));
+
+        return enriched;
     }),
     create: protectedProcedure
         .input(

@@ -216,7 +216,7 @@ export default function Consultations() {
                   <div className="flex-1">
                     <CardTitle className="text-lg">{consultation.subject}</CardTitle>
                     <CardDescription className="mt-1">
-                      Artist: {consultation.artistId}
+                      Artist: {consultation.artist?.name || consultation.artist?.email || consultation.artistId}
                     </CardDescription>
                   </div>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(consultation.status)}`}>
