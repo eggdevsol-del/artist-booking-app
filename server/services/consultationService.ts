@@ -88,7 +88,10 @@ export async function archiveOldConsultations() {
     await db
         .update(consultations)
         .set({ status: 'archived' })
-    lt(consultations.createdAt, thirtyDaysAgo.toISOString()) // Assuming createdAt is string compatible or date object
+        .where(
+            and(
+                eq(consultations.status, 'pending'),
+                lt(consultations.createdAt, thirtyDaysAgo.toISOString())
             )
         );
 }
