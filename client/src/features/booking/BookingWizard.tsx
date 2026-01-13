@@ -123,7 +123,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                             key={service.id}
                             className={`group relative p-6 cursor-pointer transition-all duration-300 rounded-[2rem] border ${selectedService?.id === service.id
                                 ? 'bg-[#5b4eff]/10 border-[#5b4eff] shadow-[0_0_30px_rgba(91,78,255,0.15)]'
-                                : 'bg-[#1a1a1a]/80 backdrop-blur-sm border-white/5 hover:border-white/10 hover:bg-[#222]/90'
+                                : 'bg-[#1a1a1a] border-white/5 hover:border-white/10 hover:bg-[#222]'
                                 }`}
                             onClick={() => setSelectedService(service)}
                         >
@@ -160,7 +160,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
     const renderFrequencyStep = () => (
         <div className="space-y-6 pt-2">
-            <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-white/10 p-6 rounded-[2rem] flex items-center justify-between">
+            <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-[2rem] flex items-center justify-between">
                 <div>
                     <h4 className="font-bold text-white text-lg">{selectedService?.name}</h4>
                     <p className="text-sm text-white/50 mt-1">
