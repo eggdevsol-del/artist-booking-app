@@ -3,17 +3,50 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { Calendar, MessageCircle, User, ChevronRight } from "lucide-react";
-import { useEffect } from "react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Calendar, ChevronDown, ChevronRight, MessageCircle, Trash2, User } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
 export default function Conversations() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
 
-  const { data: conversations, isLoading } = trpc.conversations.list.useQuery(undefined, {
+  const { data: conversations, isLoading, refetch } = trpc.conversations.list.useQuery(undefined, {
     enabled: !!user,
     refetchInterval: 10000,
+  });
+
+  // Get pending consultation requests for artists
+  const { data: pendingConsults } = trpc.consultations.list.useQuery(undefined, {
+    enabled: !!user && (user.role === 'artist' || user.role === 'admin'),
+    refetchInterval: 10000,
+  });
+
+  const [viewedConsultations, setViewedConsultations] = useState<Set<number>>(() => {
+    try {
+      const stored = localStorage.getItem('viewedConsultations');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch (e) {
+      console.error("Failed to parse viewedConsultations", e);
+      return new Set();
+    }
+  });
+
+  const [isConsultationsOpen, setIsConsultationsOpen] = useState(true);
+
+  const createConversationMutation = trpc.conversations.getOrCreate.useMutation({
+    onSuccess: (conversation) => {
+      if (conversation) {
+        setLocation(`/chat/${conversation.id}`);
+      }
+    },
+  });
+
+  const updateConsultationMutation = trpc.consultations.update.useMutation({
+    onSuccess: () => {
+      refetch();
+    }
   });
 
   // Redirect to login if not authenticated
@@ -22,6 +55,22 @@ export default function Conversations() {
       setLocation("/login");
     }
   }, [user, loading, setLocation]);
+
+  // Handle artist referral link
+  useEffect(() => {
+    if (user && user.role === 'client') {
+      const params = new URLSearchParams(window.location.search);
+      const refArtistId = params.get('ref');
+
+      if (refArtistId && user.id) {
+        createConversationMutation.mutate({
+          artistId: refArtistId,
+          clientId: user.id
+        });
+        window.history.replaceState({}, '', '/conversations');
+      }
+    }
+  }, [user]);
 
   if (loading || isLoading) {
     return (
