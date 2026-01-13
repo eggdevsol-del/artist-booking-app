@@ -99,7 +99,7 @@ export default function Conversations() {
       {/* Conversations List */}
       <main className="flex-1 px-4 py-4 mobile-scroll">
 
-        {isArtist && pendingConsults && pendingConsults.filter(c => c.status === 'pending').length > 0 && (
+        {isArtist && pendingConsults && pendingConsults.filter(c => c.status === 'pending' && !c.viewed).length > 0 && (
           <Collapsible
             open={isConsultationsOpen}
             onOpenChange={setIsConsultationsOpen}
@@ -117,7 +117,7 @@ export default function Conversations() {
 
             <CollapsibleContent className="space-y-2">
               {pendingConsults
-                .filter(c => c.status === 'pending')
+                .filter(c => c.status === 'pending' && !c.viewed)
                 .sort((a, b) => new Date(b.createdAt as any).getTime() - new Date(a.createdAt as any).getTime())
                 .map((consult) => (
                   <Card
