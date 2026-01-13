@@ -562,7 +562,7 @@ export default function Chat() {
   const otherUserName = conversation.otherUser?.name || "Unknown User";
 
   return (
-    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background relative selection:bg-primary/20">
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background selection:bg-primary/20">
 
       {/* Fixed Header & Consultation Pin - Z-Index High to stay on top */}
       <div className="flex-none z-50 bg-background/80 backdrop-blur-xl border-b border-white/5 shadow-sm supports-[backdrop-filter]:bg-background/60">
