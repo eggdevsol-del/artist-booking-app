@@ -124,8 +124,14 @@ export default function Conversations() {
                     key={consult.id}
                     className="p-4 cursor-pointer hover:bg-accent/5 transition-colors border-l-4 border-l-primary"
                     onClick={async () => {
-                      // Mark consultation as viewed
+                      // Mark consultation as viewed immediately
+                      updateConsultationMutation.mutate({
+                        id: consult.id,
+                        viewed: 1
+                      });
+
                       try {
+                        // Local optimistic update (keep existing logic)
                         const newViewed = new Set(viewedConsultations);
                         newViewed.add(consult.id);
                         setViewedConsultations(newViewed);
