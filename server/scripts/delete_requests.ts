@@ -1,4 +1,4 @@
-
+import "dotenv/config";
 import { getDb } from "../services/core";
 import { consultations } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";

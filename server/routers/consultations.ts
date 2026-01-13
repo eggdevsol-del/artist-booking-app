@@ -22,7 +22,7 @@ export const consultationsRouter = router({
                 artistId: input.artistId,
                 subject: input.subject,
                 description: input.description,
-                preferredDate: input.preferredDate ? new Date(input.preferredDate) : undefined,
+                preferredDate: input.preferredDate ? new Date(input.preferredDate).toISOString() : undefined,
             });
         }),
     update: protectedProcedure

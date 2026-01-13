@@ -193,8 +193,9 @@ export default function Settings() {
   if (activeSection === "main") {
     return (
       <div className="min-h-screen flex flex-col pb-20">
-        <header className="mobile-header px-4 py-4">
+        <header className="mobile-header px-4 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+          <span className="text-xs text-muted-foreground font-medium">v{__APP_VERSION__}</span>
         </header>
 
         <main className="flex-1 px-4 py-4 mobile-scroll space-y-4">

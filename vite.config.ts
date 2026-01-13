@@ -46,6 +46,9 @@ const plugins = [
 
 export default defineConfig({
   plugins,
+  define: {
+    '__APP_VERSION__': JSON.stringify(JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, 'package.json'), 'utf-8')).version),
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
