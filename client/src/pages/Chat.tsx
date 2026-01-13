@@ -749,31 +749,24 @@ export default function Chat() {
 
       {/* Fixed Bottom Input Area - Lifted above Bottom Nav */}
       {/* Input Area & Quick Actions Drawer */}
-      <div className="fixed bottom-0 left-0 right-0 z-[60]">
-        {isArtist ? (
-          <Sheet>
-            <SheetTrigger asChild>
-              <div className="absolute bottom-28 left-0 right-0 flex justify-center z-10 pointer-events-none">
-                <div className="bg-background/60 backdrop-blur-xl border border-white/10 shadow-lg rounded-t-xl px-6 py-1.5 cursor-pointer pointer-events-auto hover:bg-background/80 transition-all group flex items-center gap-2">
-                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">Quick Actions</span>
+      {/* Floating Bottom Input & Actions */}
+      <div className="fixed bottom-[88px] left-4 right-4 z-[60]">
+        <div className="relative">
+          {isArtist && (
+            <Sheet>
+              <SheetTrigger asChild>
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-8 bg-background/60 backdrop-blur-xl border border-white/10 shadow-lg rounded-full flex items-center justify-center cursor-pointer hover:bg-background/80 transition-all group gap-2 z-20">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">Quick Actions</span>
                   <ChevronUp className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
-              </div>
-            </SheetTrigger>
-            <SheetContent
-              side="bottom"
-              className="rounded-t-[2.5rem] border-t-0 p-0 bg-background/80 backdrop-blur-[20px] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)] max-h-[85vh] overflow-hidden flex flex-col gap-0"
-            >
-              <div className="w-12 h-1 bg-muted/50 rounded-full mx-auto mt-3 mb-5 shrink-0" />
-
-              <SheetHeader className="px-6 mb-2 shrink-0">
-                <SheetTitle className="text-center text-sm font-semibold uppercase tracking-widest text-muted-foreground/80">
-                  Quick Actions
-                </SheetTitle>
-              </SheetHeader>
-
-              <div className="overflow-y-auto flex-1 px-4 pb-4">
-                <div className="grid gap-6 max-w-md mx-auto">
+              </SheetTrigger>
+              <SheetContent side="bottom" className="rounded-t-[2.5rem] border-t-0 p-0 bg-background/95 backdrop-blur-[20px] shadow-2xl max-h-[85vh]">
+                <SheetHeader className="px-6 py-4 border-b border-white/5">
+                  <SheetTitle className="text-center text-sm font-semibold uppercase tracking-widest text-muted-foreground/80">
+                    Quick Actions
+                  </SheetTitle>
+                </SheetHeader>
+                <div className="p-6 grid gap-6">
                   {/* Booking Tools */}
                   <div className="space-y-3">
                     <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-2 px-1">
@@ -823,36 +816,11 @@ export default function Chat() {
                     </div>
                   )}
                 </div>
-              </div>
+              </SheetContent>
+            </Sheet>
+          )}
 
-              {/* Input Area Docked in Drawer */}
-              <div className="p-4 bg-background/50 backdrop-blur-md border-t border-white/5 mt-auto">
-                <div className="flex items-center gap-2 max-w-md mx-auto">
-                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                  <Button size="icon" variant="ghost" className="shrink-0 h-10 w-10 rounded-full hover:bg-muted" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
-                    <ImagePlus className="w-5 h-5 text-muted-foreground" />
-                  </Button>
-                  <div className="flex-1 bg-muted/50 rounded-full px-4 py-1 border border-transparent focus-within:border-primary/50 focus-within:bg-background transition-all flex items-center">
-                    <Input
-                      value={messageText}
-                      onChange={(e) => setMessageText(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                      placeholder="Type a message..."
-                      className="flex-1 bg-transparent border-0 focus-visible:ring-0 px-0 h-9 placeholder:text-muted-foreground/50"
-                      disabled={uploadingImage}
-                    />
-                  </div>
-                  <Button size="icon" className="shrink-0 h-10 w-10 rounded-full shadow-lg shadow-primary/20" onClick={handleSendMessage} disabled={!messageText.trim() || sendMessageMutation.isPending || uploadingImage}>
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
-        ) : null}
-
-        {/* Default Input Area (When Drawer is Closed or User is Client) */}
-        <div className="absolute bottom-4 left-4 right-4 z-10 pointer-events-auto">
+          {/* Input Bar */}
           <div className="bg-background/60 backdrop-blur-xl border border-white/10 shadow-2xl rounded-[2rem] p-1.5 pl-4 flex items-center gap-2">
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
             <Button size="icon" variant="ghost" className="shrink-0 h-9 w-9 rounded-full hover:bg-white/10 -ml-2" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
