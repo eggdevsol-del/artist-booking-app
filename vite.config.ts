@@ -14,6 +14,9 @@ const plugins = [
   // jsxLocPlugin(),
   vitePluginManusRuntime(),
   VitePWA({
+    strategies: 'injectManifest',
+    srcDir: 'src',
+    filename: 'sw.js',
     registerType: 'autoUpdate',
     includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
     manifest: {
@@ -33,7 +36,11 @@ const plugins = [
           type: 'image/png'
         }
       ]
-    }
+    },
+    devOptions: {
+      enabled: true,
+      type: 'module',
+    },
   })
 ];
 

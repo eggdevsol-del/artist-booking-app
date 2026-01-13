@@ -50,10 +50,70 @@ export default function Conversations() {
       {/* Conversations List */}
       <main className="flex-1 px-4 py-4 mobile-scroll">
 
-        {/* PENDING CONSULTS COMMENTED OUT FOR DEBUGGING */}
-        {/* 
-        {isArtist && pendingConsults && ... }
-        */}
+        {isArtist && pendingConsults && pendingConsults.filter(c => c.status === 'pending').length > 0 && (
+          <Collapsible
+            open={isConsultationsOpen}
+            onOpenChange={setIsConsultationsOpen}
+            className="mb-6 space-y-2"
+          >
+            <div className="flex items-center justify-between px-1 mb-2">
+              <h2 className="text-sm font-semibold text-muted-foreground">CONSULTATION REQUESTS</h2>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-9 h-9 p-0">
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isConsultationsOpen ? '' : '-rotate-90'}`} />
+                  <span className="sr-only">Toggle Consultations</span>
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+
+            <CollapsibleContent className="space-y-2">
+              {pendingConsults
+                .filter(c => c.status === 'pending')
+                .sort((a, b) => new Date(b.createdAt as any).getTime() - new Date(a.createdAt as any).getTime())
+                .map((consult) => (
+                  <Card
+                    key={consult.id}
+                    className="p-4 cursor-pointer hover:bg-accent/5 transition-colors border-l-4 border-l-primary"
+                    onClick={async () => {
+                      // Mark consultation as viewed
+                      try {
+                        const newViewed = new Set(viewedConsultations);
+                        newViewed.add(consult.id);
+                        setViewedConsultations(newViewed);
+                        localStorage.setItem('viewedConsultations', JSON.stringify(Array.from(newViewed)));
+
+                        // Create or get conversation with this client
+                        const result = await createConversationMutation.mutateAsync({
+                          clientId: consult.clientId,
+                          artistId: consult.artistId,
+                        });
+                        if (result) {
+                          setLocation(`/chat/${result.id}?consultationId=${consult.id}`);
+                        }
+                      } catch (e) {
+                        console.error("Error clicking card", e);
+                      }
+                    }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-foreground mb-1">{consult.subject}</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground line-clamp-2">{consult.description}</p>
+                        {consult.preferredDate && !isNaN(new Date(consult.preferredDate as any).getTime()) && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Preferred: {new Date(consult.preferredDate as any).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0 ml-2" />
+                    </div>
+                  </Card>
+                ))}
+            </CollapsibleContent>
+          </Collapsible>
+        )}
 
         {/* Request Consult Button for Clients */}
         {!isArtist && (

@@ -1,3 +1,12 @@
+import { cleanupOutdatedCaches, preCacheAndRoute } from 'workbox-precaching';
+import { clientsClaim } from 'workbox-core';
+
+self.skipWaiting();
+clientsClaim();
+
+cleanupOutdatedCaches();
+preCacheAndRoute(self.__WB_MANIFEST);
+
 const CACHE_NAME = 'artist-booking-v1';
 const urlsToCache = [
   '/',
@@ -10,7 +19,6 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(urlsToCache))
   );
-  self.skipWaiting();
 });
 
 // Activate service worker
@@ -36,12 +44,12 @@ self.addEventListener('fetch', (event) => {
       .then((response) => {
         // Clone the response
         const responseToCache = response.clone();
-        
+
         caches.open(CACHE_NAME)
           .then((cache) => {
             cache.put(event.request, responseToCache);
           });
-        
+
         return response;
       })
       .catch(() => {
