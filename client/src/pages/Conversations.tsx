@@ -75,8 +75,13 @@ export default function Conversations() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
   const [viewedConsultations, setViewedConsultations] = useState<Set<number>>(() => {
-    const stored = localStorage.getItem('viewedConsultations');
-    return stored ? new Set(JSON.parse(stored)) : new Set();
+    try {
+      const stored = localStorage.getItem('viewedConsultations');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch (e) {
+      console.error("Failed to parse viewedConsultations", e);
+      return new Set();
+    }
   });
   const { data: conversations, isLoading, refetch } = trpc.conversations.list.useQuery(undefined, {
     enabled: !!user,
@@ -196,10 +201,9 @@ export default function Conversations() {
                 .filter(c => c.status === 'pending')
                 .sort((a, b) => new Date(b.createdAt as any).getTime() - new Date(a.createdAt as any).getTime())
                 .map((consult) => (
-                  <SwipeableConsultationCard
+                  <Card
                     key={consult.id}
-                    consult={consult}
-                    onDelete={handleDeleteConsultation}
+                    className="p-4 cursor-pointer hover:bg-accent/5 transition-colors border-l-4 border-l-primary"
                     onClick={async () => {
                       // Mark consultation as viewed
                       try {
@@ -220,7 +224,22 @@ export default function Conversations() {
                         console.error("Error clicking card", e);
                       }
                     }}
-                  />
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-foreground mb-1">{consult.subject}</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground line-clamp-2">{consult.description}</p>
+                        {consult.preferredDate && !isNaN(new Date(consult.preferredDate as any).getTime()) && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Preferred: {new Date(consult.preferredDate as any).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0 ml-2" />
+                    </div>
+                  </Card>
                 ))}
             </CollapsibleContent>
           </Collapsible>
