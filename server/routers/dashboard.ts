@@ -1,13 +1,16 @@
-import { router, protectedProcedure } from "../trpc";
+import { router, protectedProcedure } from "../_core/trpc";
 import { z } from "zod";
 import * as schema from "../../drizzle/schema";
 import { eq, and, desc, sql, count } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { getDb } from "../db";
 
 export const dashboardRouter = router({
     getStats: protectedProcedure
         .query(async ({ ctx }) => {
-            const { db, user } = ctx;
+            const { user } = ctx;
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database connection failed" });
 
             if (user.role === 'artist' || user.role === 'admin') {
                 // Artist Stats
@@ -86,7 +89,10 @@ export const dashboardRouter = router({
 
     getRecentActivity: protectedProcedure
         .query(async ({ ctx }) => {
-            const { db, user } = ctx;
+            const { user } = ctx;
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database connection failed" });
+
             // Fetch recent 5 items (mix of appointments or consultations)
             // Simplified for now: just return recent consultations
             const interactions = await db.query.consultations.findMany({

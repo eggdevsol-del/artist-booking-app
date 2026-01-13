@@ -1,9 +1,10 @@
-import { router, protectedProcedure } from "../trpc";
+import { router, protectedProcedure } from "../_core/trpc";
 import { z } from "zod";
 import * as schema from "../../drizzle/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { randomBytes } from "crypto";
+import { getDb } from "../db";
 
 export const walletRouter = router({
     createTemplate: protectedProcedure
@@ -17,7 +18,10 @@ export const walletRouter = router({
                 throw new TRPCError({ code: "FORBIDDEN" });
             }
 
-            await ctx.db.insert(schema.voucherTemplates).values({
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database connection failed" });
+
+            await db.insert(schema.voucherTemplates).values({
                 artistId: ctx.user.id,
                 name: input.name,
                 description: input.description,
@@ -32,7 +36,10 @@ export const walletRouter = router({
             if (ctx.user.role !== 'artist' && ctx.user.role !== 'admin') {
                 throw new TRPCError({ code: "FORBIDDEN" });
             }
-            return await ctx.db.query.voucherTemplates.findMany({
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database connection failed" });
+
+            return await db.query.voucherTemplates.findMany({
                 where: eq(schema.voucherTemplates.artistId, ctx.user.id),
                 orderBy: desc(schema.voucherTemplates.createdAt)
             });
@@ -49,6 +56,9 @@ export const walletRouter = router({
                 throw new TRPCError({ code: "FORBIDDEN" });
             }
 
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database connection failed" });
+
             // Generate unique code
             const code = randomBytes(4).toString('hex').toUpperCase();
 
@@ -60,7 +70,7 @@ export const walletRouter = router({
                 expiresAt = date.toISOString();
             }
 
-            await ctx.db.insert(schema.issuedVouchers).values({
+            await db.insert(schema.issuedVouchers).values({
                 templateId: input.templateId,
                 artistId: ctx.user.id,
                 clientId: input.clientId,
@@ -74,16 +84,17 @@ export const walletRouter = router({
 
     getMyVouchers: protectedProcedure
         .query(async ({ ctx }) => {
-            return await ctx.db.query.issuedVouchers.findMany({
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database connection failed" });
+
+            return await db.query.issuedVouchers.findMany({
                 where: eq(schema.issuedVouchers.clientId, ctx.user.id),
                 with: {
                     template: true,
                     artist: {
                         columns: {
                             name: true,
-                            businessName: true // Note: businessName is in artistSettings, not users table strictly, might need adjustment if using drizzle relations correctly. 
-                            // Actually 'artist' relation points to 'users'. 'users' table doesn't have businessName.
-                            // We might need to fetch artistSettings separately or assume the user name is enough for now.
+                            // businessName: true 
                         }
                     }
                 },

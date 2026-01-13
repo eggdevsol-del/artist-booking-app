@@ -1,8 +1,9 @@
-import { router, protectedProcedure } from "../trpc";
+import { router, protectedProcedure } from "../_core/trpc";
 import { z } from "zod";
 import * as schema from "../../drizzle/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { getDb } from "../db";
 
 export const portfolioRouter = router({
     create: protectedProcedure
@@ -15,7 +16,10 @@ export const portfolioRouter = router({
                 throw new TRPCError({ code: "FORBIDDEN" });
             }
 
-            await ctx.db.insert(schema.portfolios).values({
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database connection failed" });
+
+            await db.insert(schema.portfolios).values({
                 artistId: ctx.user.id,
                 imageUrl: input.imageUrl,
                 description: input.description
@@ -29,11 +33,14 @@ export const portfolioRouter = router({
             artistId: z.string().optional(), // If provided, view specific artist, else view all (feed)
         }).optional())
         .query(async ({ ctx, input }) => {
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database connection failed" });
+
             const where = input?.artistId
                 ? eq(schema.portfolios.artistId, input.artistId)
                 : undefined; // TODO: For feed, maybe limit to random or recent
 
-            const items = await ctx.db.query.portfolios.findMany({
+            const items = await db.query.portfolios.findMany({
                 where,
                 orderBy: desc(schema.portfolios.createdAt),
                 with: {
@@ -55,7 +62,10 @@ export const portfolioRouter = router({
             portfolioId: z.number()
         }))
         .mutation(async ({ ctx, input }) => {
-            const existing = await ctx.db.query.portfolioLikes.findFirst({
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database connection failed" });
+
+            const existing = await db.query.portfolioLikes.findFirst({
                 where: and(
                     eq(schema.portfolioLikes.portfolioId, input.portfolioId),
                     eq(schema.portfolioLikes.userId, ctx.user.id)
@@ -63,11 +73,11 @@ export const portfolioRouter = router({
             });
 
             if (existing) {
-                await ctx.db.delete(schema.portfolioLikes)
+                await db.delete(schema.portfolioLikes)
                     .where(eq(schema.portfolioLikes.id, existing.id));
                 return { liked: false };
             } else {
-                await ctx.db.insert(schema.portfolioLikes).values({
+                await db.insert(schema.portfolioLikes).values({
                     portfolioId: input.portfolioId,
                     userId: ctx.user.id
                 });
@@ -80,7 +90,10 @@ export const portfolioRouter = router({
             id: z.number()
         }))
         .mutation(async ({ ctx, input }) => {
-            const item = await ctx.db.query.portfolios.findFirst({
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database connection failed" });
+
+            const item = await db.query.portfolios.findFirst({
                 where: eq(schema.portfolios.id, input.id)
             });
 
@@ -89,7 +102,7 @@ export const portfolioRouter = router({
                 throw new TRPCError({ code: "FORBIDDEN" });
             }
 
-            await ctx.db.delete(schema.portfolios).where(eq(schema.portfolios.id, input.id));
+            await db.delete(schema.portfolios).where(eq(schema.portfolios.id, input.id));
             return { success: true };
         })
 });
