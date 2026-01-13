@@ -33,7 +33,7 @@ function Router() {
   const shouldShowBottomNav = !hideBottomNavPaths.includes(location) && !location.startsWith("/404");
 
   return (
-    <div className="min-h-screen pb-16">
+    <div className={`min-h-screen ${shouldShowBottomNav ? "pb-16" : ""}`}>
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/login" component={Login} />
