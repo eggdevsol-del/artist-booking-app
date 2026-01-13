@@ -184,7 +184,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                     ].map((opt) => (
                         <div key={opt.id} className={`group relative flex items-center space-x-4 border p-5 rounded-[1.5rem] cursor-pointer transition-all duration-300 ${frequency === opt.id
                             ? 'bg-[#5b4eff]/10 border-[#5b4eff] shadow-[0_0_15px_rgba(91,78,255,0.1)]'
-                            : 'bg-[#1a1a1a]/80 backdrop-blur-sm border-white/5 hover:bg-[#222]/90'
+                            : 'bg-[#1a1a1a] border-white/5 hover:bg-[#222]'
                             }`}
                             onClick={() => setFrequency(opt.id as any)}
                         >
