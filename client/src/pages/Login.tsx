@@ -183,6 +183,11 @@ export default function Login() {
               Forgot password?
             </Button>
           </div>
+
+          {/* Version Number */}
+          <div className="mt-6 text-center">
+            <span className="text-xs text-muted-foreground font-medium">v{__APP_VERSION__}</span>
+          </div>
         </CardContent>
       </Card>
     </div>
