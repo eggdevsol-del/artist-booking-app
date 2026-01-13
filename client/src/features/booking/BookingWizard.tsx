@@ -121,9 +121,9 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                     {artistServices.map(service => (
                         <div
                             key={service.id}
-                            className={`group relative p-6 cursor-pointer transition-all duration-300 rounded-[2rem] border ${selectedService?.id === service.id
+                            className={`group relative p-6 cursor-pointer transition-all duration-300 rounded-[2rem] border-4 ${selectedService?.id === service.id
                                 ? 'bg-[#5b4eff]/10 border-[#5b4eff] shadow-[0_0_30px_rgba(91,78,255,0.15)]'
-                                : 'bg-[#1a1a1a] border-white/5 hover:border-white/10 hover:bg-[#222]'
+                                : 'bg-orange-500 border-cyan-400 hover:border-white/10 hover:bg-[#222]'
                                 }`}
                             onClick={() => setSelectedService(service)}
                         >
