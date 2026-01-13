@@ -291,7 +291,6 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
     );
 
     return (
-    return (
         <Dialog open={isOpen} onOpenChange={(v) => !v && handleClose()}>
             <DialogContent className="sm:max-w-[500px] max-h-[85vh] flex flex-col p-0 gap-0 border border-white/10 bg-[#121212]/90 backdrop-blur-xl shadow-2xl rounded-[2.5rem] overflow-hidden text-white outline-none">
                 <DialogHeader className="p-8 pb-4 shrink-0 bg-white/[0.02]">
@@ -359,7 +358,6 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                 )}
             </DialogContent>
         </Dialog>
-    );
     );
 
 }
