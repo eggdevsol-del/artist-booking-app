@@ -18,7 +18,7 @@ export default function Conversations() {
   });
 
   // Get pending consultation requests for artists
-  const { data: pendingConsults } = trpc.consultations.list.useQuery(undefined, {
+  const { data: pendingConsults, refetch: refetchPending } = trpc.consultations.list.useQuery(undefined, {
     enabled: !!user && (user.role === 'artist' || user.role === 'admin'),
     refetchInterval: 10000,
   });
@@ -46,6 +46,7 @@ export default function Conversations() {
   const updateConsultationMutation = trpc.consultations.update.useMutation({
     onSuccess: () => {
       refetch();
+      refetchPending();
     }
   });
 

@@ -106,28 +106,30 @@ export const messagesRouter = router({
 
                 // Auto-update consultation status if artist replies
                 if (ctx.user.id === conversation.artistId) {
-                    if (input.consultationId) {
-                        try {
-                            // If explicit ID provided, use it
+                    try {
+                        // 1. If explicit ID provided, use it
+                        if (input.consultationId) {
                             await db.updateConsultation(input.consultationId, { status: "responded" });
-                        } catch (err) {
-                            console.error("Failed to auto-update provided consultation ID:", err);
                         }
-                    } else {
-                        // Fallback: find key pending consultations for this client
-                        try {
-                            const pendingConsultations = await db.getConsultationsForUser(ctx.user.id, "artist");
-                            const relevantConsultations = pendingConsultations.filter(
-                                c => c.clientId === conversation.clientId && c.status === "pending"
-                            );
 
-                            // Update ALL pending consultations for this client to responded
-                            for (const consult of relevantConsultations) {
+                        // 2. ALSO check for any pending consultations between these two users
+                        // This ensures that even if the ID wasn't passed, we catch it.
+                        // We can't rely on getConsultationsForUser because it might be cached or filtered
+
+                        // Get all consultations for this artist to match against client
+                        const allConsults = await db.getConsultationsForUser(ctx.user.id, "artist");
+                        const pendingForClient = allConsults.filter(
+                            c => c.clientId === conversation.clientId && c.status === "pending"
+                        );
+
+                        for (const consult of pendingForClient) {
+                            // Avoid double update if we already did it above
+                            if (consult.id !== input.consultationId) {
                                 await db.updateConsultation(consult.id, { status: "responded" });
                             }
-                        } catch (err) {
-                            console.error("Failed to auto-update consultation status:", err);
                         }
+                    } catch (err) {
+                        console.error("Failed to auto-update consultation status:", err);
                     }
                 }
             }
