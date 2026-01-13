@@ -739,297 +739,294 @@ export default function Chat() {
             <div ref={bottomRef} className="pb-64" />
           </div>
         </ScrollArea>
-
       </div>
-    </ScrollArea>
-      </div >
 
-    {/* Fixed Bottom Input Area - Lifted above Bottom Nav */ }
-    < div className = "fixed bottom-28 left-4 right-4 z-[60] bg-background/40 backdrop-blur-xl border border-white/10 shadow-lg rounded-[2rem]" >
-      { isArtist && (
-        <Sheet>
-          <SheetTrigger asChild>
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-32 h-6 bg-background/40 backdrop-blur-md rounded-t-xl border-t border-x flex items-center justify-center cursor-pointer hover:bg-accent/50 transition-colors shadow-sm">
-              <ChevronUp className="w-4 h-4 text-muted-foreground" />
-            </div>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="h-[60vh] rounded-t-[20px] pb-safe-bottom">
-            <SheetHeader className="mb-4">
-              <SheetTitle className="text-center text-sm font-semibold uppercase tracking-wider text-muted-foreground">Quick Actions</SheetTitle>
-            </SheetHeader>
-
-            <div className="grid gap-6 px-2">
-              {/* Core Booking Actions */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-                  <CalendarIcon className="w-3 h-3" /> Booking Tools
-                </h4>
-                <div className="grid grid-cols-3 gap-3">
-                  <Button
-                    variant="outline"
-                    className="h-20 flex-col gap-2 hover:border-primary hover:bg-primary/5"
-                    onClick={() => setShowBookingCalendar(true)}
-                  >
-                    <CalendarIcon className="w-6 h-6 text-primary" />
-                    <span className="text-xs">Book Now</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-20 flex-col gap-2 hover:border-primary hover:bg-primary/5"
-                    onClick={() => {
-                      setShowProjectWizard(true);
-                      setWizardStep('service');
-                    }}
-                  >
-                    <div className="relative">
-                      <CalendarIcon className="w-6 h-6 text-primary" />
-                      <span className="absolute -top-1 -right-1 text-[8px] bg-primary text-primary-foreground px-1 rounded-full">PRO</span>
-                    </div>
-                    <span className="text-xs">Project</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-20 flex-col gap-2 hover:border-primary hover:bg-primary/5"
-                    onClick={() => {
-                      if (conversationId) {
-                        toast.info("Use the 'Confirm & Book' button in the chat bubble for projects.");
-                      }
-                    }}
-                  >
-                    <Check className="w-6 h-6 text-green-500" />
-                    <span className="text-xs">Confirm</span>
-                  </Button>
-                </div>
+      {/* Fixed Bottom Input Area - Lifted above Bottom Nav */}
+      <div className="fixed bottom-28 left-4 right-4 z-[60] bg-background/40 backdrop-blur-xl border border-white/10 shadow-lg rounded-[2rem]">
+        {isArtist && (
+          <Sheet>
+            <SheetTrigger asChild>
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-32 h-6 bg-background/40 backdrop-blur-md rounded-t-xl border-t border-x flex items-center justify-center cursor-pointer hover:bg-accent/50 transition-colors shadow-sm">
+                <ChevronUp className="w-4 h-4 text-muted-foreground" />
               </div>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[60vh] rounded-t-[20px] pb-safe-bottom">
+              <SheetHeader className="mb-4">
+                <SheetTitle className="text-center text-sm font-semibold uppercase tracking-wider text-muted-foreground">Quick Actions</SheetTitle>
+              </SheetHeader>
 
-              {/* Quick Responses */}
-              {quickActions && quickActions.length > 0 && (
+              <div className="grid gap-6 px-2">
+                {/* Core Booking Actions */}
                 <div className="space-y-3">
                   <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-                    <Zap className="w-3 h-3" /> Saved Responses
+                    <CalendarIcon className="w-3 h-3" /> Booking Tools
                   </h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    {quickActions.map((action) => (
-                      <Button
-                        key={action.id}
-                        variant="secondary"
-                        className="justify-start h-auto py-3 px-4 text-xs text-left whitespace-normal leading-relaxed"
-                        onClick={() => handleQuickAction(action)}
-                      >
-                        {action.label}
-                      </Button>
-                    ))}
+                  <div className="grid grid-cols-3 gap-3">
+                    <Button
+                      variant="outline"
+                      className="h-20 flex-col gap-2 hover:border-primary hover:bg-primary/5"
+                      onClick={() => setShowBookingCalendar(true)}
+                    >
+                      <CalendarIcon className="w-6 h-6 text-primary" />
+                      <span className="text-xs">Book Now</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-20 flex-col gap-2 hover:border-primary hover:bg-primary/5"
+                      onClick={() => {
+                        setShowProjectWizard(true);
+                        setWizardStep('service');
+                      }}
+                    >
+                      <div className="relative">
+                        <CalendarIcon className="w-6 h-6 text-primary" />
+                        <span className="absolute -top-1 -right-1 text-[8px] bg-primary text-primary-foreground px-1 rounded-full">PRO</span>
+                      </div>
+                      <span className="text-xs">Project</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-20 flex-col gap-2 hover:border-primary hover:bg-primary/5"
+                      onClick={() => {
+                        if (conversationId) {
+                          toast.info("Use the 'Confirm & Book' button in the chat bubble for projects.");
+                        }
+                      }}
+                    >
+                      <Check className="w-6 h-6 text-green-500" />
+                      <span className="text-xs">Confirm</span>
+                    </Button>
                   </div>
                 </div>
-              )}
-            </div>
-          </SheetContent>
-        </Sheet>
-      )
-}
 
-{/* Message Input */ }
-<div className="px-4 py-3 bg-transparent">
-  <div className="flex items-center gap-2">
-    <input
-      ref={fileInputRef}
-      type="file"
-      accept="image/*"
-      onChange={handleImageUpload}
-      className="hidden"
-    />
-    <Button
-      size="icon"
-      variant="outline"
-      onClick={() => fileInputRef.current?.click()}
-      disabled={uploadingImage}
-    >
-      <ImagePlus className="w-5 h-5" />
-    </Button>
-    <Input
-      value={messageText}
-      onChange={(e) => setMessageText(e.target.value)}
-      onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-      placeholder="Type a message..."
-      className="flex-1"
-      disabled={uploadingImage}
-    />
-    <Button
-      size="icon"
-      onClick={handleSendMessage}
-      disabled={!messageText.trim() || sendMessageMutation.isPending || uploadingImage}
-    >
-      <Send className="w-5 h-5" />
-    </Button>
-  </div>
-</div>
-        </div >
+                {/* Quick Responses */}
+                {quickActions && quickActions.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-2">
+                      <Zap className="w-3 h-3" /> Saved Responses
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      {quickActions.map((action) => (
+                        <Button
+                          key={action.id}
+                          variant="secondary"
+                          className="justify-start h-auto py-3 px-4 text-xs text-left whitespace-normal leading-relaxed"
+                          onClick={() => handleQuickAction(action)}
+                        >
+                          {action.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
+        )
+        }
 
-  {/* Book Project Wizard */ }
-  < BookingWizard
-isOpen = { showProjectWizard }
-onClose = {() => setShowProjectWizard(false)}
-conversationId = { conversationId }
-artistServices = { availableServices }
-onBookingSuccess = {() => {
-  setShowProjectWizard(false);
-  // Optional: trigger a refresh or toast
-}}
-        />
-
-{/* Client Confirm Dialog */ }
-<Dialog open={showClientConfirmDialog} onOpenChange={setShowClientConfirmDialog}>
-  <DialogContent className="max-w-md">
-    <DialogHeader>
-      <DialogTitle>Confirm Project Dates</DialogTitle>
-      <DialogDescription>Please review and select the dates you can attend.</DialogDescription>
-    </DialogHeader>
-    <div className="space-y-2 py-4">
-      {clientConfirmDates.map((item, idx) => (
-        <div key={idx} className="flex items-center space-x-2 p-2 rounded hover:bg-muted">
-          <Checkbox
-            id={`date-${idx}`}
-            checked={item.selected}
-            onCheckedChange={(checked) => {
-              const newDates = [...clientConfirmDates];
-              newDates[idx].selected = checked === true;
-              setClientConfirmDates(newDates);
-            }}
-          />
-          <Label htmlFor={`date-${idx}`} className="cursor-pointer flex-1">
-            {format(new Date(item.date), 'PPPP')}
-          </Label>
+        {/* Message Input */}
+        <div className="px-4 py-3 bg-transparent">
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingImage}
+            >
+              <ImagePlus className="w-5 h-5" />
+            </Button>
+            <Input
+              value={messageText}
+              onChange={(e) => setMessageText(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+              placeholder="Type a message..."
+              className="flex-1"
+              disabled={uploadingImage}
+            />
+            <Button
+              size="icon"
+              onClick={handleSendMessage}
+              disabled={!messageText.trim() || sendMessageMutation.isPending || uploadingImage}
+            >
+              <Send className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
-      ))}
-    </div>
-    <DialogFooter>
-      <Button onClick={handleClientConfirmDates}>Confirm Dates</Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
-
-{/* Existing Client Info Dialog */ }
-<Dialog open={showClientInfo} onOpenChange={setShowClientInfo}>
-  <DialogContent className="max-w-md h-[400px] flex flex-col">
-    <DialogHeader>
-      <DialogTitle>Client Information</DialogTitle>
-      <DialogDescription>Contact details and shared media</DialogDescription>
-    </DialogHeader>
-
-    <Tabs defaultValue="info" className="flex-1 overflow-hidden flex flex-col">
-      <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="info">Info</TabsTrigger>
-        <TabsTrigger value="media">Media</TabsTrigger>
-        <TabsTrigger value="content">Content</TabsTrigger>
-      </TabsList>
-
-      <ScrollArea className="flex-1 mt-2">
-        <TabsContent value="info" className="space-y-4">
-          <div className="flex items-center gap-3">
-            <User className="w-5 h-5 text-muted-foreground" />
-            <div>
-              <p className="text-sm font-medium">Full Name</p>
-              <p className="text-sm text-muted-foreground">{conversation?.otherUser?.name || "Unknown"}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Mail className="w-5 h-5 text-muted-foreground" />
-            <div>
-              <p className="text-sm font-medium">Email</p>
-              <p className="text-sm text-muted-foreground">{conversation?.otherUser?.email || "No email"}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Phone className="w-5 h-5 text-muted-foreground" />
-            <div>
-              <p className="text-sm font-medium">Phone</p>
-              <p className="text-sm text-muted-foreground">{conversation?.otherUser?.phone || "No phone"}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Cake className="w-5 h-5 text-muted-foreground" />
-            <div>
-              <p className="text-sm font-medium">Birthday</p>
-              <p className="text-sm text-muted-foreground">
-                {conversation?.otherUser?.birthday
-                  ? format(new Date(conversation.otherUser.birthday), 'MMMM do, yyyy')
-                  : "Not set"}
-              </p>
-            </div>
-          </div>
-          {conversation?.otherUser?.bio && (
-            <div className="pt-2">
-              <p className="text-sm font-medium mb-1">Bio</p>
-              <p className="text-sm text-muted-foreground bg-muted p-2 rounded-md">
-                {conversation.otherUser.bio}
-              </p>
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="media">
-          {/* Media sent by the Client */}
-          <div className="grid grid-cols-3 gap-2">
-            {messages?.filter(m => m.senderId === otherUserId && (m.messageType === 'image' || m.messageType === 'video') && !failedImages.has(m.id)).map(m => (
-              <div key={m.id} className="aspect-square rounded-md overflow-hidden bg-muted relative group">
-                {m.messageType === 'image' ? (
-                  <img
-                    src={m.content}
-                    alt="Client media"
-                    className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                    onError={() => setFailedImages(prev => new Set(prev).add(m.id))}
-                    onClick={() => {
-                      setShowClientInfo(false); // Close dialog
-                      const el = document.getElementById(`message-${m.id}`);
-                      if (el) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      }
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-xs">Video</div>
-                )}
-              </div>
-            ))}
-            {(!messages || messages.filter(m => m.senderId === otherUserId && (m.messageType === 'image' || m.messageType === 'video')).length === 0) && (
-              <p className="col-span-3 text-center text-sm text-muted-foreground py-8">No media shared</p>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="content">
-          {/* Content sent by the Artist (Me) */}
-          <div className="grid grid-cols-3 gap-2">
-            {messages?.filter(m => m.senderId === user?.id && (m.messageType === 'image' || m.messageType === 'video') && !failedImages.has(m.id)).map(m => (
-              <div key={m.id} className="aspect-square rounded-md overflow-hidden bg-muted relative">
-                {m.messageType === 'image' ? (
-                  <img
-                    src={m.content}
-                    alt="Artist content"
-                    className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                    onError={() => setFailedImages(prev => new Set(prev).add(m.id))}
-                    onClick={() => {
-                      setShowClientInfo(false); // Close dialog
-                      const el = document.getElementById(`message-${m.id}`);
-                      if (el) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      }
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-xs">Video</div>
-                )}
-              </div>
-            ))}
-            {(!messages || messages.filter(m => m.senderId === user?.id && (m.messageType === 'image' || m.messageType === 'video')).length === 0) && (
-              <p className="col-span-3 text-center text-sm text-muted-foreground py-8">No content sent</p>
-            )}
-          </div>
-        </TabsContent>
-      </ScrollArea>
-    </Tabs>
-  </DialogContent>
-</Dialog>
       </div >
-      );
+
+      {/* Book Project Wizard */}
+      < BookingWizard
+        isOpen={showProjectWizard}
+        onClose={() => setShowProjectWizard(false)}
+        conversationId={conversationId}
+        artistServices={availableServices}
+        onBookingSuccess={() => {
+          setShowProjectWizard(false);
+          // Optional: trigger a refresh or toast
+        }}
+      />
+
+      {/* Client Confirm Dialog */}
+      <Dialog open={showClientConfirmDialog} onOpenChange={setShowClientConfirmDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Project Dates</DialogTitle>
+            <DialogDescription>Please review and select the dates you can attend.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-4">
+            {clientConfirmDates.map((item, idx) => (
+              <div key={idx} className="flex items-center space-x-2 p-2 rounded hover:bg-muted">
+                <Checkbox
+                  id={`date-${idx}`}
+                  checked={item.selected}
+                  onCheckedChange={(checked) => {
+                    const newDates = [...clientConfirmDates];
+                    newDates[idx].selected = checked === true;
+                    setClientConfirmDates(newDates);
+                  }}
+                />
+                <Label htmlFor={`date-${idx}`} className="cursor-pointer flex-1">
+                  {format(new Date(item.date), 'PPPP')}
+                </Label>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button onClick={handleClientConfirmDates}>Confirm Dates</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Existing Client Info Dialog */}
+      <Dialog open={showClientInfo} onOpenChange={setShowClientInfo}>
+        <DialogContent className="max-w-md h-[400px] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Client Information</DialogTitle>
+            <DialogDescription>Contact details and shared media</DialogDescription>
+          </DialogHeader>
+
+          <Tabs defaultValue="info" className="flex-1 overflow-hidden flex flex-col">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="info">Info</TabsTrigger>
+              <TabsTrigger value="media">Media</TabsTrigger>
+              <TabsTrigger value="content">Content</TabsTrigger>
+            </TabsList>
+
+            <ScrollArea className="flex-1 mt-2">
+              <TabsContent value="info" className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <User className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Full Name</p>
+                    <p className="text-sm text-muted-foreground">{conversation?.otherUser?.name || "Unknown"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Mail className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Email</p>
+                    <p className="text-sm text-muted-foreground">{conversation?.otherUser?.email || "No email"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Phone className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Phone</p>
+                    <p className="text-sm text-muted-foreground">{conversation?.otherUser?.phone || "No phone"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Cake className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Birthday</p>
+                    <p className="text-sm text-muted-foreground">
+                      {conversation?.otherUser?.birthday
+                        ? format(new Date(conversation.otherUser.birthday), 'MMMM do, yyyy')
+                        : "Not set"}
+                    </p>
+                  </div>
+                </div>
+                {conversation?.otherUser?.bio && (
+                  <div className="pt-2">
+                    <p className="text-sm font-medium mb-1">Bio</p>
+                    <p className="text-sm text-muted-foreground bg-muted p-2 rounded-md">
+                      {conversation.otherUser.bio}
+                    </p>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="media">
+                {/* Media sent by the Client */}
+                <div className="grid grid-cols-3 gap-2">
+                  {messages?.filter(m => m.senderId === otherUserId && (m.messageType === 'image' || m.messageType === 'video') && !failedImages.has(m.id)).map(m => (
+                    <div key={m.id} className="aspect-square rounded-md overflow-hidden bg-muted relative group">
+                      {m.messageType === 'image' ? (
+                        <img
+                          src={m.content}
+                          alt="Client media"
+                          className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                          onError={() => setFailedImages(prev => new Set(prev).add(m.id))}
+                          onClick={() => {
+                            setShowClientInfo(false); // Close dialog
+                            const el = document.getElementById(`message-${m.id}`);
+                            if (el) {
+                              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs">Video</div>
+                      )}
+                    </div>
+                  ))}
+                  {(!messages || messages.filter(m => m.senderId === otherUserId && (m.messageType === 'image' || m.messageType === 'video')).length === 0) && (
+                    <p className="col-span-3 text-center text-sm text-muted-foreground py-8">No media shared</p>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="content">
+                {/* Content sent by the Artist (Me) */}
+                <div className="grid grid-cols-3 gap-2">
+                  {messages?.filter(m => m.senderId === user?.id && (m.messageType === 'image' || m.messageType === 'video') && !failedImages.has(m.id)).map(m => (
+                    <div key={m.id} className="aspect-square rounded-md overflow-hidden bg-muted relative">
+                      {m.messageType === 'image' ? (
+                        <img
+                          src={m.content}
+                          alt="Artist content"
+                          className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                          onError={() => setFailedImages(prev => new Set(prev).add(m.id))}
+                          onClick={() => {
+                            setShowClientInfo(false); // Close dialog
+                            const el = document.getElementById(`message-${m.id}`);
+                            if (el) {
+                              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs">Video</div>
+                      )}
+                    </div>
+                  ))}
+                  {(!messages || messages.filter(m => m.senderId === user?.id && (m.messageType === 'image' || m.messageType === 'video')).length === 0) && (
+                    <p className="col-span-3 text-center text-sm text-muted-foreground py-8">No content sent</p>
+                  )}
+                </div>
+              </TabsContent>
+            </ScrollArea>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+    </div >
+  );
 }
