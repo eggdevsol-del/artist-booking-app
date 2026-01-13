@@ -1,17 +1,17 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { ArtistDashboard } from '../modules/dashboard/ArtistDashboard';
+import { ClientDashboard } from '../modules/dashboard/ClientDashboard';
 
 export default function Dashboard() {
     const { user } = useAuth();
 
-    return (
-        <div className="min-h-screen py-6 px-4 pb-24">
-            <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-            <p className="text-muted-foreground">Welcome back, {user?.name}</p>
-            {/* Placeholder content */}
-            <div className="mt-8 p-6 rounded-3xl bg-card border border-border">
-                <h2 className="text-lg font-semibold mb-2">My Activity</h2>
-                <p className="text-sm text-muted-foreground">Stats coming soon.</p>
-            </div>
-        </div>
-    );
+    // In a real app we might handle "loading" or "unauthenticated" states here too 
+    // but useAuth/ProtectedRoute usually handles the auth part.
+
+    if (user?.role === 'artist' || user?.role === 'admin') {
+        return <ArtistDashboard />;
+    }
+
+    return <ClientDashboard />;
 }
+
