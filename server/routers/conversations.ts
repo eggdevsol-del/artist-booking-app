@@ -88,4 +88,26 @@ export const conversationsRouter = router({
             await db.markMessagesAsRead(input, ctx.user.id);
             return { success: true };
         }),
+    pinConsultation: protectedProcedure
+        .input(
+            z.object({
+                conversationId: z.number(),
+                consultationId: z.number().nullable(),
+            })
+        )
+        .mutation(async ({ input, ctx }) => {
+            // Verify ownership
+            const conversation = await db.getConversationById(input.conversationId);
+            if (!conversation) throw new TRPCError({ code: "NOT_FOUND" });
+
+            // Only artist should be able to pin? Or both? User said "artist should have the option to Pin it"
+            if (ctx.user.id !== conversation.artistId) {
+                throw new TRPCError({ code: "FORBIDDEN", message: "Only artists can pin consultations" });
+            }
+
+            // Update conversation
+            await db.pinConsultation(input.conversationId, input.consultationId);
+
+            return { success: true };
+        }),
 });

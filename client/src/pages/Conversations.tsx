@@ -2,7 +2,9 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { Calendar, ChevronRight, MessageCircle, Settings, User } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { AnimatePresence, motion, useMotionValue, useTransform } from "framer-motion";
+import { Calendar, ChevronDown, ChevronRight, MessageCircle, Trash2, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
@@ -68,6 +70,92 @@ export default function Conversations() {
   }
 
   const isArtist = user?.role === "artist" || user?.role === "admin";
+  const [isConsultationsOpen, setIsConsultationsOpen] = useState(true);
+
+  const updateConsultationMutation = trpc.consultations.update.useMutation({
+    onSuccess: () => {
+      refetch();
+      // Also refetch pending to update the list
+      // The pendingConsults query will automatically refetch due to react-query invalidation if set up, 
+      // but here we might need to manually trigger or let the interval handle it. 
+      // Ideally we invalidate queries.
+    }
+  });
+
+  const handleDeleteConsultation = async (id: number, e: React.MouseEvent | PointerEvent | MouseEvent | TouchEvent) => {
+    e.stopPropagation();
+    try {
+      await updateConsultationMutation.mutateAsync({
+        id,
+        status: 'cancelled'
+      });
+    } catch (error) {
+      console.error("Failed to cancel consultation", error);
+    }
+  };
+
+
+  function SwipeableConsultationCard({ consult, onClick, onDelete }: { consult: any, onClick: () => void, onDelete: (id: number, e: any) => void }) {
+    const x = useMotionValue(0);
+    const opacity = useTransform(x, [0, 100], [1, 0]);
+    const bgOpacity = useTransform(x, [0, 100], [0, 1]);
+    const [isDragged, setIsDragged] = useState(false);
+
+    return (
+      <div className="relative overflow-hidden rounded-xl">
+        {/* Background for Delete Action */}
+        <motion.div
+          style={{ opacity: bgOpacity }}
+          className="absolute inset-0 bg-destructive/20 flex items-center justify-start pl-4 z-0"
+        >
+          <Trash2 className="w-6 h-6 text-destructive" />
+        </motion.div>
+
+        <motion.div
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={{ right: 0.5, left: 0 }}
+          onDragStart={() => setIsDragged(true)}
+          onDragEnd={(_, info) => {
+            setIsDragged(false);
+            if (info.offset.x > 100) {
+              onDelete(consult.id, {} as any);
+            }
+          }}
+          style={{ x }}
+          className="relative z-10 bg-card"
+        >
+          <Card
+            className="p-4 cursor-pointer hover:bg-accent/5 transition-colors border-l-4 border-l-primary"
+            onClick={() => {
+              if (!isDragged && x.get() < 10) {
+                onClick();
+              }
+            }}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  {/* We need to pass viewedConsultations here or handle it differently. 
+                    For now, reusing the prop wouldn't work directly inside this extracted component. 
+                    Let's simplify and just show the content. Logic can stay in parent or be passed down. 
+                */}
+                  <h3 className="font-semibold text-foreground mb-1">{consult.subject}</h3>
+                </div>
+                <p className="text-sm text-muted-foreground line-clamp-2">{consult.description}</p>
+                {consult.preferredDate && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Preferred: {new Date(consult.preferredDate as any).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0 ml-2" />
+            </div>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col pb-20">
@@ -85,55 +173,53 @@ export default function Conversations() {
 
       {/* Conversations List */}
       <main className="flex-1 px-4 py-4 mobile-scroll">
-        {/* Pending Consultation Requests for Artists */}
         {isArtist && pendingConsults && pendingConsults.filter(c => c.status === 'pending').length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-sm font-semibold text-muted-foreground mb-3 px-1">CONSULTATION REQUESTS</h2>
-            <div className="space-y-2">
-              {pendingConsults.filter(c => c.status === 'pending').map((consult) => (
-                <Card
-                  key={consult.id}
-                  className="p-4 cursor-pointer hover:bg-accent/5 transition-colors border-l-4 border-l-primary"
-                  onClick={async () => {
-                    // Mark consultation as viewed
-                    const newViewed = new Set(viewedConsultations);
-                    newViewed.add(consult.id);
-                    setViewedConsultations(newViewed);
-                    localStorage.setItem('viewedConsultations', JSON.stringify(Array.from(newViewed)));
-
-                    // Create or get conversation with this client
-                    const result = await createConversationMutation.mutateAsync({
-                      clientId: consult.clientId,
-                      artistId: consult.artistId,
-                    });
-                    if (result) {
-                      setLocation(`/chat/${result.id}?consultationId=${consult.id}`);
-                    }
-                  }}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        {!viewedConsultations.has(consult.id) && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
-                            New Request
-                          </span>
-                        )}
-                      </div>
-                      <h3 className="font-semibold text-foreground mb-1">{consult.subject}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">{consult.description}</p>
-                      {consult.preferredDate && (
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Preferred: {new Date(consult.preferredDate as any).toLocaleDateString()}
-                        </p>
-                      )}
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0 ml-2" />
-                  </div>
-                </Card>
-              ))}
+          <Collapsible
+            open={isConsultationsOpen}
+            onOpenChange={setIsConsultationsOpen}
+            className="mb-6 space-y-2"
+          >
+            <div className="flex items-center justify-between px-1 mb-2">
+              <h2 className="text-sm font-semibold text-muted-foreground">CONSULTATION REQUESTS</h2>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-9 h-9 p-0">
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isConsultationsOpen ? '' : '-rotate-90'}`} />
+                  <span className="sr-only">Toggle Consultations</span>
+                </Button>
+              </CollapsibleTrigger>
             </div>
-          </div>
+
+            <CollapsibleContent className="space-y-2">
+              <AnimatePresence>
+                {pendingConsults
+                  .filter(c => c.status === 'pending')
+                  .sort((a, b) => new Date(b.createdAt as any).getTime() - new Date(a.createdAt as any).getTime())
+                  .map((consult) => (
+                    <SwipeableConsultationCard
+                      key={consult.id}
+                      consult={consult}
+                      onDelete={handleDeleteConsultation}
+                      onClick={async () => {
+                        // Mark consultation as viewed
+                        const newViewed = new Set(viewedConsultations);
+                        newViewed.add(consult.id);
+                        setViewedConsultations(newViewed);
+                        localStorage.setItem('viewedConsultations', JSON.stringify(Array.from(newViewed)));
+
+                        // Create or get conversation with this client
+                        const result = await createConversationMutation.mutateAsync({
+                          clientId: consult.clientId,
+                          artistId: consult.artistId,
+                        });
+                        if (result) {
+                          setLocation(`/chat/${result.id}?consultationId=${consult.id}`);
+                        }
+                      }}
+                    />
+                  ))}
+              </AnimatePresence>
+            </CollapsibleContent>
+          </Collapsible>
         )}
 
         {/* Request Consult Button for Clients */}

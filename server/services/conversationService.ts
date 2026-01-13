@@ -74,7 +74,18 @@ export async function updateConversationTimestamp(conversationId: number) {
 
     await db
         .update(conversations)
-        .set({ lastMessageAt: new Date() })
+        .set({ lastMessageAt: new Date().toISOString() })
+        .where(eq(conversations.id, conversationId));
+}
+
+// Pin a consultation to a conversation
+export async function pinConsultation(conversationId: number, consultationId: number | null) {
+    const db = await getDb();
+    if (!db) return;
+
+    await db
+        .update(conversations)
+        .set({ pinnedConsultationId: consultationId })
         .where(eq(conversations.id, conversationId));
 }
 

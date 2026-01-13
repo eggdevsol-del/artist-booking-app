@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, and, lt } from "drizzle-orm";
 import { consultations, InsertConsultation } from "../../drizzle/schema";
 import { getDb } from "./core";
 
@@ -39,6 +39,15 @@ export async function getConsultationsForUser(
     const db = await getDb();
     if (!db) return [];
 
+    // Trigger auto-archive (optimistic/lazy cleanup)
+    // In a real prod app, this might be a cron, but here we do it on fetch for simplicity
+    // wrapping in try-catch to not block the read
+    try {
+        await archiveOldConsultations();
+    } catch (e) {
+        console.error("Failed to auto-archive consultations", e);
+    }
+
     const condition =
         role === "artist"
             ? eq(consultations.artistId, userId)
@@ -60,8 +69,29 @@ export async function updateConsultation(
 
     await db
         .update(consultations)
-        .set({ ...updates, updatedAt: new Date() })
+        .set({ ...updates, updatedAt: new Date().toISOString() })
         .where(eq(consultations.id, id));
 
     return getConsultation(id);
+}
+
+// Archive pending consultations older than 30 days
+export async function archiveOldConsultations() {
+    const db = await getDb();
+    if (!db) return;
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    // Using sql directly or query builder if feasible, 
+    // but Drizzle query builder for updates with where clause on date:
+    await db
+        .update(consultations)
+        .set({ status: 'archived' })
+        .where(
+            and(
+                eq(consultations.status, 'pending'),
+                lt(consultations.createdAt, thirtyDaysAgo.toISOString()) // Assuming createdAt is string compatible or date object
+            )
+        );
 }

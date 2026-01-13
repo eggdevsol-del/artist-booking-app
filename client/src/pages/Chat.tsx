@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, Calendar as CalendarIcon, Send, User, Phone, Mail, Cake, CreditCard, ImagePlus, ChevronRight, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar as CalendarIcon, Send, User, Phone, Mail, Cake, CreditCard, ImagePlus, ChevronRight, Check, Loader2, Pin, PinOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
@@ -59,6 +59,25 @@ export default function Chat() {
       enabled: !!user && conversationId > 0,
     });
 
+  const pinConsultationMutation = trpc.conversations.pinConsultation.useMutation({
+    onSuccess: () => {
+      utils.conversations.getById.invalidate(conversationId);
+      toast.success("Consultation pinned status updated");
+    },
+    onError: (err) => {
+      toast.error("Failed to update pin status");
+      console.error(err);
+    }
+  });
+
+  const targetConsultationId = consultationId ? parseInt(consultationId) : conversation?.pinnedConsultationId;
+
+  const { data: consultationList } = trpc.consultations.list.useQuery(undefined, {
+    enabled: !!user, // Fetch all to find the relevant one. Optimally getById would be better but this works with existing router.
+  });
+
+  const consultationData = consultationList?.find(c => c.id === targetConsultationId);
+
   const markAsReadMutation = trpc.conversations.markAsRead.useMutation();
 
   // Mark messages as read when conversation opens
@@ -68,11 +87,7 @@ export default function Chat() {
     }
   }, [conversationId, user]);
 
-  const { data: consultation } = trpc.consultations.list.useQuery(undefined, {
-    enabled: !!consultationId,
-  });
 
-  const consultationData = consultation?.find(c => c.id === parseInt(consultationId || '0'));
 
   const { data: messages, isLoading: messagesLoading, refetch: refetchMessages } =
     trpc.messages.list.useQuery(
@@ -578,6 +593,46 @@ export default function Chat() {
           )}
         </div>
       </header>
+
+      {/* Consultation Details & Pinning */}
+      {consultationData && (
+        <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b p-4 flex items-start justify-between gap-4 shadow-sm z-10">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              {consultationData.subject}
+              {conversation?.pinnedConsultationId === consultationData.id && (
+                <Pin className="w-3 h-3 text-primary fill-primary" />
+              )}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{consultationData.description}</p>
+            {consultationData.preferredDate && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Preferred: {new Date(consultationData.preferredDate as any).toLocaleDateString()}
+              </p>
+            )}
+          </div>
+          {isArtist && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+              onClick={() => {
+                const isPinned = conversation?.pinnedConsultationId === consultationData.id;
+                pinConsultationMutation.mutate({
+                  conversationId,
+                  consultationId: isPinned ? null : consultationData.id
+                });
+              }}
+            >
+              {conversation?.pinnedConsultationId === consultationData.id ? (
+                <PinOff className="w-4 h-4 text-muted-foreground" />
+              ) : (
+                <Pin className="w-4 h-4 text-muted-foreground" />
+              )}
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Messages */}
       <ScrollArea className="flex-1 px-4 py-4 pb-[160px]" ref={scrollRef}>

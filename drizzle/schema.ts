@@ -1,5 +1,5 @@
 import { mysqlTable, mysqlSchema, AnyMySqlColumn, foreignKey, primaryKey, int, varchar, text, datetime, mysqlEnum, timestamp, index, longtext, unique, tinyint } from "drizzle-orm/mysql-core"
-import { sql } from "drizzle-orm"
+import { sql, type InferSelectModel, type InferInsertModel } from "drizzle-orm"
 
 export const appointments = mysqlTable("appointments", {
 	id: int().autoincrement().notNull(),
@@ -87,7 +87,7 @@ export const consultations = mysqlTable("consultations", {
 	subject: varchar({ length: 255 }).notNull(),
 	description: text().notNull(),
 	preferredDate: datetime({ mode: 'string' }),
-	status: mysqlEnum(['pending', 'responded', 'scheduled', 'completed', 'cancelled']).default('pending').notNull(),
+	status: mysqlEnum(['pending', 'responded', 'scheduled', 'completed', 'cancelled', 'archived']).default('pending').notNull(),
 	createdAt: timestamp({ mode: 'string' }).default(sql`(now())`),
 	updatedAt: timestamp({ mode: 'string' }).default(sql`(now())`),
 },
@@ -99,6 +99,7 @@ export const conversations = mysqlTable("conversations", {
 	id: int().autoincrement().notNull(),
 	artistId: varchar({ length: 64 }).notNull().references(() => users.id, { onDelete: "cascade" }),
 	clientId: varchar({ length: 64 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+	pinnedConsultationId: int(), // Breaking circular reference for now
 	lastMessageAt: timestamp({ mode: 'string' }).default(sql`(now())`),
 	createdAt: timestamp({ mode: 'string' }).default(sql`(now())`),
 },
@@ -274,3 +275,11 @@ export const users = mysqlTable("users", {
 	(table) => [
 		primaryKey({ columns: [table.id], name: "users_id" }),
 	]);
+
+
+
+export type InsertConsultation = InferInsertModel<typeof consultations>;
+export type SelectConsultation = InferSelectModel<typeof consultations>;
+export type InsertConversation = InferInsertModel<typeof conversations>;
+export type InsertMessage = InferInsertModel<typeof messages>;
+export type InsertSocialMessageSync = InferInsertModel<typeof socialMessageSync>;
