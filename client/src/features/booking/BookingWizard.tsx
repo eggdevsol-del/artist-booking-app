@@ -115,41 +115,41 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
     const renderServiceStep = () => (
         <div className="space-y-4 pt-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-[#5b4eff]/80 mb-4 pl-1">SELECT SERVICE</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-primary/80 mb-4 pl-1">SELECT SERVICE</p>
             <ScrollArea className="h-[380px] pr-4 -mr-4">
                 <div className="grid grid-cols-1 gap-4 pr-4">
                     {artistServices.map(service => (
                         <div
                             key={service.id}
-                            className={`group relative p-6 cursor-pointer transition-all duration-300 rounded-[2rem] border ${selectedService?.id === service.id
-                                ? 'bg-[#5b4eff]/10 border-[#5b4eff] shadow-[0_0_30px_rgba(91,78,255,0.15)]'
-                                : 'bg-[#1a1a1a] border-white/5 hover:border-white/10 hover:bg-[#222]'
+                            className={`group relative p-6 cursor-pointer transition-all duration-300 rounded-lg border ${selectedService?.id === service.id
+                                ? 'bg-primary/10 border-primary shadow-[0_0_30px_rgba(91,78,255,0.15)]' // Keep specific shadow color for glow or use shadow-primary/20
+                                : 'bg-card border-white/5 hover:border-white/10 hover:bg-card/80'
                                 }`}
                             onClick={() => setSelectedService(service)}
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div>
-                                    <h4 className={`font-bold text-xl mb-1 ${selectedService?.id === service.id ? 'text-[#a5a0ff]' : 'text-white'}`}>
+                                    <h4 className={`font-bold text-xl mb-1 ${selectedService?.id === service.id ? 'text-primary' : 'text-white'}`}>
                                         {service.name}
                                     </h4>
                                     <div className="flex items-center gap-3 mt-3">
-                                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0a0a0a] text-white/50 text-xs font-medium border border-white/5">
+                                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background text-white/50 text-xs font-medium border border-white/5">
                                             <Clock className="w-3 h-3" />
                                             {service.duration} mins
                                         </span>
-                                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0a0a0a] text-white/50 text-xs font-medium border border-white/5">
+                                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background text-white/50 text-xs font-medium border border-white/5">
                                             <Layers className="w-3 h-3" />
                                             {service.sittings || 1} sitting{(service.sittings || 1) > 1 ? 's' : ''}
                                         </span>
                                     </div>
                                 </div>
-                                <span className="font-bold text-lg text-[#5b4eff]">
+                                <span className="font-bold text-lg text-primary">
                                     ${service.price}
                                 </span>
                             </div>
 
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center absolute bottom-6 right-6 transition-colors ${selectedService?.id === service.id ? 'border-[#5b4eff] bg-[#5b4eff]' : 'border-white/20'}`}>
-                                {selectedService?.id === service.id && <Check className="w-3.5 h-3.5 text-white" strokeWidth={4} />}
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center absolute bottom-6 right-6 transition-colors ${selectedService?.id === service.id ? 'border-primary bg-primary' : 'border-white/20'}`}>
+                                {selectedService?.id === service.id && <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={4} />}
                             </div>
                         </div>
                     ))}
@@ -160,7 +160,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
     const renderFrequencyStep = () => (
         <div className="space-y-6 pt-2">
-            <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-[2rem] flex items-center justify-between">
+            <div className="bg-card border border-white/10 p-6 rounded-lg flex items-center justify-between">
                 <div>
                     <h4 className="font-bold text-white text-lg">{selectedService?.name}</h4>
                     <p className="text-sm text-white/50 mt-1">
@@ -168,7 +168,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                     </p>
                 </div>
                 <div className="text-right">
-                    <span className="block font-bold text-2xl text-[#5b4eff]">${selectedService?.price}</span>
+                    <span className="block font-bold text-2xl text-primary">${selectedService?.price}</span>
                     <span className="text-[10px] text-white/30 uppercase tracking-wider font-bold">PER SESSION</span>
                 </div>
             </div>
@@ -182,14 +182,14 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                         { id: 'biweekly', label: 'Bi-Weekly', sub: 'Every two weeks' },
                         { id: 'monthly', label: 'Monthly', sub: 'Once a month' }
                     ].map((opt) => (
-                        <div key={opt.id} className={`group relative flex items-center space-x-4 border p-5 rounded-[1.5rem] cursor-pointer transition-all duration-300 ${frequency === opt.id
-                            ? 'bg-[#5b4eff]/10 border-[#5b4eff] shadow-[0_0_15px_rgba(91,78,255,0.1)]'
-                            : 'bg-[#1a1a1a] border-white/5 hover:bg-[#222]'
+                        <div key={opt.id} className={`group relative flex items-center space-x-4 border p-5 rounded-md cursor-pointer transition-all duration-300 ${frequency === opt.id
+                            ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(91,78,255,0.1)]'
+                            : 'bg-card border-white/5 hover:bg-card/80'
                             }`}
                             onClick={() => setFrequency(opt.id as any)}
                         >
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${frequency === opt.id ? 'border-[#5b4eff]' : 'border-white/20 ml-1'}`}>
-                                {frequency === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-[#5b4eff]" />}
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${frequency === opt.id ? 'border-primary' : 'border-white/20 ml-1'}`}>
+                                {frequency === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                             </div>
                             <div className="flex-1">
                                 <Label htmlFor={opt.id} className={`text-base font-bold cursor-pointer block transition-colors ${frequency === opt.id ? 'text-white' : 'text-white/70'}`}>{opt.label}</Label>
@@ -206,18 +206,18 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
         <div className="space-y-6 pt-2">
             {isLoadingAvailability && (
                 <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                    <Loader2 className="w-10 h-10 animate-spin text-[#5b4eff]" />
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
                     <p className="text-sm font-medium text-white/50 animate-pulse">Scanning calendar...</p>
                 </div>
             )}
 
             {availabilityError && (
-                <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl">
-                    <h5 className="font-bold text-red-500 flex items-center gap-2 mb-2 text-sm">
+                <div className="p-5 bg-destructive/10 border border-destructive/20 rounded-lg">
+                    <h5 className="font-bold text-destructive flex items-center gap-2 mb-2 text-sm">
                         <AlertCircle className="w-4 h-4" />
                         Calculation Failed
                     </h5>
-                    <p className="text-xs text-red-400/80 leading-relaxed">
+                    <p className="text-xs text-destructive/80 leading-relaxed">
                         {availabilityError.message}
                     </p>
                 </div>
@@ -226,33 +226,33 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
             {availability && (
                 <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="p-6 bg-[#1a1a1a] rounded-[2rem] border border-white/5 flex flex-col items-center justify-center text-center">
+                        <div className="p-6 bg-card rounded-lg border border-white/5 flex flex-col items-center justify-center text-center">
                             <span className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-2">TOTAL COST</span>
                             <span className="text-3xl font-bold text-white tracking-tight">${availability.totalCost}</span>
                         </div>
-                        <div className="p-6 bg-[#1a1a1a] rounded-[2rem] border border-white/5 flex flex-col items-center justify-center text-center">
+                        <div className="p-6 bg-card rounded-lg border border-white/5 flex flex-col items-center justify-center text-center">
                             <span className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-2">SITTINGS</span>
                             <span className="text-3xl font-bold text-white tracking-tight">{selectedService?.sittings || 1}</span>
                         </div>
                     </div>
 
-                    <div className="bg-[#1a1a1a] border border-white/5 rounded-[2rem] overflow-hidden p-6 pb-2">
+                    <div className="bg-card border border-white/5 rounded-lg overflow-hidden p-6 pb-2">
                         <div className="flex items-center justify-between mb-6 px-1">
                             <span className="text-xs font-bold uppercase tracking-widest text-white/40">PROPOSED SCHEDULE</span>
-                            <span className="text-[10px] font-bold bg-[#5b4eff]/20 text-[#7c74ff] px-3 py-1 rounded-full">{availability.dates.length} Dates</span>
+                            <span className="text-[10px] font-bold bg-primary/20 text-primary px-3 py-1 rounded-full">{availability.dates.length} Dates</span>
                         </div>
                         <ScrollArea className="h-[210px] pr-2 -mr-2">
                             <div className="space-y-4 pb-4">
                                 {availability.dates.map((date: string | Date, i: number) => (
                                     <div key={i} className="flex items-center gap-5 group">
-                                        <div className="w-10 h-10 rounded-full bg-[#0a0a0a] border border-white/5 flex items-center justify-center text-white/30 font-bold text-sm group-hover:text-[#5b4eff] group-hover:border-[#5b4eff]/50 transition-colors">
+                                        <div className="w-10 h-10 rounded-full bg-background border border-white/5 flex items-center justify-center text-white/30 font-bold text-sm group-hover:text-primary group-hover:border-primary/50 transition-colors">
                                             {String(i + 1).padStart(2, '0')}
                                         </div>
                                         <div className="flex-1">
                                             <p className="text-base font-bold text-white">{format(new Date(date), "EEEE,")}</p>
                                             <p className="text-base font-bold text-white">{format(new Date(date), "MMMM do")}</p>
                                         </div>
-                                        <div className="text-xs font-bold text-[#b4b0ff] bg-[#5b4eff]/10 px-3 py-1.5 rounded-full border border-[#5b4eff]/20">
+                                        <div className="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20">
                                             {format(new Date(date), "h:mm a")}
                                         </div>
                                     </div>
@@ -267,8 +267,8 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
     const renderSuccessStep = () => (
         <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center">
-            <div className="w-24 h-24 bg-[#5b4eff]/20 rounded-full flex items-center justify-center mb-2">
-                <CheckCircle2 className="w-12 h-12 text-[#5b4eff]" />
+            <div className="w-24 h-24 bg-primary/20 rounded-full flex items-center justify-center mb-2">
+                <CheckCircle2 className="w-12 h-12 text-primary" />
             </div>
             <div className="space-y-2">
                 <h3 className="text-3xl font-bold text-white tracking-tight">Proposal Sent!</h3>
@@ -276,7 +276,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                     The project proposal has been sent to the client.
                 </p>
             </div>
-            <Button onClick={handleClose} className="w-full h-14 rounded-2xl text-lg font-bold bg-[#5b4eff] hover:bg-[#4a3ecc] text-white shadow-lg shadow-[#5b4eff]/20 mt-4">
+            <Button onClick={handleClose} className="w-full h-14 rounded-lg text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 mt-4">
                 Return to Chat
             </Button>
         </div>
@@ -284,7 +284,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
     return (
         <Dialog open={isOpen} onOpenChange={(v) => !v && handleClose()}>
-            <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col p-1 gap-0 border border-white/10 bg-[#0a0a0a] shadow-2xl rounded-[3rem] overflow-hidden text-white outline-none">
+            <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col p-1 gap-0 border border-white/10 bg-background shadow-2xl rounded-xl overflow-hidden text-white outline-none">
                 <DialogHeader className="p-8 pb-2 shrink-0">
                     <DialogTitle className="text-2xl font-bold tracking-tight text-center">
                         {step === 'service' && "Select Service"}
@@ -320,7 +320,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                 <Button
                                     disabled={!selectedService}
                                     onClick={() => setStep('frequency')}
-                                    className="rounded-[1.2rem] px-8 h-12 bg-[#5b4eff] hover:bg-[#4a3ecc] text-white font-bold shadow-lg shadow-[#5b4eff]/25 disabled:opacity-50 disabled:shadow-none transition-all"
+                                    className="rounded-lg px-8 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/25 disabled:opacity-50 disabled:shadow-none transition-all"
                                 >
                                     Next
                                 </Button>
@@ -329,7 +329,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                             {step === 'frequency' && (
                                 <Button
                                     onClick={() => setStep('review')}
-                                    className="rounded-[1.2rem] px-8 h-12 bg-[#5b4eff] hover:bg-[#4a3ecc] text-white font-bold shadow-lg shadow-[#5b4eff]/25 transition-all"
+                                    className="rounded-lg px-8 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/25 transition-all"
                                 >
                                     Find Dates
                                 </Button>
@@ -339,7 +339,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                 <Button
                                     disabled={!availability || sendMessageMutation.isPending}
                                     onClick={handleConfirmBooking}
-                                    className="rounded-[1.2rem] px-8 h-12 bg-[#5b4eff] hover:bg-[#4a3ecc] text-white font-bold shadow-lg shadow-[#5b4eff]/30 transition-all w-full sm:w-auto"
+                                    className="rounded-lg px-8 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/30 transition-all w-full sm:w-auto"
                                 >
                                     {sendMessageMutation.isPending ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : null}
                                     Send Proposal

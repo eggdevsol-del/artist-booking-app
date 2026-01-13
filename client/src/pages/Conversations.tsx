@@ -123,7 +123,7 @@ export default function Conversations() {
                 .map((consult) => (
                   <Card
                     key={consult.id}
-                    className="p-5 cursor-pointer transition-all duration-300 border-0 bg-gradient-to-r from-[#5b4eff]/20 to-[#5b4eff]/5 backdrop-blur-xl rounded-[2.5rem] relative group border border-white/10 hover:border-[#5b4eff]/30 shadow-lg"
+                    className="p-5 cursor-pointer transition-all duration-300 border-0 bg-gradient-to-r from-primary/20 to-primary/5 backdrop-blur-xl rounded-lg relative group border border-white/10 hover:border-primary/30 shadow-lg"
                     onClick={async () => {
                       // Mark consultation as viewed immediately
                       updateConsultationMutation.mutate({
@@ -152,22 +152,22 @@ export default function Conversations() {
                     }}
                   >
                     {/* Glowing effect on hover */}
-                    <div className="absolute inset-0 rounded-[2.5rem] bg-gradient-to-r from-[#5b4eff]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                     <div className="flex items-center justify-between relative z-10">
                       <div className="flex-1 min-w-0 pr-4">
                         <div className="flex items-center gap-2 mb-1.5">
-                          <span className="w-2 h-2 rounded-full bg-[#5b4eff] animate-pulse shadow-[0_0_8px_#5b4eff]" />
+                          <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(91,78,255,0.8)]" />
                           <h3 className="font-bold text-white text-base truncate pr-2">{consult.subject} - {consult.client?.name || 'Client'}</h3>
                         </div>
                         <p className="text-sm text-white/60 line-clamp-2 leading-relaxed pl-4">{consult.description}</p>
                         {consult.preferredDate && !isNaN(new Date(consult.preferredDate as any).getTime()) && (
-                          <p className="text-xs font-mono text-[#5b4eff] mt-2 pl-4 font-medium opacity-90">
+                          <p className="text-xs font-mono text-primary mt-2 pl-4 font-medium opacity-90">
                             Requested for: {new Date(consult.preferredDate as any).toLocaleDateString()}
                           </p>
                         )}
                       </div>
-                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-[#5b4eff] group-hover:text-white transition-colors duration-300">
+                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors duration-300">
                         <ChevronRight className="w-4 h-4 text-white/40 group-hover:text-white" />
                       </div>
                     </div>
@@ -182,7 +182,7 @@ export default function Conversations() {
           <div className="mb-6">
             <Button
               size="lg"
-              className="w-full h-14 text-lg font-semibold shadow-lg"
+              className="w-full h-14 text-lg font-semibold shadow-lg rounded-lg"
               onClick={() => setLocation("/consultations")}
             >
               <Calendar className="w-5 h-5 mr-2" />
@@ -210,7 +210,7 @@ export default function Conversations() {
             {conversations.map((conv) => (
               <Card
                 key={conv.id}
-                className="group relative p-4 pr-6 cursor-pointer border-0 bg-white/5 backdrop-blur-md rounded-[3rem] transition-all duration-300 hover:bg-white/10 hover:scale-[1.02] border border-white/5 hover:border-white/10"
+                className="group relative p-4 pr-6 cursor-pointer border-0 bg-card backdrop-blur-md rounded-lg transition-all duration-300 hover:bg-card/80 hover:scale-[1.02] border border-white/5 hover:border-white/10"
                 onClick={() => setLocation(`/chat/${conv.id}`)}
               >
                 <div className="flex items-center gap-4">
