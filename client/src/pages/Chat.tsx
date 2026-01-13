@@ -649,7 +649,7 @@ export default function Chat() {
       {/* Messages */}
       <div className="flex-1 min-h-0 relative">
         <ScrollArea className="h-full px-4 py-4" ref={scrollRef}>
-          <div className="space-y-4 pb-[160px]">
+          <div className="space-y-4 pb-[182px]">
             {messages && messages.length > 0 ? (
               messages.map((message) => {
                 const isOwn = message.senderId === user?.id;
@@ -750,7 +750,7 @@ export default function Chat() {
       {/* Fixed Bottom Input Area - Lifted above Bottom Nav */}
       {/* Input Area & Quick Actions Drawer */}
       {/* Floating Bottom Input & Actions */}
-      <div className="fixed bottom-[88px] left-4 right-4 z-[60]">
+      <div className="fixed bottom-[110px] left-4 right-4 z-[60]">
         <div className="relative">
           {isArtist && (
             <Sheet>
