@@ -562,19 +562,21 @@ export default function Chat() {
   const otherUserName = conversation.otherUser?.name || "Unknown User";
 
   return (
-    <div className="h-[100dvh] flex flex-col overflow-hidden bg-background">
-      <div className="flex-none z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        {/* Header */}
-        <header className="mobile-header px-4 py-3 border-b">
+    <div className="h-[100dvh] flex flex-col overflow-hidden bg-background relative selection:bg-primary/20">
+
+      {/* Fixed Header & Consultation Pin - Z-Index High to stay on top */}
+      <div className="flex-none z-50 bg-background/80 backdrop-blur-xl border-b border-white/5 shadow-sm supports-[backdrop-filter]:bg-background/60">
+        <header className="mobile-header px-4 py-3">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
+              className="hover:bg-primary/10 -ml-2"
               onClick={() => setLocation("/conversations")}
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center overflow-hidden flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center overflow-hidden flex-shrink-0 ring-2 ring-background shadow-md">
               {conversation.otherUser?.avatar ? (
                 <img src={conversation.otherUser.avatar} alt={otherUserName} className="w-full h-full object-cover" />
               ) : (
@@ -584,13 +586,17 @@ export default function Chat() {
               )}
             </div>
             <div className="flex-1">
-              <h1 className="font-semibold">{otherUserName}</h1>
-              <p className="text-xs text-muted-foreground">Online</p>
+              <h1 className="font-semibold text-base leading-tight">{otherUserName}</h1>
+              <p className="text-xs text-primary font-medium flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                Online
+              </p>
             </div>
             {isArtist && (
               <Button
                 variant="ghost"
                 size="icon"
+                className="hover:bg-primary/10 -mr-2"
                 onClick={() => setShowClientInfo(true)}
               >
                 <User className="w-5 h-5" />
@@ -601,18 +607,18 @@ export default function Chat() {
 
         {/* Consultation Details & Pinning */}
         {consultationData && (
-          <div className="border-b p-4 flex items-start justify-between gap-4 shadow-sm">
+          <div className="px-4 py-3 border-t border-white/5 bg-accent/5 backdrop-blur-sm flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-sm flex items-center gap-2">
+              <h3 className="font-semibold text-sm flex items-center gap-2 text-foreground/90">
                 {consultationData.subject}
                 {conversation?.pinnedConsultationId === consultationData.id && (
                   <Pin className="w-3 h-3 text-primary fill-primary" />
                 )}
               </h3>
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{consultationData.description}</p>
+              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{consultationData.description}</p>
               {consultationData.preferredDate && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Preferred: {new Date(consultationData.preferredDate as any).toLocaleDateString()}
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80 mt-1 font-medium">
+                  {new Date(consultationData.preferredDate as any).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                 </p>
               )}
             </div>
@@ -620,7 +626,7 @@ export default function Chat() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 p-0"
+                className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary transition-colors"
                 onClick={() => {
                   const isPinned = conversation?.pinnedConsultationId === consultationData.id;
                   pinConsultationMutation.mutate({
@@ -630,9 +636,9 @@ export default function Chat() {
                 }}
               >
                 {conversation?.pinnedConsultationId === consultationData.id ? (
-                  <PinOff className="w-4 h-4 text-muted-foreground" />
+                  <PinOff className="w-4 h-4" />
                 ) : (
-                  <Pin className="w-4 h-4 text-muted-foreground" />
+                  <Pin className="w-4 h-4" />
                 )}
               </Button>
             )}
@@ -742,125 +748,131 @@ export default function Chat() {
       </div>
 
       {/* Fixed Bottom Input Area - Lifted above Bottom Nav */}
-      <div className="fixed bottom-28 left-4 right-4 z-[60] bg-background/40 backdrop-blur-xl border border-white/10 shadow-lg rounded-[2rem]">
-        {isArtist && (
+      {/* Input Area & Quick Actions Drawer */}
+      <div className="fixed bottom-0 left-0 right-0 z-[60]">
+        {isArtist ? (
           <Sheet>
             <SheetTrigger asChild>
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-32 h-6 bg-background/40 backdrop-blur-md rounded-t-xl border-t border-x flex items-center justify-center cursor-pointer hover:bg-accent/50 transition-colors shadow-sm">
-                <ChevronUp className="w-4 h-4 text-muted-foreground" />
+              <div className="absolute bottom-28 left-0 right-0 flex justify-center z-10 pointer-events-none">
+                <div className="bg-background/60 backdrop-blur-xl border border-white/10 shadow-lg rounded-t-xl px-6 py-1.5 cursor-pointer pointer-events-auto hover:bg-background/80 transition-all group flex items-center gap-2">
+                  <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">Quick Actions</span>
+                  <ChevronUp className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
               </div>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-[60vh] rounded-t-[20px] pb-safe-bottom">
-              <SheetHeader className="mb-4">
-                <SheetTitle className="text-center text-sm font-semibold uppercase tracking-wider text-muted-foreground">Quick Actions</SheetTitle>
+            <SheetContent
+              side="bottom"
+              className="rounded-t-[2.5rem] border-t-0 p-0 bg-background/80 backdrop-blur-[20px] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)] max-h-[85vh] overflow-hidden flex flex-col gap-0"
+              hideClose
+            >
+              <div className="w-12 h-1 bg-muted/50 rounded-full mx-auto mt-3 mb-5 shrink-0" />
+
+              <SheetHeader className="px-6 mb-2 shrink-0">
+                <SheetTitle className="text-center text-sm font-semibold uppercase tracking-widest text-muted-foreground/80">
+                  Quick Actions
+                </SheetTitle>
               </SheetHeader>
 
-              <div className="grid gap-6 px-2">
-                {/* Core Booking Actions */}
-                <div className="space-y-3">
-                  <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-                    <CalendarIcon className="w-3 h-3" /> Booking Tools
-                  </h4>
-                  <div className="grid grid-cols-3 gap-3">
-                    <Button
-                      variant="outline"
-                      className="h-20 flex-col gap-2 hover:border-primary hover:bg-primary/5"
-                      onClick={() => setShowBookingCalendar(true)}
-                    >
-                      <CalendarIcon className="w-6 h-6 text-primary" />
-                      <span className="text-xs">Book Now</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-20 flex-col gap-2 hover:border-primary hover:bg-primary/5"
-                      onClick={() => {
-                        setShowProjectWizard(true);
-                        setWizardStep('service');
-                      }}
-                    >
-                      <div className="relative">
-                        <CalendarIcon className="w-6 h-6 text-primary" />
-                        <span className="absolute -top-1 -right-1 text-[8px] bg-primary text-primary-foreground px-1 rounded-full">PRO</span>
-                      </div>
-                      <span className="text-xs">Project</span>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-20 flex-col gap-2 hover:border-primary hover:bg-primary/5"
-                      onClick={() => {
-                        if (conversationId) {
-                          toast.info("Use the 'Confirm & Book' button in the chat bubble for projects.");
-                        }
-                      }}
-                    >
-                      <Check className="w-6 h-6 text-green-500" />
-                      <span className="text-xs">Confirm</span>
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Quick Responses */}
-                {quickActions && quickActions.length > 0 && (
+              <div className="overflow-y-auto flex-1 px-4 pb-4">
+                <div className="grid gap-6 max-w-md mx-auto">
+                  {/* Booking Tools */}
                   <div className="space-y-3">
-                    <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-                      <Zap className="w-3 h-3" /> Saved Responses
+                    <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-2 px-1">
+                      <CalendarIcon className="w-3 h-3" /> Booking Tools
                     </h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      {quickActions.map((action) => (
-                        <Button
-                          key={action.id}
-                          variant="secondary"
-                          className="justify-start h-auto py-3 px-4 text-xs text-left whitespace-normal leading-relaxed"
-                          onClick={() => handleQuickAction(action)}
-                        >
-                          {action.label}
-                        </Button>
-                      ))}
+                    <div className="grid grid-cols-3 gap-3">
+                      <Button variant="outline" className="h-24 flex-col gap-3 rounded-2xl border-dashed border-primary/20 hover:border-primary hover:bg-primary/5 transition-all group" onClick={() => setShowBookingCalendar(true)}>
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <CalendarIcon className="w-5 h-5 text-primary" />
+                        </div>
+                        <span className="text-xs font-medium">Book Now</span>
+                      </Button>
+                      <Button variant="outline" className="h-24 flex-col gap-3 rounded-2xl border-dashed border-primary/20 hover:border-primary hover:bg-primary/5 transition-all group" onClick={() => { setShowProjectWizard(true); setWizardStep('service'); }}>
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center relative group-hover:scale-110 transition-transform">
+                          <CalendarIcon className="w-5 h-5 text-primary" />
+                          <span className="absolute -top-1 -right-1 text-[8px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-bold shadow-sm">PRO</span>
+                        </div>
+                        <span className="text-xs font-medium">Project</span>
+                      </Button>
+                      <Button variant="outline" className="h-24 flex-col gap-3 rounded-2xl border-dashed border-green-500/30 hover:border-green-500 hover:bg-green-500/5 transition-all group" onClick={() => conversationId && toast.info("Use 'Confirm & Book' in chat bubble.")}>
+                        <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Check className="w-5 h-5 text-green-500" />
+                        </div>
+                        <span className="text-xs font-medium">Confirm</span>
+                      </Button>
                     </div>
                   </div>
-                )}
+
+                  {/* Quick Responses */}
+                  {quickActions && quickActions.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-2 px-1">
+                        <Zap className="w-3 h-3" /> Saved Responses
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        {quickActions.map((action) => (
+                          <Button
+                            key={action.id}
+                            variant="secondary"
+                            className="justify-start h-auto py-3 px-4 text-xs text-left whitespace-normal leading-relaxed rounded-xl bg-muted/50 hover:bg-muted transition-colors"
+                            onClick={() => handleQuickAction(action)}
+                          >
+                            {action.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Input Area Docked in Drawer */}
+              <div className="p-4 bg-background/50 backdrop-blur-md border-t border-white/5 mt-auto">
+                <div className="flex items-center gap-2 max-w-md mx-auto">
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                  <Button size="icon" variant="ghost" className="shrink-0 h-10 w-10 rounded-full hover:bg-muted" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
+                    <ImagePlus className="w-5 h-5 text-muted-foreground" />
+                  </Button>
+                  <div className="flex-1 bg-muted/50 rounded-full px-4 py-1 border border-transparent focus-within:border-primary/50 focus-within:bg-background transition-all flex items-center">
+                    <Input
+                      value={messageText}
+                      onChange={(e) => setMessageText(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                      placeholder="Type a message..."
+                      className="flex-1 bg-transparent border-0 focus-visible:ring-0 px-0 h-9 placeholder:text-muted-foreground/50"
+                      disabled={uploadingImage}
+                    />
+                  </div>
+                  <Button size="icon" className="shrink-0 h-10 w-10 rounded-full shadow-lg shadow-primary/20" onClick={handleSendMessage} disabled={!messageText.trim() || sendMessageMutation.isPending || uploadingImage}>
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </SheetContent>
           </Sheet>
-        )
-        }
+        ) : null}
 
-        {/* Message Input */}
-        <div className="px-4 py-3 bg-transparent">
-          <div className="flex items-center gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-            <Button
-              size="icon"
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadingImage}
-            >
-              <ImagePlus className="w-5 h-5" />
+        {/* Default Input Area (When Drawer is Closed or User is Client) */}
+        <div className="absolute bottom-4 left-4 right-4 z-10 pointer-events-auto">
+          <div className="bg-background/60 backdrop-blur-xl border border-white/10 shadow-2xl rounded-[2rem] p-1.5 pl-4 flex items-center gap-2">
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+            <Button size="icon" variant="ghost" className="shrink-0 h-9 w-9 rounded-full hover:bg-white/10 -ml-2" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
+              <ImagePlus className="w-5 h-5 text-muted-foreground" />
             </Button>
             <Input
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
               placeholder="Type a message..."
-              className="flex-1"
+              className="flex-1 bg-transparent border-0 focus-visible:ring-0 px-2 h-10 placeholder:text-muted-foreground/50"
               disabled={uploadingImage}
             />
-            <Button
-              size="icon"
-              onClick={handleSendMessage}
-              disabled={!messageText.trim() || sendMessageMutation.isPending || uploadingImage}
-            >
-              <Send className="w-5 h-5" />
+            <Button size="icon" className="shrink-0 h-10 w-10 rounded-full shadow-md" onClick={handleSendMessage} disabled={!messageText.trim() || sendMessageMutation.isPending || uploadingImage}>
+              <Send className="w-4 h-4" />
             </Button>
           </div>
         </div>
-      </div >
+      </div> >
 
       {/* Book Project Wizard */}
       < BookingWizard
