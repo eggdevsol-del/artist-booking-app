@@ -154,7 +154,7 @@ export default function Consultations() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Describe what you'd like to discuss..."
-                    rows={4}
+                    rows={5}
                   />
                 </div>
 
