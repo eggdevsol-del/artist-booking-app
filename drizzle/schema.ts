@@ -1,5 +1,5 @@
 import { mysqlTable, mysqlSchema, AnyMySqlColumn, foreignKey, primaryKey, int, varchar, text, datetime, mysqlEnum, timestamp, index, longtext, unique, tinyint } from "drizzle-orm/mysql-core"
-import { sql, type InferSelectModel, type InferInsertModel } from "drizzle-orm"
+import { sql, type InferSelectModel, type InferInsertModel, relations } from "drizzle-orm"
 
 export const appointments = mysqlTable("appointments", {
 	id: int().autoincrement().notNull(),
@@ -333,3 +333,118 @@ export type InsertSocialMessageSync = InferInsertModel<typeof socialMessageSync>
 export type InsertPortfolio = InferInsertModel<typeof portfolios>;
 export type InsertVoucherTemplate = InferInsertModel<typeof voucherTemplates>;
 export type InsertIssuedVoucher = InferInsertModel<typeof issuedVouchers>;
+
+export const usersRelations = relations(users, ({ many }) => ({
+	artistAppointments: many(appointments, { relationName: "artist_appointments" }),
+	clientAppointments: many(appointments, { relationName: "client_appointments" }),
+	artistConsultations: many(consultations, { relationName: "artist_consultations" }),
+	clientConsultations: many(consultations, { relationName: "client_consultations" }),
+	portfolios: many(portfolios),
+	portfolioLikes: many(portfolioLikes),
+	voucherTemplates: many(voucherTemplates),
+	issuedVouchersAsArtist: many(issuedVouchers, { relationName: "artist_issued_vouchers" }),
+	issuedVouchersAsClient: many(issuedVouchers, { relationName: "client_issued_vouchers" }),
+}));
+
+export const appointmentsRelations = relations(appointments, ({ one }) => ({
+	artist: one(users, {
+		fields: [appointments.artistId],
+		references: [users.id],
+		relationName: "artist_appointments"
+	}),
+	client: one(users, {
+		fields: [appointments.clientId],
+		references: [users.id],
+		relationName: "client_appointments"
+	}),
+	conversation: one(conversations, {
+		fields: [appointments.conversationId],
+		references: [conversations.id]
+	})
+}));
+
+export const consultationsRelations = relations(consultations, ({ one }) => ({
+	artist: one(users, {
+		fields: [consultations.artistId],
+		references: [users.id],
+		relationName: "artist_consultations"
+	}),
+	client: one(users, {
+		fields: [consultations.clientId],
+		references: [users.id],
+		relationName: "client_consultations"
+	}),
+	conversation: one(conversations, {
+		fields: [consultations.conversationId],
+		references: [conversations.id]
+	})
+}));
+
+export const conversationsRelations = relations(conversations, ({ one, many }) => ({
+	artist: one(users, {
+		fields: [conversations.artistId],
+		references: [users.id],
+	}),
+	client: one(users, {
+		fields: [conversations.clientId],
+		references: [users.id],
+	}),
+	messages: many(messages),
+	appointments: many(appointments),
+	consultations: many(consultations)
+}));
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+	conversation: one(conversations, {
+		fields: [messages.conversationId],
+		references: [conversations.id]
+	}),
+	sender: one(users, {
+		fields: [messages.senderId],
+		references: [users.id]
+	})
+}));
+
+export const portfoliosRelations = relations(portfolios, ({ one, many }) => ({
+	artist: one(users, {
+		fields: [portfolios.artistId],
+		references: [users.id],
+	}),
+	likes: many(portfolioLikes),
+}));
+
+export const portfolioLikesRelations = relations(portfolioLikes, ({ one }) => ({
+	portfolio: one(portfolios, {
+		fields: [portfolioLikes.portfolioId],
+		references: [portfolios.id],
+	}),
+	user: one(users, {
+		fields: [portfolioLikes.userId],
+		references: [users.id],
+	}),
+}));
+
+export const voucherTemplatesRelations = relations(voucherTemplates, ({ one, many }) => ({
+	artist: one(users, {
+		fields: [voucherTemplates.artistId],
+		references: [users.id],
+	}),
+	issuedVouchers: many(issuedVouchers),
+}));
+
+export const issuedVouchersRelations = relations(issuedVouchers, ({ one }) => ({
+	template: one(voucherTemplates, {
+		fields: [issuedVouchers.templateId],
+		references: [voucherTemplates.id],
+	}),
+	artist: one(users, {
+		fields: [issuedVouchers.artistId],
+		references: [users.id],
+		relationName: "artist_issued_vouchers"
+	}),
+	client: one(users, {
+		fields: [issuedVouchers.clientId],
+		references: [users.id],
+		relationName: "client_issued_vouchers"
+	}),
+}));
