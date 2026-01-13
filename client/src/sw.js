@@ -1,11 +1,11 @@
-import { cleanupOutdatedCaches, preCacheAndRoute } from 'workbox-precaching';
+import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
 import { clientsClaim } from 'workbox-core';
 
 self.skipWaiting();
 clientsClaim();
 
 cleanupOutdatedCaches();
-preCacheAndRoute(self.__WB_MANIFEST);
+precacheAndRoute(self.__WB_MANIFEST);
 
 const CACHE_NAME = 'artist-booking-v1';
 const urlsToCache = [
