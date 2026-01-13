@@ -192,17 +192,17 @@ export default function Conversations() {
             </div>
 
             <CollapsibleContent className="space-y-2">
-              <AnimatePresence>
-                {pendingConsults
-                  .filter(c => c.status === 'pending')
-                  .sort((a, b) => new Date(b.createdAt as any).getTime() - new Date(a.createdAt as any).getTime())
-                  .map((consult) => (
-                    <SwipeableConsultationCard
-                      key={consult.id}
-                      consult={consult}
-                      onDelete={handleDeleteConsultation}
-                      onClick={async () => {
-                        // Mark consultation as viewed
+              {pendingConsults
+                .filter(c => c.status === 'pending')
+                .sort((a, b) => new Date(b.createdAt as any).getTime() - new Date(a.createdAt as any).getTime())
+                .map((consult) => (
+                  <SwipeableConsultationCard
+                    key={consult.id}
+                    consult={consult}
+                    onDelete={handleDeleteConsultation}
+                    onClick={async () => {
+                      // Mark consultation as viewed
+                      try {
                         const newViewed = new Set(viewedConsultations);
                         newViewed.add(consult.id);
                         setViewedConsultations(newViewed);
@@ -216,10 +216,12 @@ export default function Conversations() {
                         if (result) {
                           setLocation(`/chat/${result.id}?consultationId=${consult.id}`);
                         }
-                      }}
-                    />
-                  ))}
-              </AnimatePresence>
+                      } catch (e) {
+                        console.error("Error clicking card", e);
+                      }
+                    }}
+                  />
+                ))}
             </CollapsibleContent>
           </Collapsible>
         )}
