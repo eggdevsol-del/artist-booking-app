@@ -13,8 +13,12 @@ export const dashboardRouter = router({
                 throw new TRPCError({ code: "FORBIDDEN" });
             }
 
+            console.log(`[Dashboard] Fetching artist overview for ${user.id}`);
             const db = await getDb();
-            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database connection failed" });
+            if (!db) {
+                console.error("[Dashboard] Database connection failed");
+                throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database connection failed" });
+            }
 
             // 1. Stats Counters
             const startOfDay = new Date();

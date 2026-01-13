@@ -8,10 +8,14 @@ import { useAuth } from "@/_core/hooks/useAuth";
 
 export function ClientDashboard() {
     const { user } = useAuth();
-    const { data: overview, isLoading } = trpc.dashboard.getClientOverview.useQuery();
+    const { data: overview, isLoading, error } = trpc.dashboard.getClientOverview.useQuery();
 
     if (isLoading) {
         return <div className="p-6 text-center text-muted-foreground animate-pulse">Loading dashboard...</div>;
+    }
+
+    if (error) {
+        return <div className="p-6 text-center text-red-500">Failed to load dashboard: {error.message}</div>;
     }
 
     if (!overview) return null;

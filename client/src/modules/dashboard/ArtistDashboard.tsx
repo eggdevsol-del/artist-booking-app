@@ -9,10 +9,14 @@ import { useAuth } from "@/_core/hooks/useAuth";
 
 export function ArtistDashboard() {
     const { user } = useAuth();
-    const { data: overview, isLoading } = trpc.dashboard.getArtistOverview.useQuery();
+    const { data: overview, isLoading, error } = trpc.dashboard.getArtistOverview.useQuery();
 
     if (isLoading) {
         return <div className="p-6 text-center text-muted-foreground animate-pulse">Loading dashboard...</div>;
+    }
+
+    if (error) {
+        return <div className="p-6 text-center text-red-500">Failed to load dashboard: {error.message}</div>;
     }
 
     if (!overview) return null;
