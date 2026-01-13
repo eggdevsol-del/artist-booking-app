@@ -43,25 +43,75 @@
 }
 
 :root {
-  /* Liquid Glass Theme Palette */
+  /* Light Theme Palette (Soft Slate) */
   --radius: 2rem;
-  /* Soft, large rounding */
 
-  /* Deep Liquid Night Background */
+  /* Soft Off-White Base */
+  --background: oklch(0.97 0.01 260);
+  /* Deep Slate Text */
+  --foreground: oklch(0.20 0.05 260);
+
+  /* Glassy White Card */
+  --card: oklch(1 0 0 / 0.8);
+  --card-foreground: oklch(0.20 0.05 260);
+
+  --popover: oklch(1 0 0 / 0.95);
+  --popover-foreground: oklch(0.20 0.05 260);
+
+  /* Primary: Deep Violet (Readable on light) */
+  --primary: oklch(0.55 0.15 280);
+  --primary-foreground: oklch(0.98 0 0);
+
+  --secondary: oklch(0.92 0.02 260);
+  --secondary-foreground: oklch(0.20 0.05 260);
+
+  --muted: oklch(0.96 0.01 260);
+  --muted-foreground: oklch(0.55 0.05 260);
+
+  --accent: oklch(0.90 0.05 260);
+  --accent-foreground: oklch(0.20 0.05 260);
+
+  --destructive: oklch(0.60 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+
+  --border: oklch(0.20 0.05 260 / 0.1);
+  --input: oklch(0.20 0.05 260 / 0.1);
+  --ring: oklch(0.55 0.15 280);
+
+  /* Chart Colors */
+  --chart-1: oklch(0.55 0.15 280);
+  --chart-2: oklch(0.50 0.20 280);
+  --chart-3: oklch(0.60 0.05 260);
+  --chart-4: oklch(0.70 0.02 200);
+  --chart-5: oklch(0.65 0.10 340);
+
+  /* Sidebar */
+  --sidebar: oklch(0.97 0.01 260);
+  --sidebar-foreground: oklch(0.20 0.05 260);
+  --sidebar-primary: oklch(0.55 0.15 280);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.20 0.05 260 / 0.05);
+  --sidebar-accent-foreground: oklch(0.20 0.05 260);
+  --sidebar-border: oklch(0.20 0.05 260 / 0.1);
+  --sidebar-ring: oklch(0.55 0.15 280);
+
+  /* Background Image/Gradient */
+  --bg-gradient: radial-gradient(circle at 100% 0%, oklch(0.95 0.05 260) 0%, transparent 40%),
+    radial-gradient(circle at 0% 100%, oklch(0.92 0.05 280) 0%, transparent 40%),
+    var(--background);
+}
+
+.dark {
+  /* Liquid Night Theme (Original) */
   --background: oklch(0.12 0.05 260);
-  /* Deep Indigo Base */
   --foreground: oklch(0.98 0 0);
-  /* White Text */
 
-  /* Liquid Glass Cards */
   --card: oklch(1 0 0 / 0.05);
-  /* Ultra-transparent white */
   --card-foreground: oklch(0.98 0 0);
 
   --popover: oklch(0.12 0.05 260 / 0.85);
   --popover-foreground: oklch(0.98 0 0);
 
-  /* Primary: Soft Violet Glow */
   --primary: oklch(0.70 0.15 280);
   --primary-foreground: oklch(1 0 0);
 
@@ -77,22 +127,15 @@
   --destructive: oklch(0.60 0.22 25);
   --destructive-foreground: oklch(1 0 0);
 
-  /* Border: Very Soft Glow */
   --border: oklch(1 0 0 / 0.15);
   --input: oklch(1 0 0 / 0.1);
   --ring: oklch(0.70 0.15 280);
 
-  /* Chart Colors (example, adjust as needed for theme) */
   --chart-1: oklch(0.70 0.15 280);
-  /* Primary */
   --chart-2: oklch(0.65 0.20 280);
-  /* Accent */
   --chart-3: oklch(0.80 0.05 260);
-  /* Lighter secondary */
   --chart-4: oklch(0.90 0.02 200);
-  /* Soft teal */
   --chart-5: oklch(0.75 0.10 340);
-  /* Muted rose */
 
   /* Sidebar */
   --sidebar: oklch(0.12 0.05 260 / 0.6);
@@ -103,42 +146,11 @@
   --sidebar-accent-foreground: oklch(0.98 0 0);
   --sidebar-border: oklch(1 0 0 / 0.15);
   --sidebar-ring: oklch(0.70 0.15 280);
-}
 
-.dark {
-  /* Force consistency - this is a dark-only theme */
-  --background: oklch(0.12 0.05 260);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(1 0 0 / 0.05);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.12 0.05 260 / 0.85);
-  --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.70 0.15 280);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.85 0.05 260 / 0.1);
-  --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(1 0 0 / 0.05);
-  --muted-foreground: oklch(0.70 0.02 260);
-  --accent: oklch(0.65 0.20 280);
-  --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.60 0.22 25);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(1 0 0 / 0.15);
-  --input: oklch(1 0 0 / 0.1);
-  --ring: oklch(0.70 0.15 280);
-  --chart-1: oklch(0.70 0.15 280);
-  --chart-2: oklch(0.65 0.20 280);
-  --chart-3: oklch(0.80 0.05 260);
-  --chart-4: oklch(0.90 0.02 200);
-  --chart-5: oklch(0.75 0.10 340);
-  --sidebar: oklch(0.12 0.05 260 / 0.6);
-  --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.70 0.15 280);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(1 0 0 / 0.1);
-  --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(1 0 0 / 0.15);
-  --sidebar-ring: oklch(0.70 0.15 280);
+  /* Dark Mode Gradient */
+  --bg-gradient: radial-gradient(circle at 100% 0%, #4c1d95 0%, transparent 40%),
+    radial-gradient(circle at 0% 100%, #312e81 0%, transparent 40%),
+    #0f172a;
 }
 
 @layer base {
@@ -148,20 +160,7 @@
 
   body {
     @apply bg-background text-foreground;
-
-    /* 
-       LIQUID NIGHT GRADIENT
-       - Deep Indigo/Violet base
-       - Subtle top-right glow (Moonlight/Streetlight feel)
-    */
-    background:
-      radial-gradient(circle at 100% 0%, #4c1d95 0%, transparent 40%),
-      /* Violet Glow */
-      radial-gradient(circle at 0% 100%, #312e81 0%, transparent 40%),
-      /* Indigo Depth */
-      #0f172a;
-    /* Slate 900 Base */
-
+    background: var(--bg-gradient);
     background-attachment: fixed;
     height: 100vh;
     -webkit-font-smoothing: antialiased;
@@ -230,6 +229,12 @@
      - Floating feel
      - Subtle white borders
   */
+  /* 
+     LIQUID GLASS VARIANT
+     - Soft, milky transparency
+     - Floating feel
+     - Subtle white borders
+  */
   .liquid-glass,
   .glass-card,
   .card,
@@ -237,29 +242,36 @@
   .floating-nav {
     @apply backdrop-blur-[20px] shadow-lg rounded-[2rem];
 
-    /* Milky / Smoky Glass Surface */
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+    /* Glass Surface - Theme Aware */
+    background: var(--card);
+    /* Uses variable which changes with theme */
 
     /* Soft Glow Border */
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-top: 1px solid rgba(255, 255, 255, 0.25);
-    /* Subtle top light */
+    border: 1px solid var(--border);
+    border-top: 1px solid var(--input);
 
     /* Smooth Shadow */
     box-shadow:
-      0 8px 32px -4px rgba(0, 0, 0, 0.5),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+      0 8px 32px -4px rgba(0, 0, 0, 0.1),
+      /* Lighter shadow base */
+      inset 0 1px 0 0 var(--input);
   }
 
-  /* Specific override for the floating nav pill to make it stand out */
-  .floating-nav {
-    /* @apply liquid-glass; Removed to fix build error */
-    background: rgba(20, 20, 30, 0.4);
-    /* Slightly darker/denser */
-    backdrop-filter: blur(25px) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.8);
+  .dark .liquid-glass,
+  .dark .glass-card,
+  .dark .card,
+  .dark [data-slot="card"],
+  .dark .floating-nav {
+    /* Re-apply stronger shadows for dark mode if needed, or stick to variables */
+    box-shadow:
+      0 8px 32px -4px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
   }
+
+
 
   /* Mobile-first utilities */
   .mobile-container {
