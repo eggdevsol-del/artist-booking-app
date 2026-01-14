@@ -1,4 +1,4 @@
-
+```
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 // import { Calendar, Image, LayoutDashboard, MessageCircle, Settings, Wallet } from "lucide-react"; // REMOVED: Icons come from config
@@ -7,7 +7,7 @@ import { useTotalUnreadCount } from "@/lib/selectors/conversation.selectors";
 import { BottomNavRow } from "./BottomNavRow";
 import { useBottomNav } from "@/contexts/BottomNavContext";
 import { motion, useAnimation, useMotionValue, animate } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { MAIN_NAV_ITEMS } from "@/_core/bottomNav/defaultNav";
 
 /* 
@@ -45,52 +45,80 @@ export default function BottomNav() {
 
     const { rowIndex, isContextualVisible, setContextualVisible, contextualRow } = useBottomNav();
 
-
-
-    // ... inside component
     // Animation Controls & Motion Values
     const controls = useAnimation();
     const y = useMotionValue(0);
-    const x = useMotionValue(0); // Horizontal transform
-    const mainRowRef = useRef<HTMLDivElement>(null);
+    const x = useMotionValue(0); // Horizontal transform (negative offset)
 
-    // Manual Drag State
-    const isDragging = useRef(false);
-    const startPoint = useRef({ x: 0, y: 0 });
-    const axisLocked = useRef<'x' | 'y' | null>(null);
-    const initialOffset = useRef(0);
-    const pageIndex = useRef(0); // Horizontal Page Index
-    const pageWidth = useRef(0);
-    const maxPages = useRef(0);
-    const totalMove = useRef(0);
+    // Refs for DOM elements
+    const viewportRef = useRef<HTMLDivElement>(null); // The outer pill
+    const mainRowRef = useRef<HTMLDivElement>(null); // Row 0
+    const row1Ref = useRef<HTMLDivElement>(null);    // Row 1 wrapper
     const captureLayerRef = useRef<HTMLDivElement>(null);
 
-    // ... useEffect for Y (unchanged)
+    // Manual Drag State - SSOT
+    const offsetX = useRef(0); // Positive horizontal scroll offset
+    const maxOffset = useRef(0);
+    const viewportWidth = useRef(0);
+    const isDragging = useRef(false);
+    const startPoint = useRef({ x: 0, y: 0 });
+    const startOffset = useRef(0);
+    const axisLocked = useRef<'x' | 'y' | null>(null);
+    const totalMove = useRef(0);
+    
+    // Measurement Logic
+    const measure = useCallback(() => {
+        const viewport = viewportRef.current;
+        const activeContent = isContextualVisible ? row1Ref.current : mainRowRef.current;
+
+        if (viewport && activeContent) {
+            viewportWidth.current = viewport.clientWidth;
+            const contentWidth = activeContent.scrollWidth;
+            maxOffset.current = Math.max(0, contentWidth - viewportWidth.current);
+
+            // Re-clamp current offset if bounds changed
+            const clamped = Math.max(0, Math.min(offsetX.current, maxOffset.current));
+            if (clamped !== offsetX.current && !isDragging.current) {
+                offsetX.current = clamped;
+                x.set(-clamped);
+            }
+        }
+    }, [isContextualVisible, x, contextualRow]); // Added contextualRow to deps
+
+    // Observe Resizes
+    useEffect(() => {
+        measure();
+        const obs = new ResizeObserver(() => measure());
+        if (viewportRef.current) obs.observe(viewportRef.current);
+        if (mainRowRef.current) obs.observe(mainRowRef.current);
+        if (row1Ref.current) obs.observe(row1Ref.current);
+        
+        window.addEventListener('resize', measure);
+        return () => {
+            obs.disconnect();
+            window.removeEventListener('resize', measure);
+        };
+    }, [measure, contextualRow]); // Re-measure if content changes
+
+    // ... useEffect for Y (unchanged) - This is handled by controls.start calls and the motion.div animate prop.
+    useEffect(() => {
+        controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 });
+    }, [isContextualVisible, controls]);
+
 
     const handlePointerDown = (e: React.PointerEvent) => {
         if (captureLayerRef.current) {
             captureLayerRef.current.setPointerCapture(e.pointerId);
         }
 
+        measure(); // Ensure fresh bounds
         isDragging.current = true;
         startPoint.current = { x: e.clientX, y: e.clientY };
+        startOffset.current = offsetX.current;
         axisLocked.current = null;
         totalMove.current = 0;
-
-        initialOffset.current = y.get();
-
-        // Measure for Horizontal Logic
-        if (mainRowRef.current) {
-            const containerWidth = mainRowRef.current.parentElement?.clientWidth || window.innerWidth;
-            const contentWidth = mainRowRef.current.scrollWidth;
-            pageWidth.current = containerWidth;
-            // Calculate max pages based on content fitting
-            maxPages.current = Math.max(0, Math.ceil(contentWidth / containerWidth) - 1);
-
-            // Note: If contentWidth <= containerWidth, maxPages is 0.
-        }
-
-        console.log('[BottomNav] Pointer Down', { x: e.clientX, y: e.clientY, page: pageIndex.current });
+        
+        console.log('[BottomNav] Pointer Down', { offset: offsetX.current, max: maxOffset.current });
     };
 
     const handlePointerMove = (e: React.PointerEvent) => {
@@ -103,47 +131,41 @@ export default function BottomNav() {
 
         totalMove.current = Math.max(totalMove.current, Math.hypot(dx, dy));
 
+        // Axis Lock Logic: Threshold 8px
         if (!axisLocked.current) {
-            if (absDx + absDy > 8) {
-                if (absDy > absDx * 1.25) { // Increased vertical threshold slightly for better H-scroll detection bias?
-                    axisLocked.current = 'y';
-                    if (!contextualRow && !isContextualVisible) {
-                        axisLocked.current = 'x';
-                    }
-                } else if (absDx > absDy * 1.25) {
+            if (absDx > 8 || absDy > 8) {
+                if (absDx > absDy + 8) {
                     axisLocked.current = 'x';
+                } else if (absDy > absDx + 8) {
+                    axisLocked.current = 'y';
+                    // Optional: If Row 0 and no contextual row, maybe prevent Y lock? 
+                    // But requirement says vertical swipe is row switch.
+                    // If no row 1, we might just rubberband.
                 }
             }
         }
 
-        if (axisLocked.current === 'y') {
+        if (axisLocked.current === 'x') {
+            // Horizontal: Drag with Clamp
+            const nextOffset = startOffset.current - dx;
+            // Strict Clamp
+            const clamped = Math.max(0, Math.min(nextOffset, maxOffset.current));
+            
+            offsetX.current = clamped;
+            x.set(-clamped);
+
+        } else if (axisLocked.current === 'y') {
+            // Vertical: Drag Row Switch
             const currentBase = isContextualVisible ? -ROW_HEIGHT : 0;
             let targetY = currentBase + dy;
 
+            // Elasticity for vertical
             if (targetY > 0) targetY = targetY * 0.2;
             if (targetY < -ROW_HEIGHT) targetY = -ROW_HEIGHT + (targetY + ROW_HEIGHT) * 0.2;
 
             y.set(targetY);
-
-        } else if (axisLocked.current === 'x') {
-            // Horizontal Paging Move (Continuous)
-            // Formula: x = -pageIndex * width + dragOffsetX
-            let targetX = -pageIndex.current * pageWidth.current + dx;
-
-            // Elasticity at edges
-            const minX = -maxPages.current * pageWidth.current;
-            const maxX = 0;
-
-            if (targetX > maxX) {
-                targetX = maxX + (targetX - maxX) * 0.3; // Left edge resistance
-            } else if (targetX < minX) {
-                targetX = minX + (targetX - minX) * 0.3; // Right edge resistance
-            }
-
-            x.set(targetX);
         }
     };
-
 
     const handlePointerUp = (e: React.PointerEvent) => {
         if (!isDragging.current) return;
@@ -152,9 +174,8 @@ export default function BottomNav() {
             captureLayerRef.current.releasePointerCapture(e.pointerId);
         }
 
-        // Click Detection / Passthrough (Threshold < 6px)
+        // Tap Passthrough
         if (totalMove.current < 6 && captureLayerRef.current) {
-            // ... (Passthrough logic unchanged)
             captureLayerRef.current.style.visibility = 'hidden';
             const target = document.elementFromPoint(e.clientX, e.clientY);
             captureLayerRef.current.style.visibility = 'visible';
@@ -162,55 +183,53 @@ export default function BottomNav() {
             if (target && target instanceof HTMLElement) {
                 target.click();
             }
-            controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 }); // Ensure stable state
+            // Reset to stable state just in case
+            controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 });
             return;
         }
 
-        // Gesture Commit Logic
-        if (axisLocked.current === 'y' && contextualRow) {
-            const dy = e.clientY - startPoint.current.y;
-            const threshold = ROW_HEIGHT * 0.25;
-            const isRow0 = !isContextualVisible;
-            let targetRow = isContextualVisible ? 1 : 0;
+        if (axisLocked.current === 'x') {
+            // Horizontal Snap
+            // Page Logic: closest page index
+            const vp = viewportWidth.current || 1;
+            const pageIndex = Math.round(offsetX.current / vp);
+            let snapOffset = pageIndex * vp;
+            
+            // Hard clamp snap target
+            snapOffset = Math.max(0, Math.min(snapOffset, maxOffset.current));
+            
+            animate(x, -snapOffset, { type: "spring", stiffness: 400, damping: 40 });
+            offsetX.current = snapOffset;
 
-            if (isRow0) {
-                if (dy < -threshold) targetRow = 1;
-            } else {
-                if (dy > threshold) targetRow = 0;
-            }
+        } else if (axisLocked.current === 'y') {
+            // Vertical Snap (Row Switch)
+            if (contextualRow) {
+                const dy = e.clientY - startPoint.current.y;
+                const threshold = ROW_HEIGHT * 0.25;
+                const isRow0 = !isContextualVisible;
+                let targetRow = isContextualVisible ? 1 : 0;
 
-            if (targetRow === 1) {
-                if (!isContextualVisible) setContextualVisible(true);
-                controls.start({ y: -ROW_HEIGHT });
+                if (isRow0) {
+                    if (dy < -threshold) targetRow = 1;
+                } else {
+                    if (dy > threshold) targetRow = 0;
+                }
+
+                if (targetRow === 1) {
+                    if (!isContextualVisible) setContextualVisible(true);
+                    controls.start({ y: -ROW_HEIGHT });
+                } else {
+                    if (isContextualVisible) setContextualVisible(false);
+                    controls.start({ y: 0 });
+                }
             } else {
-                if (isContextualVisible) setContextualVisible(false);
+                // No secondary row, snap back
                 controls.start({ y: 0 });
             }
-        }
-        else if (axisLocked.current === 'x') {
-            const dx = e.clientX - startPoint.current.x;
-            const thresh = pageWidth.current * 0.25;
-
-            // Commit Direction
-            if (dx < -thresh) {
-                // Next Page
-                pageIndex.current = Math.min(pageIndex.current + 1, maxPages.current);
-            } else if (dx > thresh) {
-                // Prev Page
-                pageIndex.current = Math.max(pageIndex.current - 1, 0);
-            }
-
-            // Snap Animation
-            animate(x, -pageIndex.current * pageWidth.current, {
-                type: "spring", stiffness: 400, damping: 40
-            });
-        }
-        else {
-            // Reset if no lock or failed lock
+        } else {
+            // Reset if undefined gesture
             controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 });
-            animate(x, -pageIndex.current * pageWidth.current, {
-                type: "spring", stiffness: 400, damping: 40
-            });
+            animate(x, -offsetX.current, { type: "spring", stiffness: 400, damping: 40 });
         }
 
         axisLocked.current = null;
@@ -218,7 +237,8 @@ export default function BottomNav() {
 
     return (
         <nav
-            className="fixed bottom-6 inset-x-6 z-50 floating-nav rounded-[2.5rem] bg-none pb-0 overflow-hidden h-[68px] select-none"
+            ref={viewportRef}
+            className="fixed bottom-6 inset-x-6 z-50 floating-nav rounded-[2.5rem] bg-none pb-0 overflow-hidden h-[68px] select-none touch-none overscroll-contain"
         >
             {/* Gesture Capture Layer - Invisible Overlay */}
             <div
@@ -314,7 +334,14 @@ export default function BottomNav() {
                 {/* Row 1: Contextual Row (if exists) */}
                 {contextualRow && (
                     <div className="h-[68px] shrink-0">
-                        {contextualRow}
+                         {/* Wrapper to apply the same X transform to Row 1 */}
+                        <motion.div 
+                            ref={row1Ref}
+                            style={{ x }}
+                            className="flex items-center w-max h-full"
+                        >
+                            {contextualRow}
+                        </motion.div>
                     </div>
                 )}
             </motion.div>
