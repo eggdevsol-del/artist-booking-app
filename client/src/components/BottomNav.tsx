@@ -232,35 +232,55 @@ export default function BottomNav() {
                     <BottomNavRow ref={mainRowRef}>
                         {navItems.map((item) => {
                             const active = isActive(item.path);
+
+                            const ButtonContent = (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className={cn(
+                                        "flex-col h-auto py-2 px-3 gap-1 hover:bg-transparent min-w-[70px] snap-center shrink-0 transition-all duration-300 relative",
+                                        active ? "text-primary scale-105" : "text-muted-foreground opacity-70 hover:opacity-100"
+                                    )}
+                                    // Tab index needed since overlay might block focus handling? 
+                                    tabIndex={-1}
+                                    onClick={item.action}
+                                >
+                                    <div className="relative">
+                                        <item.icon className={cn("w-6 h-6 mb-0.5", active && "fill-current/20")} />
+                                        {item.id === "messages" && totalUnreadCount > 0 && (
+                                            <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white shadow-sm ring-2 ring-background">
+                                                {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
+                                            </span>
+                                        )}
+                                        {/* Support generic badge count if needed in future */}
+                                        {item.badgeCount !== undefined && item.badgeCount > 0 && item.id !== 'messages' && (
+                                            <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white shadow-sm ring-2 ring-background">
+                                                {item.badgeCount}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className={cn("text-[10px] font-medium transition-all", active ? "font-bold" : "font-normal")}>
+                                        {item.label}
+                                    </span>
+                                    {active && (
+                                        <span className="h-1 w-1 rounded-full bg-primary absolute bottom-1" />
+                                    )}
+                                </Button>
+                            );
+
+                            if (item.path) {
+                                return (
+                                    <Link key={item.id} href={item.path}>
+                                        {ButtonContent}
+                                    </Link>
+                                );
+                            }
+
                             return (
-                                <Link key={item.path} href={item.path}>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className={cn(
-                                            "flex-col h-auto py-2 px-3 gap-1 hover:bg-transparent min-w-[70px] snap-center shrink-0 transition-all duration-300 relative",
-                                            active ? "text-primary scale-105" : "text-muted-foreground opacity-70 hover:opacity-100"
-                                        )}
-                                        // Tab index needed since overlay might block focus handling? 
-                                        tabIndex={-1}
-                                    >
-                                        <div className="relative">
-                                            <item.icon className={cn("w-6 h-6 mb-0.5", active && "fill-current/20")} />
-                                            {item.label === "Messages" && totalUnreadCount > 0 && (
-                                                <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white shadow-sm ring-2 ring-background">
-                                                    {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <span className={cn("text-[10px] font-medium transition-all", active ? "font-bold" : "font-normal")}>
-                                            {item.label}
-                                        </span>
-                                        {active && (
-                                            <span className="h-1 w-1 rounded-full bg-primary absolute bottom-1" />
-                                        )}
-                                    </Button>
-                                </Link>
-                            )
+                                <div key={item.id}>
+                                    {ButtonContent}
+                                </div>
+                            );
                         })}
                     </BottomNavRow>
                 </div>
