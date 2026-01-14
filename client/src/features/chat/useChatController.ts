@@ -12,6 +12,143 @@ export function useChatController(conversationId: number) {
     const viewportRef = useRef<HTMLDivElement>(null);
     const [scrollIntent, setScrollIntent] = useState<'AUTO_FOLLOW' | 'USER_READING_HISTORY'>('AUTO_FOLLOW');
 
+    // URL Params (Consultation ID)
+    const searchParams = new URLSearchParams(window.location.search);
+    const paramConsultationId = searchParams.get('consultationId');
+
+    // UI State
+    const [uploadingImage, setUploadingImage] = useState(false);
+    const [showClientInfo, setShowClientInfo] = useState(false);
+    const [showBookingCalendar, setShowBookingCalendar] = useState(false);
+    const [selectedDates, setSelectedDates] = useState<Date[]>([]);
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+
+    // Project Wizard State
+    const [showProjectWizard, setShowProjectWizard] = useState(false);
+    const [projectStartDate, setProjectStartDate] = useState<Date | null>(null);
+    const [availableServices, setAvailableServices] = useState<any[]>([]);
+
+    // Client Confirm Dialog State
+    const [showClientConfirmDialog, setShowClientConfirmDialog] = useState(false);
+    const [clientConfirmMessageId, setClientConfirmMessageId] = useState<number | null>(null);
+    const [clientConfirmDates, setClientConfirmDates] = useState<{ date: string, selected: boolean }[]>([]);
+    const [clientConfirmMetadata, setClientConfirmMetadata] = useState<any>(null);
+
+    const utils = trpc.useUtils();
+
+    // -- Queries --
+
+    const { data: conversation, isLoading: convLoading } =
+        trpc.conversations.getById.useQuery(conversationId, {
+            enabled: !!user && conversationId > 0,
+        });
+
+    const { data: messages, isLoading: messagesLoading } =
+        trpc.messages.list.useQuery(
+            { conversationId },
+            {
+                enabled: !!user && conversationId > 0,
+                refetchInterval: 3000,
+            }
+        );
+
+    const { data: quickActions } = trpc.quickActions.list.useQuery(undefined, {
+        enabled: !!user && (user.role === "artist" || user.role === "admin"),
+    });
+
+    const { data: artistSettings } = trpc.artistSettings.get.useQuery(undefined, {
+        enabled: !!user && (user.role === "artist" || user.role === "admin"),
+    });
+
+    const { data: consultationList } = trpc.consultations.list.useQuery(undefined, {
+        enabled: !!user,
+    });
+
+    const targetConsultationId = paramConsultationId ? parseInt(paramConsultationId) : conversation?.pinnedConsultationId;
+    const consultationData = consultationList?.find(c => c.id === targetConsultationId);
+
+    // -- Mutations --
+
+    const pinConsultationMutation = trpc.conversations.pinConsultation.useMutation({
+        onSuccess: () => {
+            utils.conversations.getById.invalidate(conversationId);
+            toast.success("Consultation pinned status updated");
+        },
+        onError: (err) => {
+            toast.error("Failed to update pin status");
+        }
+    });
+
+    const markAsReadMutation = trpc.conversations.markAsRead.useMutation();
+
+    const updateMetadataMutation = trpc.messages.updateMetadata.useMutation({
+        onSuccess: () => {
+            utils.messages.list.invalidate({ conversationId });
+        }
+    });
+
+    const sendMessageMutation = trpc.messages.send.useMutation({
+        onMutate: async (newMessage) => {
+            await utils.messages.list.cancel({ conversationId });
+            const previousMessages = utils.messages.list.getData({ conversationId });
+
+            const optimisticMessage = {
+                id: Date.now(),
+                conversationId: newMessage.conversationId,
+                senderId: user?.id || '',
+                content: newMessage.content,
+                messageType: newMessage.messageType || "text",
+                metadata: newMessage.metadata || null,
+                readBy: null,
+                createdAt: new Date().toISOString(),
+                sender: { id: user?.id, name: user?.name, avatar: user?.avatar, role: user?.role } // Mock sender
+            };
+
+            utils.messages.list.setData(
+                { conversationId },
+                (old: any) => old ? [...old, optimisticMessage] : [optimisticMessage]
+            );
+
+            return { previousMessages };
+        },
+        onError: (error: any, newMessage, context) => {
+            if (context?.previousMessages) {
+                utils.messages.list.setData({ conversationId }, context.previousMessages);
+            }
+            toast.error("Failed to send message: " + error.message);
+        },
+        onSuccess: async () => {
+            setMessageText("");
+            await utils.messages.list.invalidate({ conversationId });
+        },
+    });
+
+    const bookProjectMutation = trpc.appointments.bookProject.useMutation({
+        onSuccess: (data) => {
+            toast.success(`${data.count} appointments booked successfully!`);
+            utils.messages.list.invalidate({ conversationId });
+            setShowClientConfirmDialog(false);
+        },
+        onError: (err) => {
+            toast.error("Failed to book project: " + err.message);
+        }
+    });
+
+    const uploadImageMutation = trpc.upload.uploadImage.useMutation({
+        onSuccess: (data) => {
+            sendMessageMutation.mutate({
+                conversationId,
+                content: data.url,
+                messageType: "image",
+            });
+            setUploadingImage(false);
+        },
+        onError: (error: any) => {
+            toast.error("Failed to upload image: " + error.message);
+            setUploadingImage(false);
+        },
+    });
+
     const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
         if (viewportRef.current) {
             const vp = viewportRef.current;
