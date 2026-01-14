@@ -8,162 +8,88 @@ import { format } from "date-fns";
 export function useChatController(conversationId: number) {
     const { user, loading: authLoading } = useAuth();
     const [messageText, setMessageText] = useState("");
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const bottomRef = useRef<HTMLDivElement>(null);
+    // Scroll Logic
+    const viewportRef = useRef<HTMLDivElement>(null);
+    const [scrollIntent, setScrollIntent] = useState<'AUTO_FOLLOW' | 'USER_READING_HISTORY'>('AUTO_FOLLOW');
 
-    // URL Params (Consultation ID)
-    const searchParams = new URLSearchParams(window.location.search);
-    const paramConsultationId = searchParams.get('consultationId');
+    const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+        if (viewportRef.current) {
+            const vp = viewportRef.current;
+            // Force intent back to auto-follow when manually scrolling to bottom (e.g. sending message)
+            setScrollIntent('AUTO_FOLLOW');
+            vp.scrollTo({ top: vp.scrollHeight, behavior });
+        }
+    }, [viewportRef]);
 
-    // UI State
-    const [uploadingImage, setUploadingImage] = useState(false);
-    const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
-    const hasScrolledRef = useRef(false);
-    const [showClientInfo, setShowClientInfo] = useState(false);
-    const [showBookingCalendar, setShowBookingCalendar] = useState(false);
-    const [selectedDates, setSelectedDates] = useState<Date[]>([]);
-    const [currentMonth, setCurrentMonth] = useState(new Date());
+    const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+        const target = e.currentTarget;
+        const { scrollTop, scrollHeight, clientHeight } = target;
 
-    // Project Wizard State
-    const [showProjectWizard, setShowProjectWizard] = useState(false);
-    const [projectStartDate, setProjectStartDate] = useState<Date | null>(null);
-    const [availableServices, setAvailableServices] = useState<any[]>([]);
+        // Threshold: If within 50px of bottom, consider it "at bottom"
+        const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
 
-    // Client Confirm Dialog State
-    const [showClientConfirmDialog, setShowClientConfirmDialog] = useState(false);
-    const [clientConfirmMessageId, setClientConfirmMessageId] = useState<number | null>(null);
-    const [clientConfirmDates, setClientConfirmDates] = useState<{ date: string, selected: boolean }[]>([]);
-    const [clientConfirmMetadata, setClientConfirmMetadata] = useState<any>(null);
-
-    const utils = trpc.useUtils();
-
-    // -- Queries --
-
-    const { data: conversation, isLoading: convLoading } =
-        trpc.conversations.getById.useQuery(conversationId, {
-            enabled: !!user && conversationId > 0,
-        });
-
-    const { data: messages, isLoading: messagesLoading } =
-        trpc.messages.list.useQuery(
-            { conversationId },
-            {
-                enabled: !!user && conversationId > 0,
-                refetchInterval: 3000,
+        if (isAtBottom) {
+            if (scrollIntent !== 'AUTO_FOLLOW') {
+                setScrollIntent('AUTO_FOLLOW');
             }
-        );
-
-    const { data: quickActions } = trpc.quickActions.list.useQuery(undefined, {
-        enabled: !!user && (user.role === "artist" || user.role === "admin"),
-    });
-
-    const { data: artistSettings } = trpc.artistSettings.get.useQuery(undefined, {
-        enabled: !!user && (user.role === "artist" || user.role === "admin"),
-    });
-
-    const { data: consultationList } = trpc.consultations.list.useQuery(undefined, {
-        enabled: !!user,
-    });
-
-    const targetConsultationId = paramConsultationId ? parseInt(paramConsultationId) : conversation?.pinnedConsultationId;
-    const consultationData = consultationList?.find(c => c.id === targetConsultationId);
-
-    // -- Mutations --
-
-    const pinConsultationMutation = trpc.conversations.pinConsultation.useMutation({
-        onSuccess: () => {
-            utils.conversations.getById.invalidate(conversationId);
-            toast.success("Consultation pinned status updated");
-        },
-        onError: (err) => {
-            toast.error("Failed to update pin status");
-        }
-    });
-
-    const markAsReadMutation = trpc.conversations.markAsRead.useMutation();
-
-    const updateMetadataMutation = trpc.messages.updateMetadata.useMutation({
-        onSuccess: () => {
-            utils.messages.list.invalidate({ conversationId });
-        }
-    });
-
-    const sendMessageMutation = trpc.messages.send.useMutation({
-        onMutate: async (newMessage) => {
-            await utils.messages.list.cancel({ conversationId });
-            const previousMessages = utils.messages.list.getData({ conversationId });
-
-            const optimisticMessage = {
-                id: Date.now(),
-                conversationId: newMessage.conversationId,
-                senderId: user?.id || '',
-                content: newMessage.content,
-                messageType: newMessage.messageType || "text",
-                metadata: newMessage.metadata || null,
-                readBy: null,
-                createdAt: new Date().toISOString(),
-                sender: { id: user?.id, name: user?.name, avatar: user?.avatar, role: user?.role } // Mock sender
-            };
-
-            utils.messages.list.setData(
-                { conversationId },
-                (old: any) => old ? [...old, optimisticMessage] : [optimisticMessage]
-            );
-
-            return { previousMessages };
-        },
-        onError: (error: any, newMessage, context) => {
-            if (context?.previousMessages) {
-                utils.messages.list.setData({ conversationId }, context.previousMessages);
+        } else {
+            if (scrollIntent !== 'USER_READING_HISTORY') {
+                setScrollIntent('USER_READING_HISTORY');
             }
-            toast.error("Failed to send message: " + error.message);
-        },
-        onSuccess: async () => {
-            setMessageText("");
-            await utils.messages.list.invalidate({ conversationId });
-        },
-        onSettled: () => {
-            // Scroll handled by component via ref usually, but we can expose a trigger
-        },
-    });
-
-    const bookProjectMutation = trpc.appointments.bookProject.useMutation({
-        onSuccess: (data) => {
-            toast.success(`${data.count} appointments booked successfully!`);
-            utils.messages.list.invalidate({ conversationId });
-            setShowClientConfirmDialog(false);
-        },
-        onError: (err) => {
-            toast.error("Failed to book project: " + err.message);
         }
-    });
+    }, [scrollIntent]);
 
-    const uploadImageMutation = trpc.upload.uploadImage.useMutation({
-        onSuccess: (data) => {
-            sendMessageMutation.mutate({
-                conversationId,
-                content: data.url,
-                messageType: "image",
-            });
-            setUploadingImage(false);
-        },
-        onError: (error: any) => {
-            toast.error("Failed to upload image: " + error.message);
-            setUploadingImage(false);
-        },
-    });
+    // Auto-Scroll Effect
+    useEffect(() => {
+        if (messages && messages.length > 0) {
+            if (scrollIntent === 'AUTO_FOLLOW') {
+                // Use 'instant' for initial load if needed, but 'smooth' is fine for updates
+                // For a seamless "stick to bottom", we might want requestAnimationFrame
+
+                // Using timeout to ensure DOM update has happened (React 18 usually batches fine, but ScrollArea might delay layout)
+                // A small timeout ensures content is rendered
+                setTimeout(() => {
+                    if (viewportRef.current) {
+                        const vp = viewportRef.current;
+                        vp.scrollTo({ top: vp.scrollHeight, behavior: 'smooth' });
+                    }
+                }, 100);
+            }
+        }
+    }, [messages, scrollIntent]); // Re-run if messages change OR if intent switches back to auto-follow (though usually intent switch is MANUAL scroll, so maybe not needed to trigger scroll? 
+    // Actually, if I scroll back to bottom, intent becomes AUTO_FOLLOW. I don't necessarily need to scroll to bottom AGAIN if I'm already there.
+    // The main trigger is MESSAGES changing.
+
+    // Correction: Effect should depend on `messages`. 
+    // If intent is AUTO_FOLLOW, scroll.
+
+    // Also, handleSendMessage needs to Force Auto-Follow.
+
+    useEffect(() => {
+        if (!messagesLoading && messages?.length) {
+            // Initial load check?
+            // If it's the very first load, we probably want to jump to bottom immediately.
+            // But 'scrollIntent' starts at 'AUTO_FOLLOW'.
+        }
+    }, [messagesLoading]);
+
 
     // -- Handlers --
 
     const handleSendMessage = useCallback(() => {
         if (!messageText.trim()) return;
+
+        // Optimistic scroll enforcement
+        setScrollIntent('AUTO_FOLLOW'); // Ensure we follow own message
+        scrollToBottom('smooth');
+
         sendMessageMutation.mutate({
             conversationId,
             content: messageText,
             messageType: "text",
             consultationId: paramConsultationId ? parseInt(paramConsultationId) : undefined,
         });
-    }, [messageText, conversationId, paramConsultationId, sendMessageMutation.mutate]);
+    }, [messageText, conversationId, paramConsultationId, sendMessageMutation.mutate, scrollToBottom]);
 
     const handleImageUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -176,6 +102,10 @@ export function useChatController(conversationId: number) {
             toast.error("Image size must be less than 10MB");
             return;
         }
+
+        setScrollIntent('AUTO_FOLLOW'); // Force follow on upload
+        scrollToBottom('smooth');
+
         setUploadingImage(true);
         toast.info("Uploading image...");
         const reader = new FileReader();
@@ -192,7 +122,7 @@ export function useChatController(conversationId: number) {
             setUploadingImage(false);
         };
         reader.readAsDataURL(file);
-    }, [uploadImageMutation.mutate, setUploadingImage]);
+    }, [uploadImageMutation.mutate, setUploadingImage, scrollToBottom]);
 
     const handleQuickAction = useCallback((action: any) => {
         if (action.actionType === "find_availability") {
@@ -202,13 +132,16 @@ export function useChatController(conversationId: number) {
 
         // For send_text, custom, and deposit_info, we just send the content as a message
         if (["send_text", "custom", "deposit_info"].includes(action.actionType)) {
+            setScrollIntent('AUTO_FOLLOW');
+            scrollToBottom('smooth');
+
             sendMessageMutation.mutate({
                 conversationId,
                 content: action.content,
                 messageType: "text",
             });
         }
-    }, [conversationId, sendMessageMutation.mutate, setShowProjectWizard]);
+    }, [conversationId, sendMessageMutation.mutate, setShowProjectWizard, scrollToBottom]);
 
     const handleClientConfirmDates = useCallback(async () => {
         if (!clientConfirmMessageId || !clientConfirmMetadata) return;
@@ -232,6 +165,9 @@ export function useChatController(conversationId: number) {
             price: clientConfirmMetadata.price
         });
 
+        setScrollIntent('AUTO_FOLLOW');
+        scrollToBottom('smooth');
+
         sendMessageMutation.mutate({
             conversationId,
             content: message,
@@ -241,7 +177,7 @@ export function useChatController(conversationId: number) {
 
         setShowClientConfirmDialog(false);
         toast.success("Dates confirmed!");
-    }, [clientConfirmMessageId, clientConfirmMetadata, clientConfirmDates, conversationId, sendMessageMutation.mutate, setShowClientConfirmDialog]);
+    }, [clientConfirmMessageId, clientConfirmMetadata, clientConfirmDates, conversationId, sendMessageMutation.mutate, setShowClientConfirmDialog, scrollToBottom]);
 
     const handleClientAcceptProposal = useCallback((message: any, metadata: any) => {
         if (!metadata.proposedDates && !metadata.dates) return;
@@ -282,6 +218,9 @@ export function useChatController(conversationId: number) {
                     metadata: newMetadata
                 });
 
+                setScrollIntent('AUTO_FOLLOW');
+                scrollToBottom('smooth');
+
                 sendMessageMutation.mutate({
                     conversationId,
                     content: `I accept the project proposal for ${metadata.serviceName}.`,
@@ -289,7 +228,7 @@ export function useChatController(conversationId: number) {
                 });
             }
         });
-    }, [conversationId, bookProjectMutation.mutate, updateMetadataMutation.mutate, sendMessageMutation.mutate]);
+    }, [conversationId, bookProjectMutation.mutate, updateMetadataMutation.mutate, sendMessageMutation.mutate, scrollToBottom]);
 
     const handleArtistBookProject = useCallback((metadata: any) => {
         if (!metadata.confirmedDates || !metadata.serviceName) return;
@@ -397,9 +336,11 @@ export function useChatController(conversationId: number) {
         clientConfirmDates, setClientConfirmDates,
         clientConfirmMetadata, setClientConfirmMetadata,
         clientConfirmMessageId, setClientConfirmMessageId,
-        scrollRef, bottomRef,
         uploadingImage,
-        hasScrolledRef,
+        // Removed old refs
+        // Expose new refs / logic
+        viewportRef,
+        handleScroll,
 
         // Derived
         isArtist,

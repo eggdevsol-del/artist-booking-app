@@ -63,9 +63,9 @@ export default function Chat() {
     uploadingImage,
 
     // Refs
-    scrollRef,
-    bottomRef,
-    hasScrolledRef,
+    viewportRef,
+    handleScroll,
+    // (Removed scrollRef, bottomRef, hasScrolledRef)
 
     // Client Confirm State
     showClientConfirmDialog, setShowClientConfirmDialog,
@@ -128,20 +128,6 @@ export default function Chat() {
 
   // Local UI Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Scrolling Logic
-  const scrollToBottom = () => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
-  useEffect(() => {
-    if (messages && messages.length > 0 && !hasScrolledRef.current) {
-      scrollToBottom();
-      hasScrolledRef.current = true;
-    }
-  }, [messages, hasScrolledRef]);
 
   // Key press handler local (calls hook handler)
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -259,7 +245,11 @@ export default function Chat() {
 
       {/* Messages */}
       <div className="flex-1 min-h-0 relative">
-        <ScrollArea className="h-full px-4 py-4" ref={scrollRef}>
+        <ScrollArea
+          className="h-full px-4 py-4"
+          viewportRef={viewportRef}
+          onScroll={handleScroll}
+        >
           <div className="space-y-4 pb-[182px]">
             {messages && messages.length > 0 ? (
               messages.map((message) => {
@@ -343,7 +333,7 @@ export default function Chat() {
                 <p className="text-muted-foreground">No messages yet</p>
               </div>
             )}
-            <div ref={bottomRef} className="pb-64" />
+            {/* Removed bottomRef div */}
           </div>
         </ScrollArea>
       </div>
