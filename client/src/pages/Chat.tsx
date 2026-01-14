@@ -79,12 +79,10 @@ export default function Chat() {
   // Register Bottom Nav Contextual Row (Quick Actions)
   const quickActionsRow = useMemo(() => (
     <QuickActionsRow
-      onSendProposal={() => setShowProjectWizard(true)}
-      onBookNow={() => setShowBookingCalendar(true)}
       quickActions={user?.role === 'artist' || user?.role === 'admin' ? quickActions : []}
       onQuickActionRequest={handleQuickAction}
     />
-  ), [setShowProjectWizard, setShowBookingCalendar, quickActions, user?.role, handleQuickAction]);
+  ), [quickActions, user?.role, handleQuickAction]);
 
   useRegisterBottomNavRow("quick-actions", quickActionsRow);
 

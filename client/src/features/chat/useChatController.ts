@@ -196,7 +196,13 @@ export function useChatController(conversationId: number) {
     };
 
     const handleQuickAction = (action: any) => {
-        if (action.actionType === "send_text") {
+        if (action.actionType === "find_availability") {
+            setShowProjectWizard(true);
+            return;
+        }
+
+        // For send_text, custom, and deposit_info, we just send the content as a message
+        if (["send_text", "custom", "deposit_info"].includes(action.actionType)) {
             sendMessageMutation.mutate({
                 conversationId,
                 content: action.content,
