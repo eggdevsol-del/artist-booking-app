@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { BookingWizard } from "@/features/booking/BookingWizard";
 import { ClientProfileSheet } from "@/features/chat/ClientProfileSheet";
 import { ProjectProposalMessage } from "@/components/chat/ProjectProposalMessage";
+import { ProjectProposalModal } from "@/features/chat/components/ProjectProposalModal";
 import { ArrowLeft, Send, User, Phone, Mail, Cake, ImagePlus, Pin, PinOff, Calendar, FileText, Zap } from "lucide-react";
 import { useRegisterBottomNavRow } from "@/contexts/BottomNavContext";
 import { QuickActionsRow, ChatAction } from "@/features/chat/components/QuickActionsRow";
@@ -70,6 +71,10 @@ export default function Chat() {
     // Client Confirm State
     showClientConfirmDialog, setShowClientConfirmDialog,
     clientConfirmDates, setClientConfirmDates,
+
+    // Proposal Modal
+    selectedProposal, setSelectedProposal,
+    handleViewProposal,
 
   } = useChatController(conversationId);
 
@@ -275,15 +280,7 @@ export default function Chat() {
                         <ProjectProposalMessage
                           metadata={metadata}
                           isArtist={isArtist}
-                          isPendingAction={bookProjectMutation.isPending}
-                          onAccept={() => handleClientAcceptProposal(message, metadata)}
-                          onReject={() => {
-                            sendMessageMutation.mutate({
-                              conversationId,
-                              content: "I'm sorry, those dates don't work for me.",
-                              messageType: "text"
-                            });
-                          }}
+                          onViewDetails={() => handleViewProposal(message, metadata)}
                         />
                       </div>
                     ) : (
@@ -460,6 +457,25 @@ export default function Chat() {
         isOpen={showClientInfo}
         onClose={() => setShowClientInfo(false)}
         client={conversation?.otherUser}
+      />
+
+      <ProjectProposalModal
+        isOpen={!!selectedProposal}
+        onClose={() => setSelectedProposal(null)}
+        metadata={selectedProposal?.metadata}
+        isArtist={isArtist}
+        onAccept={() => selectedProposal && handleClientAcceptProposal(selectedProposal.message, selectedProposal.metadata)}
+        onReject={() => {
+          if (selectedProposal) {
+            sendMessageMutation.mutate({
+              conversationId,
+              content: "I'm sorry, those dates don't work for me.",
+              messageType: "text"
+            });
+            setSelectedProposal(null);
+          }
+        }}
+        isPendingAction={bookProjectMutation.isPending}
       />
     </div>
   );

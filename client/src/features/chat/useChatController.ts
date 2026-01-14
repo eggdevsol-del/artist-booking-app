@@ -28,6 +28,9 @@ export function useChatController(conversationId: number) {
     const [projectStartDate, setProjectStartDate] = useState<Date | null>(null);
     const [availableServices, setAvailableServices] = useState<any[]>([]);
 
+    // Proposal View State
+    const [selectedProposal, setSelectedProposal] = useState<{ message: any, metadata: any } | null>(null);
+
     // Client Confirm Dialog State
     const [showClientConfirmDialog, setShowClientConfirmDialog] = useState(false);
     const [clientConfirmMessageId, setClientConfirmMessageId] = useState<number | null>(null);
@@ -357,6 +360,7 @@ export function useChatController(conversationId: number) {
 
                 setScrollIntent('AUTO_FOLLOW');
                 scrollToBottom('smooth');
+                setSelectedProposal(null); // Close modal on success
 
                 sendMessageMutation.mutate({
                     conversationId,
@@ -366,6 +370,10 @@ export function useChatController(conversationId: number) {
             }
         });
     }, [conversationId, bookProjectMutation.mutate, updateMetadataMutation.mutate, sendMessageMutation.mutate, scrollToBottom]);
+
+    const handleViewProposal = useCallback((message: any, metadata: any) => {
+        setSelectedProposal({ message, metadata });
+    }, []);
 
     const handleArtistBookProject = useCallback((metadata: any) => {
         if (!metadata.confirmedDates || !metadata.serviceName) return;
@@ -478,6 +486,10 @@ export function useChatController(conversationId: number) {
         // Expose new refs / logic
         viewportRef,
         handleScroll,
+
+        // Proposal Modal
+        selectedProposal, setSelectedProposal,
+        handleViewProposal,
 
         // Derived
         isArtist,
