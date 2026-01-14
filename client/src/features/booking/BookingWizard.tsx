@@ -115,20 +115,15 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
     const renderServiceStep = () => (
         <div className="space-y-4 pt-2">
-            {/* UNMISTAKABLE VISUAL CHANGE - LARGE HEADER */}
-            <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-8 rounded-3xl text-center mb-6">
-                <h2 className="text-4xl font-black text-white mb-2">📋 CHOOSE YOUR SERVICE</h2>
-                <p className="text-white/90 text-lg">Step 1 of 3 - Select a service package</p>
-            </div>
             <p className="text-xs font-bold uppercase tracking-widest text-[#5b4eff]/80 mb-4 pl-1">SELECT SERVICE</p>
             <ScrollArea className="h-[380px] pr-4 -mr-4">
                 <div className="grid grid-cols-1 gap-4 pr-4">
                     {artistServices.map(service => (
                         <div
                             key={service.id}
-                            className={`group relative p-6 cursor-pointer transition-all duration-300 rounded-[2rem] border-4 ${selectedService?.id === service.id
+                            className={`group relative p-6 cursor-pointer transition-all duration-300 rounded-[2rem] border ${selectedService?.id === service.id
                                 ? 'bg-[#5b4eff]/10 border-[#5b4eff] shadow-[0_0_30px_rgba(91,78,255,0.15)]'
-                                : 'bg-orange-500 border-cyan-400 hover:border-white/10 hover:bg-[#222]'
+                                : 'bg-[#1a1a1a] border-white/5 hover:border-white/10 hover:bg-[#222]'
                                 }`}
                             onClick={() => setSelectedService(service)}
                         >
@@ -290,11 +285,6 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
     return (
         <Dialog open={isOpen} onOpenChange={(v) => !v && handleClose()}>
             <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col p-1 gap-0 border border-white/10 bg-background/95 backdrop-blur-[20px] shadow-2xl rounded-[2.5rem] overflow-hidden text-white outline-none">
-                {/* BUILD PROOF MARKER - TEMPORARY DEBUG */}
-                <div className="bg-red-600 text-white p-4 text-center font-bold text-lg z-[9999] shrink-0">
-                    BOOKING WIZARD BUILD PROOF v{__APP_VERSION__}
-                </div>
-
                 <DialogHeader className="p-8 pb-2 shrink-0 border-b border-white/5">
                     <DialogTitle className="text-2xl font-bold tracking-tight text-center">
                         {step === 'service' && "Select Service"}
