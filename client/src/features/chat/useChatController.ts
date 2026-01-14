@@ -163,7 +163,7 @@ export function useChatController(conversationId: number) {
             messageType: "text",
             consultationId: paramConsultationId ? parseInt(paramConsultationId) : undefined,
         });
-    }, [messageText, conversationId, paramConsultationId, sendMessageMutation]);
+    }, [messageText, conversationId, paramConsultationId, sendMessageMutation.mutate]);
 
     const handleImageUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -192,7 +192,7 @@ export function useChatController(conversationId: number) {
             setUploadingImage(false);
         };
         reader.readAsDataURL(file);
-    }, [uploadImageMutation, setUploadingImage]);
+    }, [uploadImageMutation.mutate, setUploadingImage]);
 
     const handleQuickAction = useCallback((action: any) => {
         if (action.actionType === "find_availability") {
@@ -208,7 +208,7 @@ export function useChatController(conversationId: number) {
                 messageType: "text",
             });
         }
-    }, [conversationId, sendMessageMutation, setShowProjectWizard]);
+    }, [conversationId, sendMessageMutation.mutate, setShowProjectWizard]);
 
     const handleClientConfirmDates = useCallback(async () => {
         if (!clientConfirmMessageId || !clientConfirmMetadata) return;
@@ -241,7 +241,7 @@ export function useChatController(conversationId: number) {
 
         setShowClientConfirmDialog(false);
         toast.success("Dates confirmed!");
-    }, [clientConfirmMessageId, clientConfirmMetadata, clientConfirmDates, conversationId, sendMessageMutation, setShowClientConfirmDialog]);
+    }, [clientConfirmMessageId, clientConfirmMetadata, clientConfirmDates, conversationId, sendMessageMutation.mutate, setShowClientConfirmDialog]);
 
     const handleClientAcceptProposal = useCallback((message: any, metadata: any) => {
         if (!metadata.proposedDates && !metadata.dates) return;
@@ -289,7 +289,7 @@ export function useChatController(conversationId: number) {
                 });
             }
         });
-    }, [conversationId, bookProjectMutation, updateMetadataMutation, sendMessageMutation]);
+    }, [conversationId, bookProjectMutation.mutate, updateMetadataMutation.mutate, sendMessageMutation.mutate]);
 
     const handleArtistBookProject = useCallback((metadata: any) => {
         if (!metadata.confirmedDates || !metadata.serviceName) return;
@@ -311,7 +311,7 @@ export function useChatController(conversationId: number) {
             conversationId,
             appointments
         });
-    }, [conversationId, bookProjectMutation]);
+    }, [conversationId, bookProjectMutation.mutate]);
 
     // Calendar Logic
     const nextMonth = useCallback(() => {
