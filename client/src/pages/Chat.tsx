@@ -10,9 +10,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { BookingWizard } from "@/features/booking/BookingWizard";
 import { ClientProfileSheet } from "@/features/chat/ClientProfileSheet";
 import { ProjectProposalMessage } from "@/components/chat/ProjectProposalMessage";
-import { ArrowLeft, Send, User, Phone, Mail, Cake, ImagePlus, Pin, PinOff } from "lucide-react";
+import { ArrowLeft, Send, User, Phone, Mail, Cake, ImagePlus, Pin, PinOff, Calendar, FileText, Zap } from "lucide-react";
 import { useRegisterBottomNavRow } from "@/contexts/BottomNavContext";
-import { QuickActionsRow } from "@/features/chat/components/QuickActionsRow";
+import { QuickActionsRow, ChatAction } from "@/features/chat/components/QuickActionsRow";
 import { useLocation, useParams } from "wouter";
 import { format } from "date-fns";
 import { useEffect, useRef, useState, useMemo } from "react";
@@ -20,71 +20,62 @@ import { toast } from "sonner";
 
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
-  const conversationId = parseInt(id || "0");
-  const [, setLocation] = useLocation();
+  // ... (rest of imports unchanged)
 
+  // ... inside Chat component
 
+  // Register Bottom Nav Contextual Row (Quick Actions + System Actions)
+  const quickActionsRow = useMemo(() => {
+    const isAuthorized = user?.role === 'artist' || user?.role === 'admin';
 
+    // System Actions (Fixed)
+    const systemActions: ChatAction[] = [
+      {
+        id: 'chat.book',
+        label: 'Book',
+        icon: Calendar,
+        onClick: () => setShowBookingCalendar(true),
+        highlight: true // Optional: highlight system actions?
+      },
+      {
+        id: 'chat.proposal',
+        label: 'Proposal',
+        icon: FileText,
+        onClick: () => setShowProjectWizard(true),
+        highlight: true
+      }
+    ];
 
-  const {
-    user,
-    authLoading,
-    conversation,
-    convLoading,
-    messages,
-    messagesLoading,
-    quickActions,
-    availableServices,
+    // User Configured Actions
+    const userActions: ChatAction[] = isAuthorized && quickActions ? quickActions.map(qa => {
+      // Icon Mapping
+      let Icon = Zap;
+      if (qa.actionType === 'find_availability') Icon = FileText;
+      else if (qa.actionType === 'deposit_info') Icon = Send;
 
-    // State
-    messageText, setMessageText,
-    showClientInfo, setShowClientInfo,
-    showBookingCalendar, setShowBookingCalendar,
-    showProjectWizard, setShowProjectWizard,
-    projectStartDate, setProjectStartDate,
+      return {
+        id: qa.id,
+        label: qa.label,
+        icon: Icon,
+        onClick: () => handleQuickAction(qa),
+        highlight: false
+      };
+    }) : [];
 
-    // Derived
-    isArtist,
-    otherUserName,
-    consultationData,
-    calendarDays,
+    // Validated Composition (Guard against regression)
+    const allActions = [...systemActions, ...userActions];
 
-    // Handlers
-    handleSendMessage,
-    handleImageUpload,
-    handleQuickAction,
-    handleClientConfirmDates,
-    handleClientAcceptProposal,
-    handleArtistBookProject,
-    nextMonth,
-    prevMonth,
+    // Runtime Guard
+    if (allActions[0].id !== 'chat.book' || allActions[1].id !== 'chat.proposal') {
+      console.error("System actions missing or out of order in Chat BottomNav!");
+    }
 
-    // Mutations used for loading states
-    sendMessageMutation,
-    pinConsultationMutation,
-    bookProjectMutation,
-    uploadingImage,
+    return (
+      <QuickActionsRow actions={allActions} />
+    );
+  }, [quickActions, user?.role, handleQuickAction, setShowBookingCalendar, setShowProjectWizard]);
 
-    // Refs
-    scrollRef,
-    bottomRef,
-    hasScrolledRef,
-
-    // Client Confirm State
-    showClientConfirmDialog, setShowClientConfirmDialog,
-    clientConfirmDates, setClientConfirmDates,
-
-  } = useChatController(conversationId);
-
-  // Register Bottom Nav Contextual Row (Quick Actions)
-  const quickActionsRow = useMemo(() => (
-    <QuickActionsRow
-      quickActions={user?.role === 'artist' || user?.role === 'admin' ? quickActions : []}
-      onQuickActionRequest={handleQuickAction}
-    />
-  ), [quickActions, user?.role, handleQuickAction]);
-
-  useRegisterBottomNavRow("quick-actions", quickActionsRow);
+  useRegisterBottomNavRow("chat", quickActionsRow);
 
   // Local UI Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
