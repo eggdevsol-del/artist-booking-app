@@ -26,18 +26,6 @@ export default function Chat() {
 
 
 
-  // Register Bottom Nav Contextual Row (Quick Actions)
-  const quickActionsRow = useMemo(() => (
-    <QuickActionsRow
-      onSendProposal={() => setShowProjectWizard(true)}
-      onBookNow={() => setShowBookingCalendar(true)}
-      quickActions={user?.role === 'artist' || user?.role === 'admin' ? quickActions : []}
-      onQuickActionRequest={handleQuickAction}
-    />
-  ), [setShowProjectWizard, setShowBookingCalendar, quickActions, user?.role, handleQuickAction]);
-
-  useRegisterBottomNavRow("quick-actions", quickActionsRow);
-
   const {
     user,
     authLoading,
@@ -87,6 +75,18 @@ export default function Chat() {
     clientConfirmDates, setClientConfirmDates,
 
   } = useChatController(conversationId);
+
+  // Register Bottom Nav Contextual Row (Quick Actions)
+  const quickActionsRow = useMemo(() => (
+    <QuickActionsRow
+      onSendProposal={() => setShowProjectWizard(true)}
+      onBookNow={() => setShowBookingCalendar(true)}
+      quickActions={user?.role === 'artist' || user?.role === 'admin' ? quickActions : []}
+      onQuickActionRequest={handleQuickAction}
+    />
+  ), [setShowProjectWizard, setShowBookingCalendar, quickActions, user?.role, handleQuickAction]);
+
+  useRegisterBottomNavRow("quick-actions", quickActionsRow);
 
   // Local UI Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
