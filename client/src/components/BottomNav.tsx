@@ -1,4 +1,4 @@
-```typescript
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "wouter";
@@ -47,7 +47,7 @@ export default function BottomNav() {
     // Animation Controls & Motion Values
     const controls = useAnimation();
     const y = useMotionValue(0);
-    
+
     // Separate Horizontal Values for Persistence
     const xMain = useMotionValue(0);
     const xContextual = useMotionValue(0);
@@ -62,7 +62,7 @@ export default function BottomNav() {
     const scrollPositions = useRef({ main: 0, contextual: 0 });
     const maxOffsets = useRef({ main: 0, contextual: 0 });
     const viewportWidth = useRef(0);
-    
+
     // Lifecycle Flags
     const isDragging = useRef(false);
     const axisLocked = useRef<'x' | 'y' | null>(null);
@@ -122,7 +122,7 @@ export default function BottomNav() {
         if (viewportRef.current) obs.observe(viewportRef.current);
         if (mainRowRef.current) obs.observe(mainRowRef.current);
         if (row1Ref.current) obs.observe(row1Ref.current); // May be null initially?
-        
+
         window.addEventListener('resize', measure);
         return () => {
             obs.disconnect();
@@ -135,7 +135,7 @@ export default function BottomNav() {
         controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 });
         // measure() will be called by ResizeObserver eventually if layout changes, 
         // but explicit call handles immediate state updates if needed.
-        measure(); 
+        measure();
     }, [isContextualVisible, controls, measure]);
 
 
@@ -147,13 +147,13 @@ export default function BottomNav() {
         measure(); // Ensure fresh bounds
         isDragging.current = true;
         startPoint.current = { x: e.clientX, y: e.clientY };
-        
+
         // Store start offset for the *active* row
         startOffset.current = scrollPositions.current[getActiveKey()];
-        
+
         axisLocked.current = null;
         totalMove.current = 0;
-        
+
         // Stop any ongoing springs
         getActiveX().stop();
     };
@@ -172,11 +172,11 @@ export default function BottomNav() {
         if (!axisLocked.current) {
             if (absDx > 8 || absDy > 8) {
                 if (absDx > absDy + 8) {
-                     // Check maxOffset > 0, otherwise disable H-drag
-                     const key = getActiveKey();
-                     if (maxOffsets.current[key] > 0) {
-                         axisLocked.current = 'x';
-                     }
+                    // Check maxOffset > 0, otherwise disable H-drag
+                    const key = getActiveKey();
+                    if (maxOffsets.current[key] > 0) {
+                        axisLocked.current = 'x';
+                    }
                 } else if (absDy > absDx + 8) {
                     // Critical: Guard vertical lock if no contextual row
                     if (contextualRow) {
@@ -191,10 +191,10 @@ export default function BottomNav() {
             const key = getActiveKey();
             const nextOffset = startOffset.current - dx;
             const max = maxOffsets.current[key];
-            
+
             // Strict Clamp
             const clamped = Math.max(0, Math.min(nextOffset, max));
-            
+
             scrollPositions.current[key] = clamped;
             getActiveX().set(-clamped);
 
@@ -273,7 +273,7 @@ export default function BottomNav() {
                 }
             } else {
                 // No secondary row, snap back
-                 controls.start({ y: 0 });
+                controls.start({ y: 0 });
             }
         } else {
             // Reset if undefined gesture
