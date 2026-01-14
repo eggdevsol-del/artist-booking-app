@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Calendar, Image, LayoutDashboard, MessageCircle, Settings, Wallet } from "lucide-react";
@@ -5,8 +6,10 @@ import { Link, useLocation } from "wouter";
 import { useTotalUnreadCount } from "@/lib/selectors/conversation.selectors";
 import { BottomNavRow } from "./BottomNavRow";
 import { useBottomNav } from "@/contexts/BottomNavContext";
-import { motion, PanInfo } from "framer-motion";
-import { useState } from "react";
+import { motion, useAnimation, useMotionValue } from "framer-motion";
+import { useEffect, useRef } from "react";
+
+const ROW_HEIGHT = 68; // px
 
 export default function BottomNav() {
     const [location] = useLocation();
@@ -28,44 +31,127 @@ export default function BottomNav() {
     ];
 
     const { rowIndex, isContextualVisible, setContextualVisible, contextualRow } = useBottomNav();
-    const [dragY, setDragY] = useState(0);
 
-    const handleDragEnd = (event: any, info: PanInfo) => {
-        const threshold = 50; // Drag threshold to trigger switch
-        if (info.offset.y < -threshold && rowIndex === 0 && contextualRow) {
-            // Swipe UP
-            setContextualVisible(true);
-        } else if (info.offset.y > threshold && rowIndex === 1) {
-            // Swipe DOWN
-            setContextualVisible(false);
+    // Gesture State
+    const controls = useAnimation();
+    const y = useMotionValue(0);
+    const mainRowRef = useRef<HTMLDivElement>(null);
+    const axisLocked = useRef<'x' | 'y' | null>(null);
+
+    // Sync animation with state changes
+    useEffect(() => {
+        controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 });
+    }, [isContextualVisible, controls]);
+
+    const handlePanStart = () => {
+        axisLocked.current = null;
+    };
+
+    const handlePan = (event: any, info: any) => {
+        const { offset, delta } = info;
+        const absX = Math.abs(offset.x);
+        const absY = Math.abs(offset.y);
+
+        // Axis Locking Logic
+        if (!axisLocked.current) {
+            if (absX > 10 || absY > 10) { // Threshold ~10-12px
+                if (absY > absX * 1.15) {
+                    axisLocked.current = 'y';
+                    // If locking vertical, verify we have context to swipe to
+                    if (!contextualRow && !isContextualVisible) {
+                        axisLocked.current = 'x'; // Force X if no vertical action possible
+                    }
+                } else if (absX > absY * 1.15) {
+                    axisLocked.current = 'x';
+                }
+            }
+        }
+
+        if (axisLocked.current === 'y' && contextualRow) {
+            // Manual Vertical Translation
+            // Base Y is 0 (Row 0) or -ROW_HEIGHT (Row 1)
+            // dragging UP (negative delta) from 0 -> goes to -ROW_HEIGHT
+            // dragging DOWN (positive delta) from -ROW_HEIGHT -> goes to 0
+
+            const currentBase = isContextualVisible ? -ROW_HEIGHT : 0;
+            let newY = currentBase + offset.y;
+
+            // Clamp
+            // Min: -ROW_HEIGHT (Full Context Visible)
+            // Max: 0 (Main Nav Visible)
+            // Add some elasticity if desired, but strict clamping prevents 'flying'
+            if (newY > 0) newY = newY * 0.2; // Elastic pull down
+            if (newY < -ROW_HEIGHT) newY = -ROW_HEIGHT + (newY + ROW_HEIGHT) * 0.2; // Elastic pull up
+
+            y.set(newY);
+
+        } else if (axisLocked.current === 'x' || !axisLocked.current) {
+            // Horizontal Scroll - Manual Handling since touch-action: none matches
+            if (mainRowRef.current) {
+                mainRowRef.current.scrollLeft -= delta.x;
+            }
         }
     };
 
-    return (
-        <nav className="fixed bottom-6 inset-x-6 z-50 floating-nav rounded-[2.5rem] bg-none pb-0 overflow-hidden h-[68px]">
-            {/* Background blur/color is typically on the nav itself or the row. 
-                Existing Button styling suggests the nav container has background. 
-                Checking original code: 'floating-nav' likely handles bg. 
-                Original: <nav className="... floating-nav ...">
-             */}
+    const handlePanEnd = (event: any, info: any) => {
+        if (axisLocked.current === 'y' && contextualRow) {
+            const { offset, velocity } = info;
+            const currentY = y.get(); // This drives the animation frame, but we need decision logic
 
+            const isRow0 = !isContextualVisible;
+            const threshold = ROW_HEIGHT * 0.25;
+
+            let targetRow = isContextualVisible ? 1 : 0;
+
+            // Flip Logic
+            if (isRow0) {
+                // Trying to go to Row 1 (Swipe Up)
+                // offset.y is negative
+                if (offset.y < -threshold || velocity.y < -200) {
+                    targetRow = 1;
+                }
+            } else {
+                // Trying to go to Row 0 (Swipe Down)
+                // offset.y is positive
+                if (offset.y > threshold || velocity.y > 200) {
+                    targetRow = 0;
+                }
+            }
+
+            // Commit
+            if (targetRow === 1) {
+                setContextualVisible(true);
+                controls.start({ y: -ROW_HEIGHT });
+            } else {
+                setContextualVisible(false);
+                controls.start({ y: 0 });
+            }
+        } else {
+            // Reset if needed (e.g. if we started dragging but didn't lock Y)
+            controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 });
+        }
+
+        axisLocked.current = null;
+    };
+
+    return (
+        <nav
+            className="fixed bottom-6 inset-x-6 z-50 floating-nav rounded-[2.5rem] bg-none pb-0 overflow-hidden h-[68px]"
+            // touch-action: none allows both x and y to be captured by JS
+            style={{ touchAction: "none" }}
+        >
             <motion.div
-                className="flex flex-col h-full relative"
-                animate={{ y: rowIndex === 0 ? "0%" : "-100%" }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                drag="y"
-                dragConstraints={{ top: rowIndex === 1 ? 0 : 0, bottom: rowIndex === 0 ? 0 : 0 }} // Lock drag unless we want visual feedback
-                dragElastic={0.2} // Allow some stretch
-                onDragEnd={handleDragEnd}
-                // Lock horizontal drag to allow scrolling inside the row
-                dragDirectionLock
-                // Only allow drag if we have a contextual row or are already showing it
-                dragListener={!!contextualRow}
-                style={{ touchAction: "pan-x" }}
+                className="flex flex-col h-auto relative" // Auto height to fit children
+                animate={controls}
+                style={{ y }} // Bind MotionValue
+                transition={{ type: "spring", stiffness: 400, damping: 40 }}
+                onPanStart={handlePanStart}
+                onPan={handlePan}
+                onPanEnd={handlePanEnd}
             >
                 {/* Row 0: Main Nav */}
-                <div className="h-full shrink-0">
-                    <BottomNavRow>
+                <div className="h-[68px] shrink-0">
+                    <BottomNavRow ref={mainRowRef}>
                         {navItems.map((item) => {
                             const active = isActive(item.path);
                             return (
@@ -101,7 +187,7 @@ export default function BottomNav() {
 
                 {/* Row 1: Contextual Row (if exists) */}
                 {contextualRow && (
-                    <div className="h-full shrink-0">
+                    <div className="h-[68px] shrink-0">
                         {contextualRow}
                     </div>
                 )}
