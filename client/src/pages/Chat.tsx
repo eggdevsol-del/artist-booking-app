@@ -1,24 +1,19 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useChatController } from "@/features/chat/useChatController";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { trpc } from "@/lib/trpc";
-import { ArrowLeft, Calendar as CalendarIcon, Send, User, Phone, Mail, Cake, CreditCard, ImagePlus, ChevronRight, Check, Loader2, Pin, PinOff } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { useLocation, useParams } from "wouter";
-import { toast } from "sonner";
-import { format } from "date-fns";
-import { BookingWizard } from "@/features/booking/BookingWizard";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { ProjectProposalMessage } from "@/components/chat/ProjectProposalMessage";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ChevronUp, Zap } from "lucide-react";
-import { useChatController } from "@/features/chat/useChatController";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { BookingWizard } from "@/features/booking/BookingWizard";
+import { ProjectProposalMessage } from "@/components/chat/ProjectProposalMessage";
+import { ArrowLeft, Calendar as CalendarIcon, Send, User, Phone, Mail, Cake, ImagePlus, ChevronUp, Check, Pin, PinOff, Zap } from "lucide-react";
+import { useLocation, useParams } from "wouter";
+import { format } from "date-fns";
+import { useEffect, useRef } from "react";
+import { toast } from "sonner";
 
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
@@ -33,66 +28,56 @@ export default function Chat() {
     messages,
     messagesLoading,
     quickActions,
-    artistSettings,
     availableServices,
 
+    // State
     messageText, setMessageText,
     showClientInfo, setShowClientInfo,
     showBookingCalendar, setShowBookingCalendar,
-    selectedDates, setSelectedDates,
-    currentMonth, setCurrentMonth,
     showProjectWizard, setShowProjectWizard,
-    wizardStep, setWizardStep,
-    selectedService, setSelectedService,
-    projectFrequency, setProjectFrequency,
     projectStartDate, setProjectStartDate,
-    showClientConfirmDialog, setShowClientConfirmDialog,
-    clientConfirmDates, setClientConfirmDates,
-    clientConfirmMetadata, setClientConfirmMetadata,
-    clientConfirmMessageId, setClientConfirmMessageId,
-    scrollRef, bottomRef,
 
+    // Derived
     isArtist,
-    otherUserId,
     otherUserName,
+    consultationData,
+    calendarDays,
 
+    // Handlers
+    handleSendMessage,
+    handleImageUpload,
+    handleQuickAction,
+    handleClientConfirmDates,
+    handleClientAcceptProposal,
+    handleArtistBookProject,
+    nextMonth,
+    prevMonth,
+
+    // Mutations used for loading states
     sendMessageMutation,
     pinConsultationMutation,
     bookProjectMutation,
-    updateMetadataMutation
+    uploadingImage,
+
+    // Refs
+    scrollRef,
+    bottomRef,
+    hasScrolledRef,
+
+    // Client Confirm State
+    showClientConfirmDialog, setShowClientConfirmDialog,
+    clientConfirmDates, setClientConfirmDates,
+
   } = useChatController(conversationId);
 
-  // Local UI State
-  const [uploadingImage, setUploadingImage] = useState(false);
+  // Local UI Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
-  const hasScrolledRef = useRef(false);
-  const searchParams = new URLSearchParams(window.location.search);
-  const consultationId = searchParams.get('consultationId');
 
-  // Load target consultation logic is handled mostly by the view rendering or hook data.
-  // We might want `targetConsultationId` calculated here if used in view.
-  // View uses `consultationData`. Hook doesn't return `consultationData`.
-  // Hook returns `conversation`. `conversation` has `pinnedConsultationId`.
-  // View fetches `consultations.list`.
-  // Wait, hook DOES NOT return `consultationList`.
-  // I missed `consultations.list` logic in the hook!
-  // It was in lines 75-77 of original file.
-  // I need to add it to the Hook or keep it in View.
-  // Keep in View for now to avoid breaking. Or use TRPC hook here.
-
-  const { data: consultationList } = trpc.consultations.list.useQuery(undefined, {
-    enabled: !!user,
-  });
-  const targetConsultationId = consultationId ? parseInt(consultationId) : conversation?.pinnedConsultationId;
-  const consultationData = consultationList?.find(c => c.id === targetConsultationId);
-
-  // Logic Helpers
-
+  // Scrolling Logic
   const scrollToBottom = () => {
-    setTimeout(() => {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 200);
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   useEffect(() => {
@@ -100,313 +85,14 @@ export default function Chat() {
       scrollToBottom();
       hasScrolledRef.current = true;
     }
-  }, [messages]);
+  }, [messages, hasScrolledRef]);
 
-  // Image Upload Mutation (View Specific)
-  const uploadImageMutation = trpc.upload.uploadImage.useMutation({
-    onSuccess: (data) => {
-      sendMessageMutation.mutate({
-        conversationId,
-        content: data.url,
-        messageType: "image",
-      });
-      setUploadingImage(false);
-    },
-    onError: (error: any) => {
-      toast.error("Failed to upload image: " + error.message);
-      setUploadingImage(false);
-    },
-  });
-
-  const handleSendMessage = () => {
-    if (!messageText.trim()) return;
-    sendMessageMutation.mutate({
-      conversationId,
-      content: messageText,
-      messageType: "text",
-      consultationId: consultationId ? parseInt(consultationId) : undefined,
-    });
-  };
-
+  // Key press handler local (calls hook handler)
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
-  };
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Image size must be less than 10MB");
-      return;
-    }
-    setUploadingImage(true);
-    toast.info("Uploading image...");
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64Data = e.target?.result as string;
-      uploadImageMutation.mutate({
-        fileName: file.name,
-        fileData: base64Data,
-        contentType: file.type,
-      });
-    };
-    reader.onerror = () => {
-      toast.error("Failed to read image file");
-      setUploadingImage(false);
-    };
-    reader.readAsDataURL(file);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const handleQuickAction = (action: any) => {
-    if (action.actionType === "send_text") {
-      sendMessageMutation.mutate({
-        conversationId,
-        content: action.content,
-        messageType: "text",
-      });
-    }
-  };
-
-  // Availability Logic (needs projectAvailability from hook? No, hook doesn't have it!)
-  // I missed `findProjectAvailability` query in the hook!
-  // It was lines 113-134.
-  // I need to add it to the Hook or keep it here.
-  // Ideally in the hook.
-  // I will add it to the Hook in a NEXT STEP.
-  // For now I will re-implement it here to not break.
-  // BUT I moved `selectedService` etc to the Hook.
-
-  // Re-implementing query here using hook state:
-  const {
-    data: projectAvailability,
-    isLoading: loadingAvailability,
-    error: availabilityError
-  } = trpc.appointments.findProjectAvailability.useQuery(
-    {
-      conversationId,
-      serviceName: selectedService?.name || '',
-      serviceDuration: selectedService?.duration || 60,
-      sittings: selectedService?.sittings || 1,
-      frequency: projectFrequency,
-      startDate: new Date(),
-      price: selectedService?.price ? Number(selectedService.price) : 0,
-    },
-    {
-      enabled: !!selectedService && wizardStep === 'review',
-      retry: false
-    }
-  );
-
-  const handleSendProjectDates = () => {
-    if (!projectAvailability?.dates || !selectedService) return;
-
-    const datesList = projectAvailability.dates
-      .map((date: any) => format(new Date(date), 'EEEE, MMMM do yyyy, h:mm a'))
-      .join('\n');
-
-    const message = `I have found the following dates for your ${selectedService.name} project:\n\n${datesList}\n\nThis project consists of ${selectedService.sittings || 1} sittings.\nFrequency: ${projectFrequency}\nPrice per sitting: $${selectedService.price}\n\nPlease confirm these dates.`;
-
-    const metadata = JSON.stringify({
-      type: "project_proposal",
-      serviceName: selectedService.name,
-      serviceDuration: selectedService.duration,
-      sittings: selectedService.sittings || 1,
-      price: selectedService.price,
-      frequency: projectFrequency,
-      proposedDates: projectAvailability.dates,
-      depositAmount: artistSettings?.depositAmount || 0,
-      bsb: artistSettings?.bsb || '',
-      accountNumber: artistSettings?.accountNumber || '',
-    });
-
-    sendMessageMutation.mutate({
-      conversationId,
-      content: message,
-      messageType: "appointment_request",
-      metadata,
-    });
-
-    setShowProjectWizard(false);
-    // resetWizard logic embedded
-    setWizardStep('service');
-    setSelectedService(null);
-    setProjectFrequency('consecutive');
-    setProjectStartDate(null);
-    toast.success("Project proposal sent!");
-  };
-
-  const handleClientConfirmDates = async () => {
-    if (!clientConfirmMessageId || !clientConfirmMetadata) return;
-
-    const selectedDateStrings = clientConfirmDates
-      .filter(d => d.selected)
-      .map(d => d.date);
-
-    if (selectedDateStrings.length === 0) {
-      toast.error("Please select at least one date");
-      return;
-    }
-
-    const message = `I confirm the following dates:\n\n${selectedDateStrings.map(d => format(new Date(d), 'PPP p')).join('\n')}`;
-
-    const metadata = JSON.stringify({
-      type: "project_client_confirmation",
-      confirmedDates: selectedDateStrings,
-      originalMessageId: clientConfirmMessageId,
-      serviceName: clientConfirmMetadata.serviceName,
-      price: clientConfirmMetadata.price
-    });
-
-    sendMessageMutation.mutate({
-      conversationId,
-      content: message,
-      messageType: "text",
-      metadata
-    });
-
-    setShowClientConfirmDialog(false);
-    toast.success("Dates confirmed!");
-  };
-
-  const handleClientAcceptProposal = (message: any, metadata: any) => {
-    if (!metadata.proposedDates && !metadata.dates) return;
-    const bookingDates = metadata.dates || metadata.proposedDates || [];
-
-    if (!Array.isArray(bookingDates) || bookingDates.length === 0) {
-      toast.error("No dates found in proposal");
-      return;
-    }
-
-    const appointments = bookingDates.map((dateStr: string) => {
-      const startTime = new Date(dateStr);
-      const duration = metadata.serviceDuration || 60;
-
-      return {
-        startTime,
-        endTime: new Date(startTime.getTime() + duration * 60 * 1000),
-        title: metadata.serviceName,
-        description: "Project Booking (Client Accepted)",
-        serviceName: metadata.serviceName,
-        price: metadata.price || 0,
-        depositAmount: 0
-      };
-    });
-
-    bookProjectMutation.mutate({
-      conversationId,
-      appointments
-    }, {
-      onSuccess: () => {
-        const newMetadata = JSON.stringify({
-          ...metadata,
-          status: 'accepted'
-        });
-
-        updateMetadataMutation.mutate({
-          messageId: message.id,
-          metadata: newMetadata
-        });
-
-        sendMessageMutation.mutate({
-          conversationId,
-          content: `I accept the project proposal for ${metadata.serviceName}.`,
-          messageType: "text"
-        }, {
-          // Auto-deposit logic stub
-          onSuccess: () => { }
-        });
-      }
-    });
-  };
-
-  const handleArtistBookProject = (metadata: any) => {
-    if (!metadata.confirmedDates || !metadata.serviceName) return;
-
-    const appointments = metadata.confirmedDates.map((dateStr: string) => {
-      const startTime = new Date(dateStr);
-      // Assuming duration from metadata or default 60 (should ideally pass duration in metadata)
-      // For now, let's look up service or default
-      // Wait, we have serviceName. We don't have duration in client confirmation metadata explicitly unless we pass it.
-      // Let's assume 3 hours or fetch service?
-      // Better: pass duration in metadata chain.
-      // I will update handleClientConfirmDates to include duration if possible, but I missed it.
-      // Let's use a safe default or try to find service.
-
-      return {
-        startTime,
-        endTime: new Date(startTime.getTime() + 60 * 60 * 1000), // Default 1 hr if missing
-        title: metadata.serviceName,
-        description: "Project Booking",
-        serviceName: metadata.serviceName,
-        price: metadata.price,
-        depositAmount: 0 // We handle deposits separately or via global settings
-      };
-    });
-
-    bookProjectMutation.mutate({
-      conversationId,
-      appointments
-    });
-  }
-
-  const resetWizard = () => {
-    setWizardStep('service');
-    setSelectedService(null);
-    setProjectFrequency('consecutive');
-    setProjectStartDate(null);
-  };
-
-  const renderCalendar = () => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-
-    const days = [];
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push(<div key={`empty-${i}`} className="h-12" />);
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      const isSelected = projectStartDate?.toDateString() === date.toDateString();
-      const isToday = date.toDateString() === new Date().toDateString();
-
-      days.push(
-        <button
-          key={day}
-          onClick={() => setProjectStartDate(date)}
-          className={`h-12 rounded-lg flex items-center justify-center text-sm font-medium transition-colors ${isSelected
-            ? "bg-primary text-primary-foreground"
-            : isToday
-              ? "bg-accent text-accent-foreground border-2 border-primary"
-              : "hover:bg-accent"
-            }`}
-        >
-          {day}
-        </button>
-      );
-    }
-
-    return days;
-  };
-
-  const nextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
-  };
-
-  const prevMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
   };
 
   if (authLoading || convLoading || messagesLoading) {
@@ -433,7 +119,7 @@ export default function Chat() {
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden selection:bg-primary/20">
 
-      {/* Fixed Header & Consultation Pin - Z-Index High to stay on top */}
+      {/* Fixed Header & Consultation Pin */}
       <div className="flex-none z-50 bg-background/80 backdrop-blur-xl border-b border-white/5 shadow-sm supports-[backdrop-filter]:bg-background/60">
         <header className="mobile-header px-4 py-3">
           <div className="flex items-center gap-3">
@@ -524,7 +210,6 @@ export default function Chat() {
                 const isOwn = message.senderId === user?.id;
                 const isImage = message.messageType === "image";
 
-                // Determine message subtype based on metadata
                 let metadata: any = null;
                 try {
                   metadata = message.metadata ? JSON.parse(message.metadata) : null;
@@ -544,17 +229,9 @@ export default function Chat() {
                         <ProjectProposalMessage
                           metadata={metadata}
                           isArtist={isArtist}
-                          isPendingAction={bookProjectMutation.isPending} // Using bookProject for accept
-                          onAccept={() => {
-                            // We need to trigger the confirmation.
-                            // Since the proposal ALREADY has the dates in metadata, we can just call handleArtistBookProject?
-                            // Wait, handleArtistBookProject was for ARTIST to confirm CLIENT'S selection.
-                            // Here CLIENT is accepting ARTIST'S proposal.
-                            // We need a NEW handler: handleClientAcceptProposal
-                            handleClientAcceptProposal(message, metadata);
-                          }}
+                          isPendingAction={bookProjectMutation.isPending}
+                          onAccept={() => handleClientAcceptProposal(message, metadata)}
                           onReject={() => {
-                            // Handle rejection (maybe just a message for now)
                             sendMessageMutation.mutate({
                               conversationId,
                               content: "I'm sorry, those dates don't work for me.",
@@ -590,7 +267,6 @@ export default function Chat() {
                           })}
                         </p>
 
-                        {/* Artist View: Confirm Booking Action (Legacy/Other flow) */}
                         {isArtist && isClientConfirmation && (
                           <Button
                             className="mt-2 w-full bg-background/20 hover:bg-background/30 text-inherit border-none"
@@ -616,8 +292,6 @@ export default function Chat() {
         </ScrollArea>
       </div>
 
-      {/* Fixed Bottom Input Area - Lifted above Bottom Nav */}
-      {/* Input Area & Quick Actions Drawer */}
       {/* Floating Bottom Input & Actions */}
       <div className="fixed bottom-[110px] left-4 right-4 z-[60]">
         <div className="relative">
@@ -648,7 +322,7 @@ export default function Chat() {
                         </div>
                         <span className="text-xs font-medium">Book Now</span>
                       </Button>
-                      <Button variant="outline" className="h-24 flex-col gap-3 rounded-2xl border-dashed border-primary/20 hover:border-primary hover:bg-primary/5 transition-all group" onClick={() => { setShowProjectWizard(true); setWizardStep('service'); }}>
+                      <Button variant="outline" className="h-24 flex-col gap-3 rounded-2xl border-dashed border-primary/20 hover:border-primary hover:bg-primary/5 transition-all group" onClick={() => { setShowProjectWizard(true); }}>
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center relative group-hover:scale-110 transition-transform">
                           <CalendarIcon className="w-5 h-5 text-primary" />
                           <span className="absolute -top-1 -right-1 text-[8px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-bold shadow-sm">PRO</span>
@@ -698,7 +372,7 @@ export default function Chat() {
             <Input
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+              onKeyUp={handleKeyPress}
               placeholder="Type a message..."
               className="flex-1 bg-transparent border-0 focus-visible:ring-0 px-2 h-10 placeholder:text-muted-foreground/50"
               disabled={uploadingImage}
@@ -710,17 +384,63 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Book Project Wizard */}
-      < BookingWizard
+      <BookingWizard
         isOpen={showProjectWizard}
         onClose={() => setShowProjectWizard(false)}
         conversationId={conversationId}
         artistServices={availableServices}
         onBookingSuccess={() => {
           setShowProjectWizard(false);
-          // Optional: trigger a refresh or toast
         }}
       />
+
+      {/* Book Now Calendar Dialog */}
+      <Dialog open={showBookingCalendar} onOpenChange={setShowBookingCalendar}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Date</DialogTitle>
+          </DialogHeader>
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <Button variant="ghost" onClick={prevMonth}>&lt;</Button>
+              <span className="font-semibold">{format(new Date(calendarDays.find(d => d.type === 'day')?.date || new Date()), 'MMMM yyyy')}</span>
+              <Button variant="ghost" onClick={nextMonth}>&gt;</Button>
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
+                <div key={d} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground">{d}</div>
+              ))}
+              {calendarDays.map((item, i) => (
+                <div key={item.key || i}>
+                  {item.type === 'empty' || !item.date ? (
+                    <div className="h-10" />
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      className={`h-10 w-full p-0 font-normal ${projectStartDate?.toDateString() === item.date.toDateString()
+                          ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+                          : "hover:bg-accent"
+                        } ${item.date.toDateString() === new Date().toDateString()
+                          ? "border border-primary text-primary"
+                          : ""
+                        }`}
+                      onClick={() => {
+                        if (item.date) {
+                          setProjectStartDate(item.date);
+                          toast.info("Date selected: " + format(item.date, 'PPP'));
+                        }
+                      }}
+                    >
+                      {item.day}
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Client Confirm Dialog */}
       <Dialog open={showClientConfirmDialog} onOpenChange={setShowClientConfirmDialog}>
@@ -760,14 +480,12 @@ export default function Chat() {
             <DialogTitle>Client Information</DialogTitle>
             <DialogDescription>Contact details and shared media</DialogDescription>
           </DialogHeader>
-
           <Tabs defaultValue="info" className="flex-1 overflow-hidden flex flex-col">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="info">Info</TabsTrigger>
               <TabsTrigger value="media">Media</TabsTrigger>
               <TabsTrigger value="content">Content</TabsTrigger>
             </TabsList>
-
             <ScrollArea className="flex-1 mt-2">
               <TabsContent value="info" className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -802,79 +520,17 @@ export default function Chat() {
                     </p>
                   </div>
                 </div>
-                {conversation?.otherUser?.bio && (
-                  <div className="pt-2">
-                    <p className="text-sm font-medium mb-1">Bio</p>
-                    <p className="text-sm text-muted-foreground bg-muted p-2 rounded-md">
-                      {conversation.otherUser.bio}
-                    </p>
-                  </div>
-                )}
               </TabsContent>
-
-              <TabsContent value="media">
-                {/* Media sent by the Client */}
-                <div className="grid grid-cols-3 gap-2">
-                  {messages?.filter(m => m.senderId === otherUserId && (m.messageType === 'image' || m.messageType === 'video') && !failedImages.has(m.id)).map(m => (
-                    <div key={m.id} className="aspect-square rounded-md overflow-hidden bg-muted relative group">
-                      {m.messageType === 'image' ? (
-                        <img
-                          src={m.content}
-                          alt="Client media"
-                          className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                          onError={() => setFailedImages(prev => new Set(prev).add(m.id))}
-                          onClick={() => {
-                            setShowClientInfo(false); // Close dialog
-                            const el = document.getElementById(`message-${m.id}`);
-                            if (el) {
-                              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }
-                          }}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs">Video</div>
-                      )}
-                    </div>
-                  ))}
-                  {(!messages || messages.filter(m => m.senderId === otherUserId && (m.messageType === 'image' || m.messageType === 'video')).length === 0) && (
-                    <p className="col-span-3 text-center text-sm text-muted-foreground py-8">No media shared</p>
-                  )}
-                </div>
+              <TabsContent value="media" className="p-1">
+                <p className="text-sm text-muted-foreground text-center py-8">No shared media</p>
               </TabsContent>
-
-              <TabsContent value="content">
-                {/* Content sent by the Artist (Me) */}
-                <div className="grid grid-cols-3 gap-2">
-                  {messages?.filter(m => m.senderId === user?.id && (m.messageType === 'image' || m.messageType === 'video') && !failedImages.has(m.id)).map(m => (
-                    <div key={m.id} className="aspect-square rounded-md overflow-hidden bg-muted relative">
-                      {m.messageType === 'image' ? (
-                        <img
-                          src={m.content}
-                          alt="Artist content"
-                          className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                          onError={() => setFailedImages(prev => new Set(prev).add(m.id))}
-                          onClick={() => {
-                            setShowClientInfo(false); // Close dialog
-                            const el = document.getElementById(`message-${m.id}`);
-                            if (el) {
-                              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            }
-                          }}
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-xs">Video</div>
-                      )}
-                    </div>
-                  ))}
-                  {(!messages || messages.filter(m => m.senderId === user?.id && (m.messageType === 'image' || m.messageType === 'video')).length === 0) && (
-                    <p className="col-span-3 text-center text-sm text-muted-foreground py-8">No content sent</p>
-                  )}
-                </div>
+              <TabsContent value="content" className="p-1">
+                <p className="text-sm text-muted-foreground text-center py-8">No shared content</p>
               </TabsContent>
             </ScrollArea>
           </Tabs>
         </DialogContent>
       </Dialog>
-    </div >
+    </div>
   );
 }
