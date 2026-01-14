@@ -26,6 +26,8 @@ export function ClientProfileSheet({ isOpen, onClose, client }: ClientProfileShe
             title="Client Profile"
             side="right"
             className="w-[400px] sm:w-[540px] border-l border-white/10"
+            overlayName="Client Profile"
+            overlayId="chat.client_profile"
         >
             <div className="flex items-center gap-4 mb-6 px-1">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center overflow-hidden ring-4 ring-background/50 shadow-xl">

@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ModalShell } from "@/components/ui/overlays/modal-shell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
@@ -244,87 +244,87 @@ export default function Clients() {
       </main>
 
       {/* Add Client Dialog */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add New Client</DialogTitle>
-            <DialogDescription>
-              Create a new client profile and start a conversation
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder="John Doe"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                placeholder="john@example.com"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-                placeholder="+1 (555) 123-4567"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                onClick={handleAddClient}
-                disabled={createConversationMutation.isPending}
-                className="flex-1"
-              >
-                {createConversationMutation.isPending ? "Adding..." : "Add Client"}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowAddDialog(false);
-                  resetForm();
-                }}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-            </div>
+      <ModalShell
+        isOpen={showAddDialog}
+        onClose={() => setShowAddDialog(false)}
+        title="Add New Client"
+        description="Create a new client profile and start a conversation"
+        className="max-w-md"
+        overlayName="Add Client"
+        overlayId="clients.add_client"
+        footer={
+          <div className="flex w-full gap-2">
+            <Button
+              onClick={handleAddClient}
+              disabled={createConversationMutation.isPending}
+              className="flex-1"
+            >
+              {createConversationMutation.isPending ? "Adding..." : "Add Client"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAddDialog(false);
+                resetForm();
+              }}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        }
+      >
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              placeholder="John Doe"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email *</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+              placeholder="john@example.com"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number</Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={(e) =>
+                setFormData({ ...formData, phone: e.target.value })
+              }
+              placeholder="+1 (555) 123-4567"
+            />
+          </div>
+        </div>
+      </ModalShell>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={!!clientToDelete} onOpenChange={(open) => !open && setClientToDelete(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Bookings</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete all of this client's bookings? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end gap-3 mt-4">
+      <ModalShell
+        isOpen={!!clientToDelete}
+        onClose={() => setClientToDelete(null)}
+        title="Delete Bookings"
+        description="Are you sure you want to delete all of this client's bookings? This action cannot be undone."
+        overlayName="Delete Bookings"
+        overlayId="clients.delete_bookings"
+        footer={
+          <div className="flex w-full justify-end gap-3">
             <Button variant="outline" onClick={() => setClientToDelete(null)}>No</Button>
             <Button
               variant="destructive"
@@ -334,8 +334,10 @@ export default function Clients() {
               {deleteBookingsMutation.isPending ? "Deleting..." : "Yes, Delete All"}
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        }
+      >
+        <div />
+      </ModalShell>
     </div>
   );
 }

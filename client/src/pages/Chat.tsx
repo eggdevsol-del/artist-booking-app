@@ -304,6 +304,8 @@ export default function Chat() {
               title="Quick Actions"
               side="bottom"
               className="max-h-[85vh]"
+              overlayName="Quick Actions"
+              overlayId="chat.quick_actions"
             >
               <div className="p-6 grid gap-6">
                 {/* Booking Tools */}
@@ -398,6 +400,8 @@ export default function Chat() {
         onBookingSuccess={() => {
           setShowProjectWizard(false);
         }}
+        overlayName="Booking Wizard"
+        overlayId="chat.booking_wizard"
       />
 
       {/* Book Now Calendar Dialog */}
@@ -406,6 +410,8 @@ export default function Chat() {
         onClose={() => setShowBookingCalendar(false)}
         title="Select Date"
         className="max-w-md"
+        overlayName="Book Now"
+        overlayId="chat.book_now"
       >
         <div className="p-4">
           <div className="flex items-center justify-between mb-4">
@@ -456,6 +462,8 @@ export default function Chat() {
         description="Please review and select the dates you can attend."
         footer={<Button onClick={handleClientConfirmDates}>Confirm Dates</Button>}
         className="max-w-md"
+        overlayName="Client Confirm"
+        overlayId="chat.client_confirm"
       >
         <div className="space-y-2 py-4">
           {clientConfirmDates.map((item, idx) => (

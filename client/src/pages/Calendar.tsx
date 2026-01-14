@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ModalShell } from "@/components/ui/overlays/modal-shell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -445,217 +445,222 @@ export default function Calendar() {
       </main>
 
       {/* Appointment Creation Dialog */}
-      <Dialog open={showAppointmentDialog} onOpenChange={setShowAppointmentDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create Appointment</DialogTitle>
-            <DialogDescription>
-              {selectedDate?.toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </DialogDescription>
-          </DialogHeader>
+      <ModalShell
+        isOpen={showAppointmentDialog}
+        onClose={() => setShowAppointmentDialog(false)}
+        title="Create Appointment"
+        description={selectedDate?.toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })}
+        className="max-w-md"
+        overlayName="Create Appointment"
+        overlayId="calendar.create_appointment"
+        footer={
+          <div className="flex w-full gap-2">
+            <Button
+              onClick={handleCreateAppointment}
+              disabled={createAppointmentMutation.isPending}
+              className="flex-1"
+            >
+              {createAppointmentMutation.isPending ? "Creating..." : "Create Appointment"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAppointmentDialog(false);
+                resetForm();
+              }}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="client">Client *</Label>
+            <Select
+              value={appointmentForm.clientId}
+              onValueChange={(value) =>
+                setAppointmentForm({ ...appointmentForm, clientId: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a client" />
+              </SelectTrigger>
+              <SelectContent>
+                {clients?.map((client: any) => (
+                  <SelectItem key={client.id} value={client.id}>
+                    {client.name || client.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="client">Client *</Label>
-              <Select
-                value={appointmentForm.clientId}
-                onValueChange={(value) =>
-                  setAppointmentForm({ ...appointmentForm, clientId: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients?.map((client: any) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name || client.email}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="title">Title *</Label>
+            <Input
+              id="title"
+              value={appointmentForm.title}
+              onChange={(e) =>
+                setAppointmentForm({ ...appointmentForm, title: e.target.value })
+              }
+              placeholder="e.g., Tattoo Session"
+            />
+          </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={appointmentForm.description}
+              onChange={(e) =>
+                setAppointmentForm({
+                  ...appointmentForm,
+                  description: e.target.value,
+                })
+              }
+              placeholder="Additional details..."
+              rows={3}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
+              <Label htmlFor="startTime">Start Time *</Label>
               <Input
-                id="title"
-                value={appointmentForm.title}
-                onChange={(e) =>
-                  setAppointmentForm({ ...appointmentForm, title: e.target.value })
-                }
-                placeholder="e.g., Tattoo Session"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={appointmentForm.description}
+                id="startTime"
+                type="datetime-local"
+                value={appointmentForm.startTime}
                 onChange={(e) =>
                   setAppointmentForm({
                     ...appointmentForm,
-                    description: e.target.value,
+                    startTime: e.target.value,
                   })
                 }
-                placeholder="Additional details..."
-                rows={3}
               />
             </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="startTime">Start Time *</Label>
-                <Input
-                  id="startTime"
-                  type="datetime-local"
-                  value={appointmentForm.startTime}
-                  onChange={(e) =>
-                    setAppointmentForm({
-                      ...appointmentForm,
-                      startTime: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="endTime">End Time *</Label>
-                <Input
-                  id="endTime"
-                  type="datetime-local"
-                  value={appointmentForm.endTime}
-                  onChange={(e) =>
-                    setAppointmentForm({
-                      ...appointmentForm,
-                      endTime: e.target.value,
-                    })
-                  }
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="endTime">End Time *</Label>
+              <Input
+                id="endTime"
+                type="datetime-local"
+                value={appointmentForm.endTime}
+                onChange={(e) =>
+                  setAppointmentForm({
+                    ...appointmentForm,
+                    endTime: e.target.value,
+                  })
+                }
+              />
             </div>
+          </div>
+        </div>
+      </ModalShell>
 
-            <div className="flex gap-2">
+      {/* Appointment Detail Dialog */}
+      <ModalShell
+        isOpen={showAppointmentDetailDialog}
+        onClose={() => setShowAppointmentDetailDialog(false)}
+        title="Appointment Details"
+        className="max-w-md"
+        overlayName="Appointment Details"
+        overlayId="calendar.appointment_details"
+        footer={
+          selectedAppointment ? (
+            <div className="flex w-full gap-2 border-t pt-4">
               <Button
-                onClick={handleCreateAppointment}
-                disabled={createAppointmentMutation.isPending}
+                variant="destructive"
+                onClick={() => {
+                  if (confirm('Are you sure you want to delete this appointment?')) {
+                    deleteAppointmentMutation.mutate(selectedAppointment.id);
+                  }
+                }}
+                disabled={deleteAppointmentMutation.isPending}
                 className="flex-1"
               >
-                {createAppointmentMutation.isPending ? "Creating..." : "Create Appointment"}
+                {deleteAppointmentMutation.isPending ? "Deleting..." : "Delete"}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => {
-                  setShowAppointmentDialog(false);
-                  resetForm();
+                  setShowAppointmentDetailDialog(false);
+                  setSelectedAppointment(null);
                 }}
                 className="flex-1"
               >
-                Cancel
+                Close
               </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Appointment Detail Dialog */}
-      <Dialog open={showAppointmentDetailDialog} onOpenChange={setShowAppointmentDetailDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Appointment Details</DialogTitle>
-          </DialogHeader>
-          {selectedAppointment && (
-            <div className="space-y-4">
-              <div>
-                <Label className="text-muted-foreground">Service</Label>
-                <p className="text-lg font-semibold">{selectedAppointment.serviceName || selectedAppointment.title}</p>
-              </div>
-
-              {selectedAppointment.clientName && (
-                <div>
-                  <Label className="text-muted-foreground">Client</Label>
-                  <p className="font-medium">{selectedAppointment.clientName}</p>
-                  {selectedAppointment.clientEmail && (
-                    <p className="text-sm text-muted-foreground">{selectedAppointment.clientEmail}</p>
-                  )}
-                </div>
-              )}
-
-              {selectedAppointment.description && (
-                <div>
-                  <Label className="text-muted-foreground">Description</Label>
-                  <p>{selectedAppointment.description}</p>
-                </div>
-              )}
-
-              <div>
-                <Label className="text-muted-foreground">Date & Time</Label>
-                <p className="font-medium">
-                  {new Date(selectedAppointment.startTime).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(selectedAppointment.startTime).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}{" "}
-                  -{" "}
-                  {new Date(selectedAppointment.endTime).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-              </div>
-
-              {selectedAppointment.price && (
-                <div>
-                  <Label className="text-muted-foreground">Price</Label>
-                  <p className="text-lg font-semibold text-primary">${selectedAppointment.price}</p>
-                </div>
-              )}
-
-              <div>
-                <Label className="text-muted-foreground">Status</Label>
-                <p className="capitalize">{selectedAppointment.status}</p>
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    if (confirm('Are you sure you want to delete this appointment?')) {
-                      deleteAppointmentMutation.mutate(selectedAppointment.id);
-                    }
-                  }}
-                  disabled={deleteAppointmentMutation.isPending}
-                  className="flex-1"
-                >
-                  {deleteAppointmentMutation.isPending ? "Deleting..." : "Delete"}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowAppointmentDetailDialog(false);
-                    setSelectedAppointment(null);
-                  }}
-                  className="flex-1"
-                >
-                  Close
-                </Button>
-              </div>
+          ) : null
+        }
+      >
+        {selectedAppointment && (
+          <div className="space-y-4 pt-1">
+            <div>
+              <Label className="text-muted-foreground">Service</Label>
+              <p className="text-lg font-semibold">{selectedAppointment.serviceName || selectedAppointment.title}</p>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+
+            {selectedAppointment.clientName && (
+              <div>
+                <Label className="text-muted-foreground">Client</Label>
+                <p className="font-medium">{selectedAppointment.clientName}</p>
+                {selectedAppointment.clientEmail && (
+                  <p className="text-sm text-muted-foreground">{selectedAppointment.clientEmail}</p>
+                )}
+              </div>
+            )}
+
+            {selectedAppointment.description && (
+              <div>
+                <Label className="text-muted-foreground">Description</Label>
+                <p>{selectedAppointment.description}</p>
+              </div>
+            )}
+
+            <div>
+              <Label className="text-muted-foreground">Date & Time</Label>
+              <p className="font-medium">
+                {new Date(selectedAppointment.startTime).toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {new Date(selectedAppointment.startTime).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}{" "}
+                -{" "}
+                {new Date(selectedAppointment.endTime).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            </div>
+
+            {selectedAppointment.price && (
+              <div>
+                <Label className="text-muted-foreground">Price</Label>
+                <p className="text-lg font-semibold text-primary">${selectedAppointment.price}</p>
+              </div>
+            )}
+
+            <div>
+              <Label className="text-muted-foreground">Status</Label>
+              <p className="capitalize">{selectedAppointment.status}</p>
+            </div>
+          </div>
+        )}
+      </ModalShell>
 
 
     </div>

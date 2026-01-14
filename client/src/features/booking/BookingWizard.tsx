@@ -21,9 +21,11 @@ interface BookingWizardProps {
     artistServices: any[]; // Ideally typed from router
     artistSettings?: any;
     onBookingSuccess: () => void;
+    overlayName?: string;
+    overlayId?: string;
 }
 
-export function BookingWizard({ isOpen, onClose, conversationId, artistServices, artistSettings, onBookingSuccess }: BookingWizardProps) {
+export function BookingWizard({ isOpen, onClose, conversationId, artistServices, artistSettings, onBookingSuccess, overlayName, overlayId }: BookingWizardProps) {
     const [step, setStep] = useState<WizardStep>('service');
     const [selectedService, setSelectedService] = useState<any>(null);
     const [frequency, setFrequency] = useState<"consecutive" | "weekly" | "biweekly" | "monthly">("consecutive");
@@ -335,6 +337,8 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                 const newStep = stepsConfigs[index]?.id as WizardStep;
                 if (newStep) setStep(newStep);
             }}
+            overlayName={overlayName}
+            overlayId={overlayId}
         />
     );
 

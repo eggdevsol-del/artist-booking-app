@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ModalShell } from "@/components/ui/overlays/modal-shell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -271,126 +271,124 @@ export default function NotificationsManagement() {
       </main>
 
       {/* Add/Edit Dialog */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingTemplate ? "Edit Template" : "New Template"}
-            </DialogTitle>
-            <DialogDescription>
-              Create automated notification messages for clients
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="type">Notification Type</Label>
-              <Select
-                value={formData.templateType}
-                onValueChange={(value: TemplateType) =>
-                  setFormData({ ...formData, templateType: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(templateTypeLabels).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                {templateTypeDescriptions[formData.templateType]}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                placeholder="Your Appointment is Confirmed"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="content">Message Content</Label>
-              <Textarea
-                id="content"
-                value={formData.content}
-                onChange={(e) =>
-                  setFormData({ ...formData, content: e.target.value })
-                }
-                placeholder="Hi {clientName}, your appointment on {date} at {time} is confirmed..."
-                rows={5}
-              />
-              <p className="text-xs text-muted-foreground">
-                Use placeholders: {"{clientName}"}, {"{date}"}, {"{time}"}
-              </p>
-            </div>
-
-            {(formData.templateType === "reminder" ||
-              formData.templateType === "follow_up" ||
-              formData.templateType === "preparation") && (
-                <div className="space-y-2">
-                  <Label htmlFor="timing">Send Timing</Label>
-                  <Input
-                    id="timing"
-                    value={formData.timing}
-                    onChange={(e) =>
-                      setFormData({ ...formData, timing: e.target.value })
-                    }
-                    placeholder="1 hour before / 24 hours after"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    E.g., "1 hour before", "24 hours after", "2 days before"
-                  </p>
-                </div>
-              )}
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="enabled">Enabled</Label>
-              <Switch
-                id="enabled"
-                checked={formData.enabled}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, enabled: checked })
-                }
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                onClick={handleSave}
-                disabled={createMutation.isPending || updateMutation.isPending}
-                className="flex-1"
-              >
-                {createMutation.isPending || updateMutation.isPending
-                  ? "Saving..."
-                  : editingTemplate
-                    ? "Update"
-                    : "Create"}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowDialog(false);
-                  resetForm();
-                }}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-            </div>
+      <ModalShell
+        isOpen={showDialog}
+        onClose={() => setShowDialog(false)}
+        title={editingTemplate ? "Edit Template" : "New Template"}
+        description="Create automated notification messages for clients"
+        className="max-w-md max-h-[90vh] overflow-y-auto"
+        overlayName="Notification Template"
+        overlayId="notifications.template_editor"
+        footer={
+          <div className="flex w-full gap-2">
+            <Button
+              onClick={handleSave}
+              disabled={createMutation.isPending || updateMutation.isPending}
+              className="flex-1"
+            >
+              {createMutation.isPending || updateMutation.isPending
+                ? "Saving..."
+                : editingTemplate
+                  ? "Update"
+                  : "Create"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDialog(false);
+                resetForm();
+              }}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        }
+      >
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="type">Notification Type</Label>
+            <Select
+              value={formData.templateType}
+              onValueChange={(value: TemplateType) =>
+                setFormData({ ...formData, templateType: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(templateTypeLabels).map(([key, label]) => (
+                  <SelectItem key={key} value={key}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {templateTypeDescriptions[formData.templateType]}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="title">Title</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
+              placeholder="Your Appointment is Confirmed"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="content">Message Content</Label>
+            <Textarea
+              id="content"
+              value={formData.content}
+              onChange={(e) =>
+                setFormData({ ...formData, content: e.target.value })
+              }
+              placeholder="Hi {clientName}, your appointment on {date} at {time} is confirmed..."
+              rows={5}
+            />
+            <p className="text-xs text-muted-foreground">
+              Use placeholders: {"{clientName}"}, {"{date}"}, {"{time}"}
+            </p>
+          </div>
+
+          {(formData.templateType === "reminder" ||
+            formData.templateType === "follow_up" ||
+            formData.templateType === "preparation") && (
+              <div className="space-y-2">
+                <Label htmlFor="timing">Send Timing</Label>
+                <Input
+                  id="timing"
+                  value={formData.timing}
+                  onChange={(e) =>
+                    setFormData({ ...formData, timing: e.target.value })
+                  }
+                  placeholder="1 hour before / 24 hours after"
+                />
+                <p className="text-xs text-muted-foreground">
+                  E.g., "1 hour before", "24 hours after", "2 days before"
+                </p>
+              </div>
+            )}
+
+          <div className="flex items-center justify-between">
+            <Label htmlFor="enabled">Enabled</Label>
+            <Switch
+              id="enabled"
+              checked={formData.enabled}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, enabled: checked })
+              }
+            />
+          </div>
+        </div>
+      </ModalShell>
     </div>
   );
 }

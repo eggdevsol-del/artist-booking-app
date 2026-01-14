@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ModalShell } from "@/components/ui/overlays/modal-shell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -104,72 +104,16 @@ export default function Consultations() {
       <header className="sticky top-0 z-10 border-b">
         <div className="flex items-center justify-between p-4">
           <h1 className="text-2xl font-bold">Consultations</h1>
-          <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                New Request
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Request Consultation</DialogTitle>
-                <DialogDescription>
-                  Select an artist and request a consultation appointment
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="artist">Select Artist *</Label>
-                  <Select value={selectedArtistId} onValueChange={setSelectedArtistId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose an artist" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {artists.map((artist) => (
-                        <SelectItem key={artist.id} value={artist.id}>
-                          {artist.name || artist.email}
-                          {artist.instagramUsername && ` (@${artist.instagramUsername})`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="subject">Subject *</Label>
-                  <Input
-                    id="subject"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    placeholder="e.g., Custom tattoo design"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description *</Label>
-                  <Textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe what you'd like to discuss..."
-                    rows={5}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="preferred-date">Preferred Date (Optional)</Label>
-                  <Input
-                    id="preferred-date"
-                    type="date"
-                    value={preferredDate}
-                    onChange={(e) => setPreferredDate(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-2">
+          <ModalShell
+            isOpen={showNewDialog}
+            onClose={() => setShowNewDialog(false)}
+            title="Request Consultation"
+            description="Select an artist and request a consultation appointment"
+            className="max-w-md"
+            overlayName="Request Consultation"
+            overlayId="consultations.new_request"
+            footer={
+              <div className="flex w-full gap-2">
                 <Button
                   variant="outline"
                   className="flex-1"
@@ -185,8 +129,58 @@ export default function Consultations() {
                   {createConsultationMutation.isPending ? "Submitting..." : "Submit Request"}
                 </Button>
               </div>
-            </DialogContent>
-          </Dialog>
+            }
+          >
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="artist">Select Artist *</Label>
+                <Select value={selectedArtistId} onValueChange={setSelectedArtistId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose an artist" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {artists.map((artist) => (
+                      <SelectItem key={artist.id} value={artist.id}>
+                        {artist.name || artist.email}
+                        {artist.instagramUsername && ` (@${artist.instagramUsername})`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="subject">Subject *</Label>
+                <Input
+                  id="subject"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  placeholder="e.g., Custom tattoo design"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description *</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Describe what you'd like to discuss..."
+                  rows={5}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="preferred-date">Preferred Date (Optional)</Label>
+                <Input
+                  id="preferred-date"
+                  type="date"
+                  value={preferredDate}
+                  onChange={(e) => setPreferredDate(e.target.value)}
+                />
+              </div>
+            </div>
+          </ModalShell>
         </div>
       </header>
 

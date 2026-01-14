@@ -24,6 +24,8 @@ interface WizardShellProps {
     steps: WizardStepConfig[];
     currentStepIndex: number;
     onStepChange: (index: number) => void;
+    overlayName?: string;
+    overlayId?: string;
 }
 
 export function WizardShell({
@@ -31,7 +33,9 @@ export function WizardShell({
     onClose,
     steps,
     currentStepIndex,
-    onStepChange
+    onStepChange,
+    overlayName = "Wizard",
+    overlayId
 }: WizardShellProps) {
     const currentStep = steps[currentStepIndex];
 
@@ -86,6 +90,8 @@ export function WizardShell({
             onClose={onClose}
             title={currentStep.label}
             footer={currentStep.customFooter || footer}
+            overlayName={overlayName}
+            overlayId={overlayId}
         >
             {currentStep.render()}
         </ModalShell>

@@ -11,7 +11,8 @@ interface ModalShellProps {
     children: React.ReactNode;
     footer?: React.ReactNode;
     className?: string;
-    badgeText?: string;
+    overlayName?: string;
+    overlayId?: string;
 }
 
 export function ModalShell({
@@ -22,24 +23,26 @@ export function ModalShell({
     children,
     footer,
     className,
-    badgeText = "UI v2"
+    overlayName = "Modal",
+    overlayId
 }: ModalShellProps) {
     return (
         <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
-            <DialogContent className={cn(
-                "sm:max-w-[480px] max-h-[90vh] flex flex-col p-0 gap-0 border border-white/10 bg-background/95 backdrop-blur-[20px] shadow-2xl rounded-[2.5rem] overflow-hidden text-foreground outline-none",
-                className
-            )}>
+            <DialogContent
+                className={cn(
+                    "sm:max-w-[480px] max-h-[90vh] flex flex-col p-0 gap-0 border border-white/10 bg-background/95 backdrop-blur-[20px] shadow-2xl rounded-[2.5rem] overflow-hidden text-foreground outline-none",
+                    className
+                )}
+                data-overlay-id={overlayId}
+            >
                 <DialogHeader className="p-8 pb-4 shrink-0 border-b border-white/5 space-y-2">
                     <div className="flex items-center justify-between">
                         <DialogTitle className="text-2xl font-bold tracking-tight text-center flex-1">
                             {title}
                         </DialogTitle>
-                        {badgeText && (
-                            <Badge variant="outline" className="border-primary/20 text-primary uppercase text-[10px] tracking-widest bg-primary/5 absolute right-8 top-8">
-                                {badgeText}
-                            </Badge>
-                        )}
+                        <div className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary tracking-wider uppercase bg-primary/5 absolute right-8 top-8">
+                            UI v2 · {overlayName}
+                        </div>
                     </div>
                     {description && (
                         <DialogDescription className="text-center text-muted-foreground">

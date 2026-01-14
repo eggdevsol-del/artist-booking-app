@@ -16,7 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+import { ModalShell } from "@/components/ui/overlays/modal-shell";
 
 interface WorkHoursAndServicesProps {
   onBack: () => void;
@@ -522,74 +523,78 @@ export default function WorkHoursAndServices({ onBack }: WorkHoursAndServicesPro
       </main>
 
       {/* Project Service Builder Dialog */}
-      <Dialog open={showProjectBuilder} onOpenChange={setShowProjectBuilder}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Project Service</DialogTitle>
-            <DialogDescription>Create a multi-sitting project package based on an existing service.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
+      <ModalShell
+        isOpen={showProjectBuilder}
+        onClose={() => setShowProjectBuilder(false)}
+        title="Add Project Service"
+        description="Create a multi-sitting project package based on an existing service."
+        className="max-w-md"
+        overlayName="Project Service Builder"
+        overlayId="work_hours.project_builder"
+        footer={
+          <div className="flex w-full gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setShowProjectBuilder(false)}>Cancel</Button>
+            <Button className="flex-1" onClick={handleAddProjectService}>Add Project Service</Button>
+          </div>
+        }
+      >
+        <div className="space-y-4 py-2">
+          <div>
+            <Label>Service Name</Label>
+            <Input
+              placeholder="e.g., Full arm sleeve"
+              value={newProjectService.name}
+              onChange={(e) => setNewProjectService({ ...newProjectService, name: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label>Description</Label>
+            <Textarea
+              placeholder="Description of the project..."
+              rows={2}
+              value={newProjectService.description}
+              onChange={(e) => setNewProjectService({ ...newProjectService, description: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label>Base Service</Label>
+            <Select value={projectBaseServiceId} onValueChange={setProjectBaseServiceId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a service..." />
+              </SelectTrigger>
+              <SelectContent>
+                {services.map((service, index) => (
+                  <SelectItem key={index} value={index.toString()}>
+                    {service.name} (${service.price} / {service.duration}m)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Service Name</Label>
+              <Label>Sittings Required</Label>
               <Input
-                placeholder="e.g., Full arm sleeve"
-                value={newProjectService.name}
-                onChange={(e) => setNewProjectService({ ...newProjectService, name: e.target.value })}
+                type="number"
+                min="1"
+                value={projectSittings}
+                onChange={(e) => setProjectSittings(parseInt(e.target.value) || 1)}
               />
             </div>
             <div>
-              <Label>Description</Label>
-              <Textarea
-                placeholder="Description of the project..."
-                rows={2}
-                value={newProjectService.description}
-                onChange={(e) => setNewProjectService({ ...newProjectService, description: e.target.value })}
+              <Label>Total Price ($)</Label>
+              <Input
+                type="number"
+                value={newProjectService.price}
+                onChange={(e) => setNewProjectService({ ...newProjectService, price: parseFloat(e.target.value) || 0 })}
               />
-            </div>
-            <div>
-              <Label>Base Service</Label>
-              <Select value={projectBaseServiceId} onValueChange={setProjectBaseServiceId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a service..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {services.map((service, index) => (
-                    <SelectItem key={index} value={index.toString()}>
-                      {service.name} (${service.price} / {service.duration}m)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Sittings Required</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={projectSittings}
-                  onChange={(e) => setProjectSittings(parseInt(e.target.value) || 1)}
-                />
-              </div>
-              <div>
-                <Label>Total Price ($)</Label>
-                <Input
-                  type="number"
-                  value={newProjectService.price}
-                  onChange={(e) => setNewProjectService({ ...newProjectService, price: parseFloat(e.target.value) || 0 })}
-                />
-                <p className="text-[10px] text-muted-foreground mt-1">
-                  Auto-calculated: ${services[parseInt(projectBaseServiceId || '0')]?.price || 0} x {projectSittings}
-                </p>
-              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Auto-calculated: ${services[parseInt(projectBaseServiceId || '0')]?.price || 0} x {projectSittings}
+              </p>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowProjectBuilder(false)}>Cancel</Button>
-            <Button onClick={handleAddProjectService}>Add Project Service</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </ModalShell>
     </div>
   );
 }
