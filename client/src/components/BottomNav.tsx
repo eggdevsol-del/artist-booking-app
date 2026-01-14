@@ -1,4 +1,4 @@
-```typescript
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "wouter";
@@ -44,7 +44,7 @@ export default function BottomNav() {
     // Animation Controls & Motion Values
     const controls = useAnimation();
     const y = useMotionValue(0);
-    
+
     // Separate Horizontal Values for Persistence
     const xMain = useMotionValue(0);
     const xContextual = useMotionValue(0);
@@ -60,7 +60,7 @@ export default function BottomNav() {
     const maxPages = useRef({ main: 0, contextual: 0 });
     const viewportWidthMock = useRef(0); // Using ref to avoid re-renders, but for debug we might need state?
     // Using refs for logic to ensure stability.
-    
+
     // Lifecycle Flags
     const isDragging = useRef(false);
     const axisLocked = useRef<'x' | 'y' | null>(null);
@@ -103,7 +103,7 @@ export default function BottomNav() {
             const currentMain = pageIndexes.current.main;
             const maxMain = maxPages.current.main;
             const clampedMain = Math.max(0, Math.min(currentMain, maxMain));
-            
+
             // Explicitly set alignment even if index didn't change (handle resize)
             pageIndexes.current.main = clampedMain;
             xMain.set(-clampedMain * vp);
@@ -112,21 +112,21 @@ export default function BottomNav() {
             const currentCtx = pageIndexes.current.contextual;
             const maxCtx = maxPages.current.contextual;
             const clampedCtx = Math.max(0, Math.min(currentCtx, maxCtx));
-            
+
             pageIndexes.current.contextual = clampedCtx;
             xContextual.set(-clampedCtx * vp);
         }
 
         // Debug Update
         if (process.env.NODE_ENV === 'development') {
-             setDebugInfo({
-                 vp,
-                 pMain: pageIndexes.current.main,
-                 maxMain: maxPages.current.main,
-                 pCtx: pageIndexes.current.contextual,
-                 maxCtx: maxPages.current.contextual,
-                 dragging: isDragging.current
-             });
+            setDebugInfo({
+                vp,
+                pMain: pageIndexes.current.main,
+                maxMain: maxPages.current.main,
+                pCtx: pageIndexes.current.contextual,
+                maxCtx: maxPages.current.contextual,
+                dragging: isDragging.current
+            });
         }
 
     }, [xMain, xContextual]);
@@ -138,7 +138,7 @@ export default function BottomNav() {
         if (viewportRef.current) obs.observe(viewportRef.current);
         if (mainRowRef.current) obs.observe(mainRowRef.current);
         if (row1Ref.current) obs.observe(row1Ref.current);
-        
+
         window.addEventListener('resize', measure);
         return () => {
             obs.disconnect();
@@ -158,16 +158,16 @@ export default function BottomNav() {
             captureLayerRef.current.setPointerCapture(e.pointerId);
         }
 
-        measure(); 
+        measure();
         isDragging.current = true;
         startPoint.current = { x: e.clientX, y: e.clientY };
-        
+
         // Snapshot current X
         startX.current = getActiveX().get();
-        
+
         axisLocked.current = null;
         totalMove.current = 0;
-        
+
         getActiveX().stop();
     };
 
@@ -184,11 +184,11 @@ export default function BottomNav() {
         if (!axisLocked.current) {
             if (absDx > 8 || absDy > 8) {
                 if (absDx > absDy + 8) {
-                     // Check if scrollable
-                     const key = getActiveKey();
-                     if (maxPages.current[key] > 0) {
-                         axisLocked.current = 'x';
-                     }
+                    // Check if scrollable
+                    const key = getActiveKey();
+                    if (maxPages.current[key] > 0) {
+                        axisLocked.current = 'x';
+                    }
                 } else if (absDy > absDx + 8) {
                     if (contextualRow) {
                         axisLocked.current = 'y';
@@ -205,10 +205,10 @@ export default function BottomNav() {
 
             // Raw Move
             let nextX = startX.current + dx;
-            
+
             // Hard Clamp to Bounds [-maxOffset, 0]
             nextX = Math.max(-maxOffset, Math.min(nextX, 0));
-            
+
             getActiveX().set(nextX);
 
         } else if (axisLocked.current === 'y') {
@@ -282,15 +282,15 @@ export default function BottomNav() {
                     controls.start({ y: 0 });
                 }
             } else {
-                 controls.start({ y: 0 });
+                controls.start({ y: 0 });
             }
         } else {
-             controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 });
-             // Reset X to current page
-             const key = getActiveKey();
-             const vp = viewportWidthMock.current;
-             const p = pageIndexes.current[key];
-             animate(getActiveX(), -p * vp, { type: "spring", stiffness: 400, damping: 40 });
+            controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 });
+            // Reset X to current page
+            const key = getActiveKey();
+            const vp = viewportWidthMock.current;
+            const p = pageIndexes.current[key];
+            animate(getActiveX(), -p * vp, { type: "spring", stiffness: 400, damping: 40 });
         }
 
         axisLocked.current = null;
@@ -303,8 +303,8 @@ export default function BottomNav() {
         >
             {process.env.NODE_ENV === 'development' && (
                 <div className="fixed top-0 left-0 bg-black/80 text-white text-[10px] p-2 z-[9999] pointer-events-none font-mono">
-                    VP: {debugInfo.vp}px | 
-                    Main: {debugInfo.pMain}/{debugInfo.maxMain} | 
+                    VP: {debugInfo.vp}px |
+                    Main: {debugInfo.pMain}/{debugInfo.maxMain} |
                     Ctx: {debugInfo.pCtx}/{debugInfo.maxCtx} |
                     Drag: {String(debugInfo.dragging)}
                 </div>
