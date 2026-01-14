@@ -116,21 +116,21 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
     const renderServiceStep = () => (
         <div className="space-y-4 pt-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-[#5b4eff]/80 mb-4 pl-1">SELECT SERVICE</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-primary/80 mb-4 pl-1">SELECT SERVICE</p>
             <ScrollArea className="h-[380px] pr-4 -mr-4">
                 <div className="grid grid-cols-1 gap-4 pr-4">
                     {artistServices.map(service => (
                         <div
                             key={service.id}
                             className={`group relative p-6 cursor-pointer transition-all duration-300 rounded-[2rem] border ${selectedService?.id === service.id
-                                ? 'bg-[#5b4eff]/10 border-[#5b4eff] shadow-[0_0_30px_rgba(91,78,255,0.15)]'
-                                : 'bg-[#1a1a1a] border-white/5 hover:border-white/10 hover:bg-[#222]'
+                                ? 'bg-primary/10 border-primary shadow-[0_0_30px_rgba(91,78,255,0.15)]'
+                                : 'bg-card border-white/5 hover:border-white/10 hover:bg-white/5'
                                 }`}
                             onClick={() => setSelectedService(service)}
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div>
-                                    <h4 className={`font-bold text-xl mb-1 ${selectedService?.id === service.id ? 'text-[#a5a0ff]' : 'text-white'}`}>
+                                    <h4 className={`font-bold text-xl mb-1 ${selectedService?.id === service.id ? 'text-primary-foreground' : 'text-foreground'}`}>
                                         {service.name}
                                     </h4>
                                     <div className="flex items-center gap-3 mt-3">
@@ -144,12 +144,12 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                         </span>
                                     </div>
                                 </div>
-                                <span className="font-bold text-lg text-[#5b4eff]">
+                                <span className="font-bold text-lg text-primary">
                                     ${service.price}
                                 </span>
                             </div>
 
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center absolute bottom-6 right-6 transition-colors ${selectedService?.id === service.id ? 'border-[#5b4eff] bg-[#5b4eff]' : 'border-white/20'}`}>
+                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center absolute bottom-6 right-6 transition-colors ${selectedService?.id === service.id ? 'border-primary bg-primary' : 'border-white/20'}`}>
                                 {selectedService?.id === service.id && <Check className="w-3.5 h-3.5 text-white" strokeWidth={4} />}
                             </div>
                         </div>
@@ -161,15 +161,15 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
     const renderFrequencyStep = () => (
         <div className="space-y-6 pt-2">
-            <div className="bg-[#1a1a1a] border border-white/10 p-6 rounded-[2rem] flex items-center justify-between">
+            <div className="bg-card border border-white/10 p-6 rounded-[2rem] flex items-center justify-between">
                 <div>
-                    <h4 className="font-bold text-white text-lg">{selectedService?.name}</h4>
+                    <h4 className="font-bold text-foreground text-lg">{selectedService?.name}</h4>
                     <p className="text-sm text-white/50 mt-1">
                         {selectedService?.sittings || 1} sittings • {selectedService?.duration} mins each
                     </p>
                 </div>
                 <div className="text-right">
-                    <span className="block font-bold text-2xl text-[#5b4eff]">${selectedService?.price}</span>
+                    <span className="block font-bold text-2xl text-primary">${selectedService?.price}</span>
                     <span className="text-[10px] text-white/30 uppercase tracking-wider font-bold">PER SESSION</span>
                 </div>
             </div>
@@ -184,16 +184,16 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                         { id: 'monthly', label: 'Monthly', sub: 'Once a month' }
                     ].map((opt) => (
                         <div key={opt.id} className={`group relative flex items-center space-x-4 border p-5 rounded-[1.5rem] cursor-pointer transition-all duration-300 ${frequency === opt.id
-                            ? 'bg-[#5b4eff]/10 border-[#5b4eff] shadow-[0_0_15px_rgba(91,78,255,0.1)]'
-                            : 'bg-[#1a1a1a] border-white/5 hover:bg-[#222]'
+                            ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(91,78,255,0.1)]'
+                            : 'bg-card border-white/5 hover:bg-white/5'
                             }`}
                             onClick={() => setFrequency(opt.id as any)}
                         >
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${frequency === opt.id ? 'border-[#5b4eff]' : 'border-white/20 ml-1'}`}>
-                                {frequency === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-[#5b4eff]" />}
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${frequency === opt.id ? 'border-primary' : 'border-white/20 ml-1'}`}>
+                                {frequency === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                             </div>
                             <div className="flex-1">
-                                <Label htmlFor={opt.id} className={`text-base font-bold cursor-pointer block transition-colors ${frequency === opt.id ? 'text-white' : 'text-white/70'}`}>{opt.label}</Label>
+                                <Label htmlFor={opt.id} className={`text-base font-bold cursor-pointer block transition-colors ${frequency === opt.id ? 'text-foreground' : 'text-muted-foreground'}`}>{opt.label}</Label>
                                 <p className="text-xs text-white/40 mt-1 font-medium">{opt.sub}</p>
                             </div>
                         </div>

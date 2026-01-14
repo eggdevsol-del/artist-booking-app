@@ -18,195 +18,93 @@ import { ProjectProposalMessage } from "@/components/chat/ProjectProposalMessage
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ChevronUp, Zap } from "lucide-react";
+import { useChatController } from "@/features/chat/useChatController";
 
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
   const conversationId = parseInt(id || "0");
-  const { user, loading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
-  const [messageText, setMessageText] = useState("");
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const hasScrolledRef = useRef(false);
-  const [showClientInfo, setShowClientInfo] = useState(false);
-  const [showBookingCalendar, setShowBookingCalendar] = useState(false);
-  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  // Project Wizard State
-  const [showProjectWizard, setShowProjectWizard] = useState(false);
-  const [wizardStep, setWizardStep] = useState<'service' | 'frequency' | 'review'>('service');
-  const [selectedService, setSelectedService] = useState<any>(null);
-  const [projectFrequency, setProjectFrequency] = useState<'consecutive' | 'weekly' | 'biweekly' | 'monthly'>('consecutive');
-  const [projectStartDate, setProjectStartDate] = useState<Date | null>(null);
+  const {
+    user,
+    authLoading,
+    conversation,
+    convLoading,
+    messages,
+    messagesLoading,
+    quickActions,
+    artistSettings,
+    availableServices,
 
-  const [availableServices, setAvailableServices] = useState<any[]>([]);
+    messageText, setMessageText,
+    showClientInfo, setShowClientInfo,
+    showBookingCalendar, setShowBookingCalendar,
+    selectedDates, setSelectedDates,
+    currentMonth, setCurrentMonth,
+    showProjectWizard, setShowProjectWizard,
+    wizardStep, setWizardStep,
+    selectedService, setSelectedService,
+    projectFrequency, setProjectFrequency,
+    projectStartDate, setProjectStartDate,
+    showClientConfirmDialog, setShowClientConfirmDialog,
+    clientConfirmDates, setClientConfirmDates,
+    clientConfirmMetadata, setClientConfirmMetadata,
+    clientConfirmMessageId, setClientConfirmMessageId,
+    scrollRef, bottomRef,
+
+    isArtist,
+    otherUserId,
+    otherUserName,
+
+    sendMessageMutation,
+    pinConsultationMutation,
+    bookProjectMutation,
+    updateMetadataMutation
+  } = useChatController(conversationId);
+
+  // Local UI State
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [showClientConfirmDialog, setShowClientConfirmDialog] = useState(false);
-  const [clientConfirmMessageId, setClientConfirmMessageId] = useState<number | null>(null);
-  const [clientConfirmDates, setClientConfirmDates] = useState<{ date: string, selected: boolean }[]>([]);
-  const [clientConfirmMetadata, setClientConfirmMetadata] = useState<any>(null);
   const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
-
-  // Get consultation ID from URL if present
+  const hasScrolledRef = useRef(false);
   const searchParams = new URLSearchParams(window.location.search);
   const consultationId = searchParams.get('consultationId');
 
-  const { data: conversation, isLoading: convLoading } =
-    trpc.conversations.getById.useQuery(conversationId, {
-      enabled: !!user && conversationId > 0,
-    });
-
-  const pinConsultationMutation = trpc.conversations.pinConsultation.useMutation({
-    onSuccess: () => {
-      utils.conversations.getById.invalidate(conversationId);
-      toast.success("Consultation pinned status updated");
-    },
-    onError: (err) => {
-      toast.error("Failed to update pin status");
-      console.error(err);
-    }
-  });
-
-  const targetConsultationId = consultationId ? parseInt(consultationId) : conversation?.pinnedConsultationId;
+  // Load target consultation logic is handled mostly by the view rendering or hook data.
+  // We might want `targetConsultationId` calculated here if used in view.
+  // View uses `consultationData`. Hook doesn't return `consultationData`.
+  // Hook returns `conversation`. `conversation` has `pinnedConsultationId`.
+  // View fetches `consultations.list`.
+  // Wait, hook DOES NOT return `consultationList`.
+  // I missed `consultations.list` logic in the hook!
+  // It was in lines 75-77 of original file.
+  // I need to add it to the Hook or keep it in View.
+  // Keep in View for now to avoid breaking. Or use TRPC hook here.
 
   const { data: consultationList } = trpc.consultations.list.useQuery(undefined, {
-    enabled: !!user, // Fetch all to find the relevant one. Optimally getById would be better but this works with existing router.
+    enabled: !!user,
   });
-
+  const targetConsultationId = consultationId ? parseInt(consultationId) : conversation?.pinnedConsultationId;
   const consultationData = consultationList?.find(c => c.id === targetConsultationId);
 
-  const markAsReadMutation = trpc.conversations.markAsRead.useMutation();
+  // Logic Helpers
 
-  // Mark messages as read when conversation opens
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 200);
+  };
+
   useEffect(() => {
-    if (conversationId && user) {
-      markAsReadMutation.mutate(conversationId, {
-        onSuccess: () => {
-          utils.consultations.list.invalidate();
-        }
-      });
-    }
-  }, [conversationId, user]);
-
-
-
-  const { data: messages, isLoading: messagesLoading, refetch: refetchMessages } =
-    trpc.messages.list.useQuery(
-      { conversationId },
-      {
-        enabled: !!user && conversationId > 0,
-        refetchInterval: 3000,
-      }
-    );
-
-  const { data: quickActions } = trpc.quickActions.list.useQuery(undefined, {
-    enabled: !!user && (user.role === "artist" || user.role === "admin"),
-  });
-
-  const { data: artistSettings } = trpc.artistSettings.get.useQuery(undefined, {
-    enabled: !!user && (user.role === "artist" || user.role === "admin"),
-  });
-
-  const {
-    data: projectAvailability,
-    isLoading: loadingAvailability,
-    error: availabilityError
-  } = trpc.appointments.findProjectAvailability.useQuery(
-    {
-      conversationId,
-      serviceName: selectedService?.name || '',
-      serviceDuration: selectedService?.duration || 60,
-      sittings: selectedService?.sittings || 1,
-      frequency: projectFrequency,
-      // Always start searching from today
-      startDate: new Date(),
-      // Ensure price is a number
-      price: selectedService?.price ? Number(selectedService.price) : 0,
-    },
-    {
-      enabled: !!selectedService && wizardStep === 'review',
-      // Don't retry on failure so we show error immediately
-      retry: false
-    }
-  );
-
-  // Parse services when artistSettings loads
-  useEffect(() => {
-    if (artistSettings?.services) {
-      try {
-        const parsed = JSON.parse(artistSettings.services);
-        if (Array.isArray(parsed)) {
-          setAvailableServices(parsed);
-        }
-      } catch (e) {
-        console.error("Failed to parse services");
-      }
-    }
-  }, [artistSettings]);
-
-  const utils = trpc.useUtils();
-
-  const sendMessageMutation = trpc.messages.send.useMutation({
-    onMutate: async (newMessage) => {
-      // Cancel any outgoing refetches
-      await utils.messages.list.cancel({ conversationId });
-
-      // Snapshot the previous value
-      const previousMessages = utils.messages.list.getData({ conversationId });
-
-      // Optimistically update to the new value
-      const optimisticMessage = {
-        id: Date.now(), // Temporary ID
-        conversationId: newMessage.conversationId,
-        senderId: user?.id || '',
-        content: newMessage.content,
-        messageType: newMessage.messageType || "text",
-        metadata: newMessage.metadata || null,
-        readBy: null,
-        createdAt: new Date().toISOString(),
-      };
-
-      utils.messages.list.setData(
-        { conversationId },
-        (old) => old ? [...old, optimisticMessage] : [optimisticMessage]
-      );
-
-      // Return a context object with the snapshotted value
-      return { previousMessages };
-    },
-    onError: (error: any, newMessage, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousMessages) {
-        utils.messages.list.setData({ conversationId }, context.previousMessages);
-      }
-      toast.error("Failed to send message: " + error.message);
-    },
-    onSuccess: async () => {
-      setMessageText("");
-      // Invalidate and refetch to get the real message from server
-      await utils.messages.list.invalidate({ conversationId });
-    },
-    onSettled: () => {
+    if (messages && messages.length > 0 && !hasScrolledRef.current) {
       scrollToBottom();
-    },
-  });
+      hasScrolledRef.current = true;
+    }
+  }, [messages]);
 
-  const bookProjectMutation = trpc.appointments.bookProject.useMutation({
-    onSuccess: (data) => {
-      toast.success(`${data.count} appointments booked successfully!`);
-      refetchMessages();
-    },
-    onError: (error: any) => {
-      toast.error("Failed to book project: " + error.message);
-    },
-  });
-
+  // Image Upload Mutation (View Specific)
   const uploadImageMutation = trpc.upload.uploadImage.useMutation({
     onSuccess: (data) => {
-      // Send the image URL as a message
       sendMessageMutation.mutate({
         conversationId,
         content: data.url,
@@ -220,38 +118,8 @@ export default function Chat() {
     },
   });
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      setLocation("/");
-    }
-  }, [user, authLoading, setLocation]);
-
-  // Reset scroll state when conversation changes
-  useEffect(() => {
-    hasScrolledRef.current = false;
-  }, [conversationId]);
-
-  // Only auto-scroll on initial load or if we haven't scrolled yet
-  useEffect(() => {
-    if (!messagesLoading && messages && messages.length > 0 && !hasScrolledRef.current) {
-      scrollToBottom();
-      hasScrolledRef.current = true;
-    }
-  }, [messages, messagesLoading, conversationId]);
-
-  const scrollToBottom = () => {
-    // 200ms timeout to ensure DOM layout is complete (especially images/cards)
-    setTimeout(() => {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 200);
-  };
-
-
-
-
   const handleSendMessage = () => {
     if (!messageText.trim()) return;
-
     sendMessageMutation.mutate({
       conversationId,
       content: messageText,
@@ -260,27 +128,29 @@ export default function Chat() {
     });
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     if (!file.type.startsWith("image/")) {
       toast.error("Please select an image file");
       return;
     }
-
     if (file.size > 10 * 1024 * 1024) {
       toast.error("Image size must be less than 10MB");
       return;
     }
-
     setUploadingImage(true);
     toast.info("Uploading image...");
-
     const reader = new FileReader();
     reader.onload = async (e) => {
       const base64Data = e.target?.result as string;
-
       uploadImageMutation.mutate({
         fileName: file.name,
         fileData: base64Data,
@@ -292,10 +162,7 @@ export default function Chat() {
       setUploadingImage(false);
     };
     reader.readAsDataURL(file);
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleQuickAction = (action: any) => {
@@ -307,6 +174,36 @@ export default function Chat() {
       });
     }
   };
+
+  // Availability Logic (needs projectAvailability from hook? No, hook doesn't have it!)
+  // I missed `findProjectAvailability` query in the hook!
+  // It was lines 113-134.
+  // I need to add it to the Hook or keep it here.
+  // Ideally in the hook.
+  // I will add it to the Hook in a NEXT STEP.
+  // For now I will re-implement it here to not break.
+  // BUT I moved `selectedService` etc to the Hook.
+
+  // Re-implementing query here using hook state:
+  const {
+    data: projectAvailability,
+    isLoading: loadingAvailability,
+    error: availabilityError
+  } = trpc.appointments.findProjectAvailability.useQuery(
+    {
+      conversationId,
+      serviceName: selectedService?.name || '',
+      serviceDuration: selectedService?.duration || 60,
+      sittings: selectedService?.sittings || 1,
+      frequency: projectFrequency,
+      startDate: new Date(),
+      price: selectedService?.price ? Number(selectedService.price) : 0,
+    },
+    {
+      enabled: !!selectedService && wizardStep === 'review',
+      retry: false
+    }
+  );
 
   const handleSendProjectDates = () => {
     if (!projectAvailability?.dates || !selectedService) return;
@@ -333,12 +230,16 @@ export default function Chat() {
     sendMessageMutation.mutate({
       conversationId,
       content: message,
-      messageType: "appointment_request", // Reusing this type
+      messageType: "appointment_request",
       metadata,
     });
 
     setShowProjectWizard(false);
-    resetWizard();
+    // resetWizard logic embedded
+    setWizardStep('service');
+    setSelectedService(null);
+    setProjectFrequency('consecutive');
+    setProjectStartDate(null);
     toast.success("Project proposal sent!");
   };
 
@@ -375,12 +276,6 @@ export default function Chat() {
     toast.success("Dates confirmed!");
   };
 
-  const updateMetadataMutation = trpc.messages.updateMetadata.useMutation({
-    onSuccess: () => {
-      utils.messages.list.invalidate({ conversationId });
-    }
-  });
-
   const handleClientAcceptProposal = (message: any, metadata: any) => {
     if (!metadata.proposedDates && !metadata.dates) return;
     const bookingDates = metadata.dates || metadata.proposedDates || [];
@@ -410,7 +305,6 @@ export default function Chat() {
       appointments
     }, {
       onSuccess: () => {
-        // 1. Update message metadata to 'accepted'
         const newMetadata = JSON.stringify({
           ...metadata,
           status: 'accepted'
@@ -421,34 +315,13 @@ export default function Chat() {
           metadata: newMetadata
         });
 
-        // 2. Send acceptance message
         sendMessageMutation.mutate({
           conversationId,
           content: `I accept the project proposal for ${metadata.serviceName}.`,
           messageType: "text"
         }, {
-          onSuccess: () => {
-            // 3. Auto-send deposit info if enabled
-            if (isArtist || !isArtist) { // logic runs for client, but we check ARTIST settings.
-              // Wait, the CLIENT is clicking accept. The Client app context has 'artistSettings' ??
-              // 'artistSettings' query in Chat.tsx fetches settings for the "current user" if artist?
-              // No, line 84: `trpc.artistSettings.get.useQuery(undefined, { enabled: !!user && (user.role === "artist" ...) })`
-              // If I am the CLIENT, I don't have the ARTIST's settings loaded in `artistSettings`.
-              // I need to fetch the OTHER user's settings or the CONVERSATION'S artist settings.
-              // Actually, `projectAvailability` uses `findProjectAvailability`.
-              // I should probably make the backend handle the auto-response or fetch it here.
-              // But strictly, `Chat.tsx` lines 84 loads settings only if `user.role === "artist"`.
-              // So as a client, `artistSettings` is undefined.
-              // I cannot check `autoSendDepositInfo` here easily as a client.
-              // HOWEVER, the user asked: "please add a page to adjust settings ... such as whether to automatically send deposit information upon acceptance".
-              // If the CLIENT accepts, the SYSTEM (or Client acting as proxy) should send the info?
-              // Or the Artist's "bot" sends it.
-              // Since we are client-side only, maybe I can't do it as the client.
-              // BUT, maybe I can rely on the trigger happening on the backend? No, backend just does booking.
-              // Let's look at `BookingWizard` - that was Artist side.
-              // `handleClientAcceptProposal` runs on CLIENT side.
-            }
-          }
+          // Auto-deposit logic stub
+          onSuccess: () => { }
         });
       }
     });
@@ -556,10 +429,6 @@ export default function Chat() {
       </div>
     );
   }
-
-  const isArtist = user?.role === "artist" || user?.role === "admin";
-  const otherUserId = isArtist ? conversation.clientId : conversation.artistId;
-  const otherUserName = conversation.otherUser?.name || "Unknown User";
 
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden selection:bg-primary/20">
