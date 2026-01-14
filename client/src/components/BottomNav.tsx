@@ -1,4 +1,4 @@
-```
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 // import { Calendar, Image, LayoutDashboard, MessageCircle, Settings, Wallet } from "lucide-react"; // REMOVED: Icons come from config
@@ -65,7 +65,7 @@ export default function BottomNav() {
     const startOffset = useRef(0);
     const axisLocked = useRef<'x' | 'y' | null>(null);
     const totalMove = useRef(0);
-    
+
     // Measurement Logic
     const measure = useCallback(() => {
         const viewport = viewportRef.current;
@@ -92,7 +92,7 @@ export default function BottomNav() {
         if (viewportRef.current) obs.observe(viewportRef.current);
         if (mainRowRef.current) obs.observe(mainRowRef.current);
         if (row1Ref.current) obs.observe(row1Ref.current);
-        
+
         window.addEventListener('resize', measure);
         return () => {
             obs.disconnect();
@@ -117,7 +117,7 @@ export default function BottomNav() {
         startOffset.current = offsetX.current;
         axisLocked.current = null;
         totalMove.current = 0;
-        
+
         console.log('[BottomNav] Pointer Down', { offset: offsetX.current, max: maxOffset.current });
     };
 
@@ -150,7 +150,7 @@ export default function BottomNav() {
             const nextOffset = startOffset.current - dx;
             // Strict Clamp
             const clamped = Math.max(0, Math.min(nextOffset, maxOffset.current));
-            
+
             offsetX.current = clamped;
             x.set(-clamped);
 
@@ -194,10 +194,10 @@ export default function BottomNav() {
             const vp = viewportWidth.current || 1;
             const pageIndex = Math.round(offsetX.current / vp);
             let snapOffset = pageIndex * vp;
-            
+
             // Hard clamp snap target
             snapOffset = Math.max(0, Math.min(snapOffset, maxOffset.current));
-            
+
             animate(x, -snapOffset, { type: "spring", stiffness: 400, damping: 40 });
             offsetX.current = snapOffset;
 
@@ -334,8 +334,8 @@ export default function BottomNav() {
                 {/* Row 1: Contextual Row (if exists) */}
                 {contextualRow && (
                     <div className="h-[68px] shrink-0">
-                         {/* Wrapper to apply the same X transform to Row 1 */}
-                        <motion.div 
+                        {/* Wrapper to apply the same X transform to Row 1 */}
+                        <motion.div
                             ref={row1Ref}
                             style={{ x }}
                             className="flex items-center w-max h-full"
