@@ -43,6 +43,8 @@ export default function BottomNav() {
     const axisLocked = useRef<'x' | 'y' | null>(null);
     const initialOffset = useRef(0); // Where Y motion value started
     const scrollStart = useRef(0); // Where X scroll started
+    const totalMove = useRef(0); // To track total movement for click detection
+    const captureLayerRef = useRef<HTMLDivElement>(null);
 
     // Sync animation with state changes when NOT dragging
     useEffect(() => {
@@ -51,14 +53,17 @@ export default function BottomNav() {
         }
     }, [isContextualVisible, controls]);
 
-    // Pointer Events Handlers
+    // Pointer Events Handlers attached to Capture Layer
     const handlePointerDown = (e: React.PointerEvent) => {
-        // Essential: capture pointer to track movement even if it leaves element
-        e.currentTarget.setPointerCapture(e.pointerId);
+        // Essential: capture pointer
+        if (captureLayerRef.current) {
+            captureLayerRef.current.setPointerCapture(e.pointerId);
+        }
 
         isDragging.current = true;
         startPoint.current = { x: e.clientX, y: e.clientY };
         axisLocked.current = null;
+        totalMove.current = 0;
 
         // Capture current state
         initialOffset.current = y.get();
@@ -77,9 +82,13 @@ export default function BottomNav() {
         const absDx = Math.abs(dx);
         const absDy = Math.abs(dy);
 
-        // Axis Locking (Threshold > 14px)
+        // Track total movement for click detection
+        totalMove.current = Math.max(totalMove.current, Math.hypot(dx, dy));
+
+        // Axis Locking (Threshold > 8px - reduced for robustness)
         if (!axisLocked.current) {
-            if (absDx + absDy > 14) {
+            if (absDx + absDy > 8) {
+                // Strict 1.2 ratio for vertical lock
                 if (absDy > absDx * 1.2) {
                     axisLocked.current = 'y';
                     // Check if vertical action is possible
@@ -95,20 +104,13 @@ export default function BottomNav() {
         }
 
         if (axisLocked.current === 'y') {
-            // Vertical Paging Logic
-            // Clamp translation:
-            // If starting at 0 (Row 0), can go up to -ROW_HEIGHT
-            // If starting at -ROW_HEIGHT (Row 1), can go down to 0
-
-            // Logic: Target Y = Start base + dy
-            // Clamped between -ROW_HEIGHT and 0
-
+            // Vertical Paging Paging
             const currentBase = isContextualVisible ? -ROW_HEIGHT : 0;
             let targetY = currentBase + dy;
 
             // Elasticity / Clamping
-            if (targetY > 0) targetY = targetY * 0.2; // Dragging down from top
-            if (targetY < -ROW_HEIGHT) targetY = -ROW_HEIGHT + (targetY + ROW_HEIGHT) * 0.2; // Dragging up from bottom
+            if (targetY > 0) targetY = targetY * 0.2;
+            if (targetY < -ROW_HEIGHT) targetY = -ROW_HEIGHT + (targetY + ROW_HEIGHT) * 0.2;
 
             y.set(targetY);
 
@@ -125,23 +127,37 @@ export default function BottomNav() {
     const handlePointerUp = (e: React.PointerEvent) => {
         if (!isDragging.current) return;
         isDragging.current = false;
-        e.currentTarget.releasePointerCapture(e.pointerId);
+        if (captureLayerRef.current) {
+            captureLayerRef.current.releasePointerCapture(e.pointerId);
+        }
 
-        if (axisLocked.current === 'y') {
+        // Click Detection / Passthrough (Threshold < 6px)
+        if (totalMove.current < 6 && captureLayerRef.current) {
+            console.log('[BottomNav] Tap Detected - Passthrough Click');
+            // Hide capture layer momentarily to find element below
+            captureLayerRef.current.style.visibility = 'hidden';
+            const target = document.elementFromPoint(e.clientX, e.clientY);
+            captureLayerRef.current.style.visibility = 'visible';
+
+            if (target && target instanceof HTMLElement) {
+                target.click();
+                // If the target is inside a button link, we might need to find the closest button/link?
+                // Standard click() bubbles, so clicking the icon inside the button works.
+            }
+            controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 }); // Ensure stable state
+            return;
+        }
+
+        // Gesture Commit Logic
+        if (axisLocked.current === 'y' && contextualRow) {
             const dy = e.clientY - startPoint.current.y;
-            const absDy = Math.abs(dy);
             const threshold = ROW_HEIGHT * 0.25;
-
-            // Velocity approximation could be added, but threshold is robust
             const isRow0 = !isContextualVisible;
-
-            let targetRow = isContextualVisible ? 1 : 0; // default to staying put
+            let targetRow = isContextualVisible ? 1 : 0;
 
             if (isRow0) {
-                // On Row 0. Swipe UP (negative dy) > threshold commits to Row 1
                 if (dy < -threshold) targetRow = 1;
             } else {
-                // On Row 1. Swipe DOWN (positive dy) > threshold commits to Row 0
                 if (dy > threshold) targetRow = 0;
             }
 
@@ -154,9 +170,7 @@ export default function BottomNav() {
                 if (isContextualVisible) setContextualVisible(false);
                 controls.start({ y: 0 });
             }
-
         } else {
-            // Snap back if no lock or X lock (X doesn't snap Y)
             controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 });
         }
 
@@ -165,16 +179,37 @@ export default function BottomNav() {
 
     return (
         <nav
-            className="fixed bottom-6 inset-x-6 z-50 floating-nav rounded-[2.5rem] bg-none pb-0 overflow-hidden h-[68px]"
-            style={{ touchAction: "none" }}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
-            onPointerLeave={handlePointerUp}
+            className="fixed bottom-6 inset-x-6 z-50 floating-nav rounded-[2.5rem] bg-none pb-0 overflow-hidden h-[68px] select-none"
         >
+            {/* Gesture Capture Layer - Invisible Overlay */}
+            <div
+                ref={captureLayerRef}
+                className="absolute inset-0 z-50 cursor-grab active:cursor-grabbing"
+                style={{ touchAction: "none" }} // Crucial to block browser scroll/refresh
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                onPointerLeave={handlePointerUp}
+            />
+
             <motion.div
-                className="flex flex-col h-auto relative"
+                className="flex flex-col h-auto relative" // Content doesn't need pointer events directly, but links might need hover?
+                // Wait, if content has pointer-events-none, hover states won't work visualy underneath the overlay?
+                // Actually, the overlay block pointer events. So hover states on buttons won't trigger on Desktop mouse hover unless we do pass-through.
+                // But this is primarily a touch/swipe interface improvement.
+                // For desktop compatibility, passing 'pointer-events-none' to content is safest for 'click' simulation, 
+                // BUT removing hover effects is a downside.
+                // Re-eval: Keep pointer-events-auto on content. The overlay is on TOP.
+                // Overlay captures events. So content never sees hover.
+                // This is an acceptable tradeoff for "robust swipe" if requested, OR:
+                // We can use pointer-events: none on overlay until drag? No.
+                // We'll stick to the "Tap Passthrough" logic which handles clicks. Hover states will indeed be sacrificed on Desktop if overlay is always up.
+                // Is there a way to keep hover? 
+                // Only if overlay has pointer-events: none, but then we can't capture empty space swipes easily.
+                // Given "BottomNav pill integrity" and "Gestures", reliable swipe > hover on desktop for a mobile-first app?
+                // I will NOT force pointer-events-none on content, just in case passthrough works differently/better.
+                // Actually, let's remove pointer-events-none from motion.div
                 animate={controls}
                 style={{ y }}
                 transition={{ type: "spring", stiffness: 400, damping: 40 }}
@@ -193,9 +228,8 @@ export default function BottomNav() {
                                             "flex-col h-auto py-2 px-3 gap-1 hover:bg-transparent min-w-[70px] snap-center shrink-0 transition-all duration-300 relative",
                                             active ? "text-primary scale-105" : "text-muted-foreground opacity-70 hover:opacity-100"
                                         )}
-                                    // Stop propagation on buttons to effectively use them? 
-                                    // Actually no, we want swipes to start even if on a button.
-                                    // If a button is clicked without drag, standard click event fires.
+                                        // Tab index needed since overlay might block focus handling? 
+                                        tabIndex={-1}
                                     >
                                         <div className="relative">
                                             <item.icon className={cn("w-6 h-6 mb-0.5", active && "fill-current/20")} />
@@ -218,18 +252,14 @@ export default function BottomNav() {
                     </BottomNavRow>
                 </div>
 
-                {/* Row 1: Contextual Row - Always render if exists! */}
+                {/* Row 1: Contextual Row (if exists) */}
                 {contextualRow && (
                     <div className="h-[68px] shrink-0">
                         {contextualRow}
                     </div>
                 )}
-                {/* 
-                   If contextualRow is conditionally rendered, we still need space?
-                   The current implementation renders <div> if contextualRow is truthy.
-                   If not truthy, we just have 1 row. y is clamped to 0. Correct.
-                */}
             </motion.div>
         </nav>
     );
 }
+
