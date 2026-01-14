@@ -11,6 +11,8 @@ import { BookingWizard } from "@/features/booking/BookingWizard";
 import { ClientProfileSheet } from "@/features/chat/ClientProfileSheet";
 import { ProjectProposalMessage } from "@/components/chat/ProjectProposalMessage";
 import { ArrowLeft, Calendar as CalendarIcon, Send, User, Phone, Mail, Cake, ImagePlus, ChevronUp, Check, Pin, PinOff, Zap } from "lucide-react";
+import { useRegisterBottomNavRow } from "@/contexts/BottomNavContext";
+import { QuickActionsRow } from "@/features/chat/components/QuickActionsRow";
 import { useLocation, useParams } from "wouter";
 import { format } from "date-fns";
 import { useEffect, useRef, useState } from "react";
@@ -21,6 +23,16 @@ export default function Chat() {
   const conversationId = parseInt(id || "0");
   const [, setLocation] = useLocation();
   const [showQuickActions, setShowQuickActions] = useState(false);
+
+  // Register Bottom Nav Contextual Row (Quick Actions)
+  useRegisterBottomNavRow(
+    "quick-actions",
+    <QuickActionsRow
+      onOpenQuickActions={() => setShowQuickActions(true)}
+      onSendProposal={() => setShowProjectWizard(true)}
+      onBookNow={() => setShowBookingCalendar(true)}
+    />
+  );
 
   const {
     user,

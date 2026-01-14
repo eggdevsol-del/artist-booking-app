@@ -1,5 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { useRegisterBottomNavRow } from "@/contexts/BottomNavContext";
+import { BottomNavRow } from "@/components/BottomNavRow";
 import { Card, CardContent } from "@/components/ui/card";
 import { Heart, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +9,20 @@ import { Button } from "@/components/ui/button";
 export default function Portfolio() {
     const { user } = useAuth();
     const isArtist = user?.role === 'artist' || user?.role === 'admin';
+
+    useRegisterBottomNavRow(
+        "portfolio-actions",
+        <BottomNavRow>
+            <Button variant="ghost" size="sm" className="flex-col h-auto py-2 px-3 gap-1 hover:bg-transparent min-w-[70px] snap-center shrink-0 transition-all duration-300 relative text-muted-foreground opacity-70 hover:opacity-100">
+                <div className="relative"><Upload className="w-6 h-6 mb-0.5" /></div>
+                <span className="text-[10px] font-medium font-normal">Upload</span>
+            </Button>
+            <Button variant="ghost" size="sm" className="flex-col h-auto py-2 px-3 gap-1 hover:bg-transparent min-w-[70px] snap-center shrink-0 transition-all duration-300 relative text-muted-foreground opacity-70 hover:opacity-100">
+                <div className="relative"><Trash2 className="w-6 h-6 mb-0.5" /></div>
+                <span className="text-[10px] font-medium font-normal">Manage</span>
+            </Button>
+        </BottomNavRow>
+    );
 
     const { data: portfolioItems, isLoading } = trpc.portfolio.list.useQuery(
         isArtist ? { artistId: user?.id } : undefined
