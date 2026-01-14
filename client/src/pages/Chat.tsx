@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BookingWizard } from "@/features/booking/BookingWizard";
+import { ClientProfileSheet } from "@/features/chat/ClientProfileSheet";
 import { ProjectProposalMessage } from "@/components/chat/ProjectProposalMessage";
 import { ArrowLeft, Calendar as CalendarIcon, Send, User, Phone, Mail, Cake, ImagePlus, ChevronUp, Check, Pin, PinOff, Zap } from "lucide-react";
 import { useLocation, useParams } from "wouter";
@@ -418,8 +419,8 @@ export default function Chat() {
                     <Button
                       variant="ghost"
                       className={`h-10 w-full p-0 font-normal ${projectStartDate?.toDateString() === item.date.toDateString()
-                          ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
-                          : "hover:bg-accent"
+                        ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
+                        : "hover:bg-accent"
                         } ${item.date.toDateString() === new Date().toDateString()
                           ? "border border-primary text-primary"
                           : ""
@@ -473,64 +474,11 @@ export default function Chat() {
         </DialogContent>
       </Dialog>
 
-      {/* Existing Client Info Dialog */}
-      <Dialog open={showClientInfo} onOpenChange={setShowClientInfo}>
-        <DialogContent className="max-w-md h-[400px] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Client Information</DialogTitle>
-            <DialogDescription>Contact details and shared media</DialogDescription>
-          </DialogHeader>
-          <Tabs defaultValue="info" className="flex-1 overflow-hidden flex flex-col">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="info">Info</TabsTrigger>
-              <TabsTrigger value="media">Media</TabsTrigger>
-              <TabsTrigger value="content">Content</TabsTrigger>
-            </TabsList>
-            <ScrollArea className="flex-1 mt-2">
-              <TabsContent value="info" className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <User className="w-5 h-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Full Name</p>
-                    <p className="text-sm text-muted-foreground">{conversation?.otherUser?.name || "Unknown"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Email</p>
-                    <p className="text-sm text-muted-foreground">{conversation?.otherUser?.email || "No email"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Phone</p>
-                    <p className="text-sm text-muted-foreground">{conversation?.otherUser?.phone || "No phone"}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Cake className="w-5 h-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Birthday</p>
-                    <p className="text-sm text-muted-foreground">
-                      {conversation?.otherUser?.birthday
-                        ? format(new Date(conversation.otherUser.birthday), 'MMMM do, yyyy')
-                        : "Not set"}
-                    </p>
-                  </div>
-                </div>
-              </TabsContent>
-              <TabsContent value="media" className="p-1">
-                <p className="text-sm text-muted-foreground text-center py-8">No shared media</p>
-              </TabsContent>
-              <TabsContent value="content" className="p-1">
-                <p className="text-sm text-muted-foreground text-center py-8">No shared content</p>
-              </TabsContent>
-            </ScrollArea>
-          </Tabs>
-        </DialogContent>
-      </Dialog>
+      <ClientProfileSheet
+        isOpen={showClientInfo}
+        onClose={() => setShowClientInfo(false)}
+        client={conversation?.otherUser}
+      />
     </div>
   );
 }
