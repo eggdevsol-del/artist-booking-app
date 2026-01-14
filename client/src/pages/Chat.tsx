@@ -1,5 +1,5 @@
 import { ModalShell } from "@/components/ui/overlays/modal-shell";
-import { SheetShell } from "@/components/ui/overlays/sheet-shell";
+// import { SheetShell } from "@/components/ui/overlays/sheet-shell"; // REMOVED
 import { useChatController } from "@/features/chat/useChatController";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { BookingWizard } from "@/features/booking/BookingWizard";
 import { ClientProfileSheet } from "@/features/chat/ClientProfileSheet";
 import { ProjectProposalMessage } from "@/components/chat/ProjectProposalMessage";
-import { ArrowLeft, Calendar as CalendarIcon, Send, User, Phone, Mail, Cake, ImagePlus, ChevronUp, Check, Pin, PinOff, Zap } from "lucide-react";
+import { ArrowLeft, Send, User, Phone, Mail, Cake, ImagePlus, Pin, PinOff } from "lucide-react";
 import { useRegisterBottomNavRow } from "@/contexts/BottomNavContext";
 import { QuickActionsRow } from "@/features/chat/components/QuickActionsRow";
 import { useLocation, useParams } from "wouter";
@@ -22,10 +22,10 @@ export default function Chat() {
   const { id } = useParams<{ id: string }>();
   const conversationId = parseInt(id || "0");
   const [, setLocation] = useLocation();
-  const [, setLocation] = useLocation();
 
 
-  // Register Bottom Nav Contextual Row (Quick Actions)
+
+
   // Register Bottom Nav Contextual Row (Quick Actions)
   const quickActionsRow = useMemo(() => (
     <QuickActionsRow
@@ -311,82 +311,9 @@ export default function Chat() {
       </div>
 
       {/* Floating Bottom Input & Actions */}
+      {/* Input Bar */}
       <div className="fixed bottom-[110px] left-4 right-4 z-[60]">
         <div className="relative">
-          {isArtist && (
-            <SheetShell
-              isOpen={showQuickActions}
-              onClose={() => setShowQuickActions(false)}
-              title="Quick Actions"
-              side="bottom"
-              className="max-h-[85vh]"
-              overlayName="Quick Actions"
-              overlayId="chat.quick_actions"
-            >
-              <div className="p-6 grid gap-6">
-                {/* Booking Tools */}
-                <div className="space-y-3">
-                  <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-2 px-1">
-                    <CalendarIcon className="w-3 h-3" /> Booking Tools
-                  </h4>
-                  <div className="grid grid-cols-3 gap-3">
-                    <Button variant="outline" className="h-24 flex-col gap-3 rounded-2xl border-dashed border-primary/20 hover:border-primary hover:bg-primary/5 transition-all group" onClick={() => { setShowBookingCalendar(true); setShowQuickActions(false); }}>
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <CalendarIcon className="w-5 h-5 text-primary" />
-                      </div>
-                      <span className="text-xs font-medium">Book Now</span>
-                    </Button>
-                    <Button variant="outline" className="h-24 flex-col gap-3 rounded-2xl border-dashed border-primary/20 hover:border-primary hover:bg-primary/5 transition-all group" onClick={() => { setShowProjectWizard(true); setShowQuickActions(false); }}>
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center relative group-hover:scale-110 transition-transform">
-                        <CalendarIcon className="w-5 h-5 text-primary" />
-                        <span className="absolute -top-1 -right-1 text-[8px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-bold shadow-sm">PRO</span>
-                      </div>
-                      <span className="text-xs font-medium">Project</span>
-                    </Button>
-                    <Button variant="outline" className="h-24 flex-col gap-3 rounded-2xl border-dashed border-green-500/30 hover:border-green-500 hover:bg-green-500/5 transition-all group" onClick={() => conversationId && toast.info("Use 'Confirm & Book' in chat bubble.")}>
-                      <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Check className="w-5 h-5 text-green-500" />
-                      </div>
-                      <span className="text-xs font-medium">Confirm</span>
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Quick Responses */}
-                {quickActions && quickActions.length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-2 px-1">
-                      <Zap className="w-3 h-3" /> Saved Responses
-                    </h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      {quickActions.map((action) => (
-                        <Button
-                          key={action.id}
-                          variant="secondary"
-                          className="justify-start h-auto py-3 px-4 text-xs text-left whitespace-normal leading-relaxed rounded-xl bg-muted/50 hover:bg-muted transition-colors"
-                          onClick={() => { handleQuickAction(action); setShowQuickActions(false); }}
-                        >
-                          {action.label}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </SheetShell>
-          )}
-
-          {/* Quick Action Trigger Button */}
-          {isArtist && (
-            <div
-              className="absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-8 bg-background/60 backdrop-blur-xl border border-white/10 shadow-lg rounded-full flex items-center justify-center cursor-pointer hover:bg-background/80 transition-all group gap-2 z-20"
-              onClick={() => setShowQuickActions(true)}
-            >
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors">Quick Actions</span>
-              <ChevronUp className="w-3 h-3 text-muted-foreground group-hover:text-primary transition-colors" />
-            </div>
-          )}
-
           {/* Input Bar */}
           <div className="bg-background/60 backdrop-blur-xl border border-white/10 shadow-2xl rounded-[2rem] p-1.5 pl-4 flex items-center gap-2">
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
