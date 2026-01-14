@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { notifyAppointmentConfirmed, notifyNewMessage } from "../_core/pushNotification";
+import { eventBus } from "../_core/eventBus";
 import { protectedProcedure, router } from "../_core/trpc";
 import * as db from "../db";
 
@@ -95,13 +95,13 @@ export const messagesRouter = router({
                     ? "Sent an image"
                     : input.content;
 
-                notifyNewMessage(
-                    recipientId,
-                    ctx.user.name || "Someone",
-                    messagePreview,
-                    input.conversationId
-                ).catch(err => {
-                    console.error('[Push] Failed to send new message notification:', err);
+                eventBus.publish('message.created', {
+                    targetUserId: recipientId,
+                    title: ctx.user.name || "Someone",
+                    body: messagePreview,
+                    data: { conversationId: input.conversationId }
+                }).catch(err => {
+                    console.error('[EventBus] Failed to publish message.created:', err);
                 });
 
                 // Auto-update consultation status if artist replies
@@ -139,13 +139,13 @@ export const messagesRouter = router({
                 const dates = input.content.match(/(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday), (\w+ \d+, \d{4})/g);
                 const firstDate = dates && dates.length > 0 ? dates[0] : "soon";
 
-                notifyAppointmentConfirmed(
-                    recipientId,
-                    ctx.user.name || "A client",
-                    firstDate,
-                    input.conversationId
-                ).catch(err => {
-                    console.error('[Push] Failed to send appointment confirmation notification:', err);
+                eventBus.publish('appointment.confirmed', {
+                    targetUserId: recipientId,
+                    title: ctx.user.name || "A client",
+                    body: `Appointment confirmed for ${firstDate}`, // Assuming body logic needed here or generic?
+                    data: { conversationId: input.conversationId }
+                }).catch(err => {
+                    console.error('[EventBus] Failed to publish appointment.confirmed:', err);
                 });
             }
 

@@ -321,9 +321,23 @@ export const issuedVouchers = mysqlTable("issued_vouchers", {
 	createdAt: timestamp({ mode: 'string' }).default(sql`(now())`),
 	redeemedAt: timestamp({ mode: 'string' }),
 }, (table) => [
-	primaryKey({ columns: [table.id], name: "issued_vouchers_id" }),
-	index("idx_voucher_code").on(table.code),
 ]);
+
+export const notificationOutbox = mysqlTable("notification_outbox", {
+	id: int().autoincrement().notNull(),
+	eventType: varchar({ length: 100 }).notNull(),
+	payloadJson: text().notNull(),
+	status: mysqlEnum(['pending', 'sent', 'failed']).default('pending'),
+	attemptCount: int().default(0),
+	lastError: text(),
+	nextAttemptAt: datetime({ mode: 'string' }),
+	createdAt: timestamp({ mode: 'string' }).default(sql`(now())`),
+	updatedAt: timestamp({ mode: 'string' }).default(sql`(now())`),
+},
+	(table) => [
+		primaryKey({ columns: [table.id], name: "notification_outbox_id" }),
+		index("idx_status_next_attempt").on(table.status, table.nextAttemptAt),
+	]);
 
 
 export type InsertConsultation = InferInsertModel<typeof consultations>;
@@ -334,6 +348,8 @@ export type InsertSocialMessageSync = InferInsertModel<typeof socialMessageSync>
 export type InsertPortfolio = InferInsertModel<typeof portfolios>;
 export type InsertVoucherTemplate = InferInsertModel<typeof voucherTemplates>;
 export type InsertIssuedVoucher = InferInsertModel<typeof issuedVouchers>;
+export type InsertNotificationOutbox = InferInsertModel<typeof notificationOutbox>;
+
 
 export const usersRelations = relations(users, ({ many }) => ({
 	artistAppointments: many(appointments, { relationName: "artist_appointments" }),

@@ -11,6 +11,8 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { verifyAndFixDatabase } from "../verify-and-fix-db";
 import { storageGetData } from "../storage";
+import { startOutboxWorker } from "../workers/outboxProcessor";
+
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -38,6 +40,13 @@ async function startServer() {
   } catch (error) {
     console.error('[Server] Database initialization failed:', error);
     // Continue anyway - the app might work in read-only mode or with existing tables
+  }
+
+  // Start background workers
+  try {
+    startOutboxWorker();
+  } catch (e) {
+    console.error('[Server] Failed to start outbox worker:', e);
   }
 
   const app = express();
