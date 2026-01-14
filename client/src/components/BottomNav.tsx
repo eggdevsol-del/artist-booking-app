@@ -61,6 +61,7 @@ export default function BottomNav() {
                 dragDirectionLock
                 // Only allow drag if we have a contextual row or are already showing it
                 dragListener={!!contextualRow}
+                style={{ touchAction: "pan-x" }}
             >
                 {/* Row 0: Main Nav */}
                 <div className="h-full shrink-0">
