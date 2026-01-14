@@ -29,19 +29,24 @@ export function BottomNavProvider({ children }: { children: React.ReactNode }) {
     const registerRow = useCallback((id: string, content: ReactNode) => {
         setRegistry((prev) => ({ ...prev, [id]: content }));
         setActiveId(id);
+
         return () => {
             setRegistry((prev) => {
                 const newRegistry = { ...prev };
                 delete newRegistry[id];
                 return newRegistry;
             });
-            setActiveId((current) => (current === id ? null : current));
-            // Reset to main row if the active contextual row is removed
-            if (activeId === id) {
-                setIsContextualVisible(false);
-            }
+
+            // Atomically check if we are removing the active row
+            setActiveId((current) => {
+                if (current === id) {
+                    setIsContextualVisible(false);
+                    return null;
+                }
+                return current;
+            });
         };
-    }, [activeId]);
+    }, []);
 
     const setContextualVisible = useCallback((visible: boolean) => {
         if (visible && !contextualRow) return; // Cannot show if no content
