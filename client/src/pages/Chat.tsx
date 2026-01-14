@@ -15,7 +15,7 @@ import { useRegisterBottomNavRow } from "@/contexts/BottomNavContext";
 import { QuickActionsRow } from "@/features/chat/components/QuickActionsRow";
 import { useLocation, useParams } from "wouter";
 import { format } from "date-fns";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { toast } from "sonner";
 
 export default function Chat() {
@@ -25,14 +25,15 @@ export default function Chat() {
   const [showQuickActions, setShowQuickActions] = useState(false);
 
   // Register Bottom Nav Contextual Row (Quick Actions)
-  useRegisterBottomNavRow(
-    "quick-actions",
+  const quickActionsRow = useMemo(() => (
     <QuickActionsRow
       onOpenQuickActions={() => setShowQuickActions(true)}
       onSendProposal={() => setShowProjectWizard(true)}
       onBookNow={() => setShowBookingCalendar(true)}
     />
-  );
+  ), []);
+
+  useRegisterBottomNavRow("quick-actions", quickActionsRow);
 
   const {
     user,
