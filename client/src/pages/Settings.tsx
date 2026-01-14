@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useUIDebug } from "@/_core/contexts/UIDebugContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import DemoDataLoader from "./DemoDataLoader";
 import PushNotificationSettings from "@/components/PushNotificationSettings";
@@ -34,6 +35,7 @@ type SettingsSection = "main" | "profile" | "work-hours" | "quick-actions" | "no
 export default function Settings() {
   const { user, loading, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { showDebugLabels, setShowDebugLabels } = useUIDebug();
   const [, setLocation] = useLocation();
   const [activeSection, setActiveSection] = useState<SettingsSection>("main");
 
@@ -396,6 +398,33 @@ export default function Settings() {
 
           {/* Demo Data Loader (Artist only) */}
           {isArtist && <DemoDataLoader />}
+
+          {/* Advanced Section */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-slate-500/10">
+                  <Zap className="w-5 h-5 text-slate-500" />
+                </div>
+                <CardTitle className="text-base">Advanced</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="debug-labels">Show UI Debug Labels</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Display technical IDs and names on UI overlays
+                  </p>
+                </div>
+                <Switch
+                  id="debug-labels"
+                  checked={showDebugLabels}
+                  onCheckedChange={setShowDebugLabels}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Logout */}
           <Card className="cursor-pointer hover:bg-destructive/5 transition-colors" onClick={handleLogout}>

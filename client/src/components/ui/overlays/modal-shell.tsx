@@ -2,6 +2,7 @@ import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useUIDebug } from "@/_core/contexts/UIDebugContext";
 
 interface ModalShellProps {
     isOpen: boolean;
@@ -26,6 +27,7 @@ export function ModalShell({
     overlayName = "Modal",
     overlayId
 }: ModalShellProps) {
+    const { showDebugLabels } = useUIDebug();
     return (
         <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
             <DialogContent
@@ -40,9 +42,16 @@ export function ModalShell({
                         <DialogTitle className="text-2xl font-bold tracking-tight text-center flex-1">
                             {title}
                         </DialogTitle>
-                        <div className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary tracking-wider uppercase bg-primary/5 absolute right-8 top-8">
-                            UI v2 · {overlayName}
-                        </div>
+                        {showDebugLabels && overlayName && (
+                            <div className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary tracking-wider uppercase bg-primary/5 absolute right-8 top-8">
+                                UI v2 · {overlayName}
+                            </div>
+                        )}
+                        {showDebugLabels && overlayId && (
+                            <div className="px-2 py-0.5 rounded-full bg-destructive/10 border border-destructive/20 text-[10px] font-bold text-destructive tracking-wider font-mono absolute right-8 top-16">
+                                ID: {overlayId}
+                            </div>
+                        )}
                     </div>
                     {description && (
                         <DialogDescription className="text-center text-muted-foreground">

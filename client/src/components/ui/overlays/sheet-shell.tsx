@@ -2,6 +2,7 @@ import React from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useUIDebug } from "@/_core/contexts/UIDebugContext";
 
 interface SheetShellProps {
     isOpen: boolean;
@@ -28,6 +29,7 @@ export function SheetShell({
     overlayName = "Sheet",
     overlayId
 }: SheetShellProps) {
+    const { showDebugLabels } = useUIDebug();
     return (
         <Sheet open={isOpen} onOpenChange={(v) => !v && onClose()}>
             <SheetContent
@@ -46,9 +48,11 @@ export function SheetShell({
                         <SheetTitle className="text-sm font-semibold uppercase tracking-widest text-muted-foreground/80 text-center">
                             {title}
                         </SheetTitle>
-                        <div className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary tracking-wider uppercase bg-primary/5 absolute right-0 top-1/2 -translate-y-1/2">
-                            UI v2 · {overlayName}
-                        </div>
+                        {showDebugLabels && overlayName && (
+                            <div className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-bold text-primary tracking-wider uppercase bg-primary/5 absolute right-0 top-1/2 -translate-y-1/2">
+                                UI v2 · {overlayName}
+                            </div>
+                        )}
                     </div>
                     {description && (
                         <SheetDescription className="text-center text-xs text-muted-foreground">

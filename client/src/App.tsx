@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
+import { UIDebugProvider } from "@/_core/contexts/UIDebugContext";
 import InstallPrompt from "./components/InstallPrompt";
 import IOSInstallPrompt from "./components/IOSInstallPrompt";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -71,14 +72,16 @@ function App() {
       defaultTheme="dark"
       switchable
     >
-      <TooltipProvider>
-        <Toaster />
-        <InstallPrompt />
-        <IOSInstallPrompt />
-        <ErrorBoundary>
-          <Router />
-        </ErrorBoundary>
-      </TooltipProvider>
+      <UIDebugProvider>
+        <TooltipProvider>
+          <Toaster />
+          <InstallPrompt />
+          <IOSInstallPrompt />
+          <ErrorBoundary>
+            <Router />
+          </ErrorBoundary>
+        </TooltipProvider>
+      </UIDebugProvider>
     </ThemeProvider>
   );
 }
