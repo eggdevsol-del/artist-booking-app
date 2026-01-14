@@ -1,13 +1,31 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Calendar, Image, LayoutDashboard, MessageCircle, Settings, Wallet } from "lucide-react";
+// import { Calendar, Image, LayoutDashboard, MessageCircle, Settings, Wallet } from "lucide-react"; // REMOVED: Icons come from config
 import { Link, useLocation } from "wouter";
 import { useTotalUnreadCount } from "@/lib/selectors/conversation.selectors";
 import { BottomNavRow } from "./BottomNavRow";
 import { useBottomNav } from "@/contexts/BottomNavContext";
 import { motion, useAnimation, useMotionValue } from "framer-motion";
 import { useEffect, useRef } from "react";
+import { MAIN_NAV_ITEMS } from "@/_core/bottomNav/defaultNav";
+
+/* 
+   ################################################################################
+   #                           FROZEN API CONTRACT                                #
+   ################################################################################
+   #                                                                              #
+   #  DO NOT ADD ROUTE LOGIC OR CONDITIONAL RENDERING IN THIS COMPONENT.          #
+   #  DO NOT ADD HARDCODED BUTTONS HERE.                                          #
+   #                                                                              #
+   #  This component is a dumb renderer for the BottomNav System.                 #
+   #  See: docs/bottom-nav.md for architectural rules.                            #
+   #                                                                              #
+   #  - Top Level Items: Edit client/src/_core/bottomNav/defaultNav.ts            #
+   #  - Contextual Actions: Use `useRegisterBottomNavRow` in your Page component. #
+   #                                                                              #
+   ################################################################################
+*/
 
 const ROW_HEIGHT = 68; // px
 
@@ -15,20 +33,15 @@ export default function BottomNav() {
     const [location] = useLocation();
     const totalUnreadCount = useTotalUnreadCount();
 
-    const isActive = (p: string) => {
+    const isActive = (p?: string) => {
+        if (!p) return false;
         if (p === "/" && location === "/") return true;
         if (p !== "/" && location.startsWith(p)) return true;
         return false;
     };
 
-    const navItems = [
-        { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { path: "/conversations", label: "Messages", icon: MessageCircle },
-        { path: "/calendar", label: "Calendar", icon: Calendar },
-        { path: "/portfolio", label: "Portfolio", icon: Image },
-        { path: "/wallet", label: "Wallet", icon: Wallet },
-        { path: "/settings", label: "Settings", icon: Settings },
-    ];
+    // Config comes from canonical source
+    const navItems = MAIN_NAV_ITEMS;
 
     const { rowIndex, isContextualVisible, setContextualVisible, contextualRow } = useBottomNav();
 

@@ -79,3 +79,26 @@ To preserve the maintainability and scalability of this system, the following ru
 -   **Contextual Row:** An ephemeral row of actions specific to the user's current task (e.g., "Send Proposal" in Chat).
 -   **Registry:** The internal state map in `BottomNavContext` that stores active contextual rows.
 -   **Gesture Capture Layer:** A transparent overlay in `BottomNav` that intercepts pointer events to ensure reliable swiping without interfering with browser gestures (pull-to-refresh).
+
+## Frozen API Rules
+
+The BottomNav interaction model and API are **FROZEN**. To ensure stability and consistency, strict rules apply:
+
+1.  **Canonical Types Only:** All navigation items must strictly adhere to the types defined in `client/src/_core/bottomNav/types.ts`.
+2.  **Registration First:** 
+    -   **Main Row:** Defined statically in `client/src/_core/bottomNav/defaultNav.ts`.
+    -   **Contextual Rows:** Must be registered via `useRegisterBottomNavRow`.
+3.  **No Exceptions:** Do not add "one-off" buttons directly to `BottomNav.tsx`.
+4.  **No Logic:** `BottomNav.tsx` must remain logic-free regarding routes.
+
+### How to Add/Remove Buttons
+
+**Main Navigation (Dashboard, etc.)**
+-   [ ] Open `client/src/_core/bottomNav/defaultNav.ts`.
+-   [ ] Add or remove items from the `MAIN_NAV_ITEMS` array.
+-   [ ] Ensure the new item matches the `BottomNavButton` interface.
+
+**Contextual Actions (Page-Specific)**
+-   [ ] In your page component (e.g., `Chat.tsx`), define your action row.
+-   [ ] Use `useRegisterBottomNavRow('unique-id', <YourActionRow />)`.
+-   [ ] Do NOT edit `BottomNav.tsx` to add `if (page === 'chat')`.
