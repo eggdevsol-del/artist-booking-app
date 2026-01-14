@@ -106,7 +106,12 @@ artist-booking-app/
 
 - [Development Guide](./DEVELOPMENT.md) - Detailed development instructions
 - [Deployment Guide](./DEPLOY_INSTRUCTIONS.md) - How to deploy to production
+- [Deployment Guide](./DEPLOY_INSTRUCTIONS.md) - How to deploy to production
 - [Deployment Technical](./DEPLOYMENT.md) - Technical deployment details
+
+## UI Systems
+
+- [BottomNav System](./docs/bottom-nav.md) - Architecture and interaction model for the 2D navigation system.
 
 ## Features Roadmap
 
