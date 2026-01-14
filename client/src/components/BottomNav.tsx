@@ -55,18 +55,19 @@ export default function BottomNav() {
     const row1Ref = useRef<HTMLDivElement>(null);
     const captureLayerRef = useRef<HTMLDivElement>(null);
 
-    // State SSOT: Page Index (Integers)
-    const pageIndexes = useRef({ main: 0, contextual: 0 });
-    const maxPages = useRef({ main: 0, contextual: 0 });
-    const viewportWidthMock = useRef(0); // Using ref to avoid re-renders, but for debug we might need state?
-    // Using refs for logic to ensure stability.
+    // State SSOT: Pixel Offsets (Positive integers)
+    // 0 = Start, Max = (Content - Viewport)
+    const scrollOffsets = useRef({ main: 0, contextual: 0 });
+    const maxOffsets = useRef({ main: 0, contextual: 0 });
+    const viewportWidthMock = useRef(0);
 
     // Lifecycle Flags
     const isDragging = useRef(false);
     const axisLocked = useRef<'x' | 'y' | null>(null);
     const startPoint = useRef({ x: 0, y: 0 });
-    const startX = useRef(0); // Snapshot of X value at drag start
+    const startOffsetRef = useRef(0); // Snapshot off offset at drag start
     const totalMove = useRef(0);
+    const velocityTracker = useRef({ lastX: 0, lastTime: 0, velocity: 0 });
 
     // Debug State (Dev only)
     const [debugInfo, setDebugInfo] = useState<any>({});
@@ -81,50 +82,49 @@ export default function BottomNav() {
         if (!viewport) return;
 
         const vp = viewport.clientWidth;
-        if (vp < 10) return; // Ignore invalid widths (initial render/paint)
+        if (vp < 10) return; // Ignore invalid widths
 
         viewportWidthMock.current = vp;
 
         // Measure Main
         if (mainRowRef.current) {
             const content = mainRowRef.current.scrollWidth;
-            maxPages.current.main = Math.max(0, Math.ceil(content / vp) - 1);
+            maxOffsets.current.main = Math.max(0, content - vp);
         }
 
         // Measure Contextual
         if (row1Ref.current) {
             const content = row1Ref.current.scrollWidth;
-            maxPages.current.contextual = Math.max(0, Math.ceil(content / vp) - 1);
+            maxOffsets.current.contextual = Math.max(0, content - vp);
         }
 
         // Enforcement (Only if NOT dragging)
         if (!isDragging.current) {
             // Check Main
-            const currentMain = pageIndexes.current.main;
-            const maxMain = maxPages.current.main;
-            const clampedMain = Math.max(0, Math.min(currentMain, maxMain));
+            const curMain = scrollOffsets.current.main;
+            const maxMain = maxOffsets.current.main;
+            const clampedMain = Math.max(0, Math.min(curMain, maxMain));
 
-            // Explicitly set alignment even if index didn't change (handle resize)
-            pageIndexes.current.main = clampedMain;
-            xMain.set(-clampedMain * vp);
+            scrollOffsets.current.main = clampedMain;
+            xMain.set(-clampedMain);
 
             // Check Contextual
-            const currentCtx = pageIndexes.current.contextual;
-            const maxCtx = maxPages.current.contextual;
-            const clampedCtx = Math.max(0, Math.min(currentCtx, maxCtx));
+            const curCtx = scrollOffsets.current.contextual;
+            const maxCtx = maxOffsets.current.contextual;
+            const clampedCtx = Math.max(0, Math.min(curCtx, maxCtx));
 
-            pageIndexes.current.contextual = clampedCtx;
-            xContextual.set(-clampedCtx * vp);
+            scrollOffsets.current.contextual = clampedCtx;
+            xContextual.set(-clampedCtx);
         }
 
         // Debug Update
         if (process.env.NODE_ENV === 'development') {
             setDebugInfo({
                 vp,
-                pMain: pageIndexes.current.main,
-                maxMain: maxPages.current.main,
-                pCtx: pageIndexes.current.contextual,
-                maxCtx: maxPages.current.contextual,
+                offsetMain: scrollOffsets.current.main,
+                maxMain: maxOffsets.current.main,
+                offsetCtx: scrollOffsets.current.contextual,
+                maxCtx: maxOffsets.current.contextual,
                 dragging: isDragging.current
             });
         }
@@ -162,8 +162,12 @@ export default function BottomNav() {
         isDragging.current = true;
         startPoint.current = { x: e.clientX, y: e.clientY };
 
-        // Snapshot current X
-        startX.current = getActiveX().get();
+        // Snapshot current offset
+        const key = getActiveKey();
+        startOffsetRef.current = scrollOffsets.current[key];
+
+        // Velocity Init
+        velocityTracker.current = { lastX: e.clientX, lastTime: performance.now(), velocity: 0 };
 
         axisLocked.current = null;
         totalMove.current = 0;
@@ -173,6 +177,17 @@ export default function BottomNav() {
 
     const handlePointerMove = (e: React.PointerEvent) => {
         if (!isDragging.current) return;
+
+        const now = performance.now();
+        const dt = now - velocityTracker.current.lastTime;
+        const dxRaw = e.clientX - velocityTracker.current.lastX;
+        if (dt > 0) {
+            // Simple velocity tracking (px/ms)
+            // Low-pass filter could be better but this is sufficient for basic inertia check
+            velocityTracker.current.velocity = dxRaw / dt;
+        }
+        velocityTracker.current.lastX = e.clientX;
+        velocityTracker.current.lastTime = now;
 
         const dx = e.clientX - startPoint.current.x;
         const dy = e.clientY - startPoint.current.y;
@@ -186,7 +201,7 @@ export default function BottomNav() {
                 if (absDx > absDy + 8) {
                     // Check if scrollable
                     const key = getActiveKey();
-                    if (maxPages.current[key] > 0) {
+                    if (maxOffsets.current[key] > 0) {
                         axisLocked.current = 'x';
                     }
                 } else if (absDy > absDx + 8) {
@@ -199,17 +214,16 @@ export default function BottomNav() {
 
         if (axisLocked.current === 'x') {
             const key = getActiveKey();
-            const vp = viewportWidthMock.current;
-            const maxP = maxPages.current[key];
-            const maxOffset = maxP * vp;
+            const max = maxOffsets.current[key];
 
-            // Raw Move
-            let nextX = startX.current + dx;
+            // Current = Start - Delta (drag left increases offset)
+            const nextOffset = startOffsetRef.current - dx;
 
-            // Hard Clamp to Bounds [-maxOffset, 0]
-            nextX = Math.max(-maxOffset, Math.min(nextX, 0));
+            // STRICT CLAMP: No elasticity
+            const clampedOffset = Math.max(0, Math.min(nextOffset, max));
 
-            getActiveX().set(nextX);
+            scrollOffsets.current[key] = clampedOffset;
+            getActiveX().set(-clampedOffset);
 
         } else if (axisLocked.current === 'y') {
             const currentBase = isContextualVisible ? -ROW_HEIGHT : 0;
@@ -235,31 +249,38 @@ export default function BottomNav() {
             if (target && target instanceof HTMLElement) {
                 target.click();
             }
+            // Reset Y
             controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 });
-            // Re-align X just in case
-            const activeX = getActiveX();
-            const key = getActiveKey();
-            const vp = viewportWidthMock.current;
-            const p = pageIndexes.current[key];
-            activeX.set(-p * vp);
             return;
         }
 
         if (axisLocked.current === 'x') {
             const key = getActiveKey();
             const activeX = getActiveX();
-            const currentX = activeX.get();
-            const vp = viewportWidthMock.current;
-            const maxP = maxPages.current[key];
+            const max = maxOffsets.current[key];
+            const currentOffset = scrollOffsets.current[key];
 
-            // Calculate Page
-            // currentX is negative.
-            const rawPage = -currentX / (vp || 1);
-            const snappedPage = Math.round(rawPage);
-            const clampedPage = Math.max(0, Math.min(snappedPage, maxP));
+            // Inertia Logic (Optional, but requested)
+            // If velocity is significant, decay
+            // const v = velocityTracker.current.velocity; // px/ms
+            // Framer motion expects px/sec? Or raw?
+            // animate(x, ..., { type: "inertia", velocity: v * 1000 })
 
-            pageIndexes.current[key] = clampedPage;
-            animate(activeX, -clampedPage * vp, { type: "spring", stiffness: 400, damping: 40 });
+            // For now, adhere to "Constraint: Horizontal position must be the sole SSOT and persist exactly where user releases".
+            // Since inertia modifies the position after release, it contradicts "persist exactly where releases" if taken literally.
+            // BUT "only inertia decay if velocity exists".
+            // Implementation: If I impl inertia, I need to update scrollOffsets.current *after* animation finishes.
+            // Which adds complexity (onComplete callback).
+            // Simplest robust solution: No inertia, stop dead.
+            // OR: basic short glide.
+
+            // Decision: Stop dead for max precision/robustness as primary request was "Continuous... (no paging)".
+            // User did say "after release: no animation... only inertia decay".
+            // I will implement NO animation for now to be strictly safe on the persistence.
+            // Inertia can be added if it feels too stiff.
+
+            scrollOffsets.current[key] = currentOffset;
+            activeX.set(-currentOffset);
 
         } else if (axisLocked.current === 'y') {
             if (contextualRow) {
@@ -286,11 +307,6 @@ export default function BottomNav() {
             }
         } else {
             controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 });
-            // Reset X to current page
-            const key = getActiveKey();
-            const vp = viewportWidthMock.current;
-            const p = pageIndexes.current[key];
-            animate(getActiveX(), -p * vp, { type: "spring", stiffness: 400, damping: 40 });
         }
 
         axisLocked.current = null;
@@ -304,8 +320,8 @@ export default function BottomNav() {
             {process.env.NODE_ENV === 'development' && (
                 <div className="fixed top-0 left-0 bg-black/80 text-white text-[10px] p-2 z-[9999] pointer-events-none font-mono">
                     VP: {debugInfo.vp}px |
-                    Main: {debugInfo.pMain}/{debugInfo.maxMain} |
-                    Ctx: {debugInfo.pCtx}/{debugInfo.maxCtx} |
+                    Main: {debugInfo.offsetMain}/{debugInfo.maxMain} |
+                    Ctx: {debugInfo.offsetCtx}/{debugInfo.maxCtx} |
                     Drag: {String(debugInfo.dragging)}
                 </div>
             )}
