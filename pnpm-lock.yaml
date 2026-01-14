@@ -282,10 +282,22 @@ importers:
       vitest:
         specifier: ^2.1.4
         version: 2.1.9(@types/node@24.10.7)(lightningcss@1.30.2)(terser@5.44.1)
+      workbox-cacheable-response:
+        specifier: ^7.4.0
+        version: 7.4.0
       workbox-core:
         specifier: ^7.4.0
         version: 7.4.0
+      workbox-expiration:
+        specifier: ^7.4.0
+        version: 7.4.0
       workbox-precaching:
+        specifier: ^7.4.0
+        version: 7.4.0
+      workbox-routing:
+        specifier: ^7.4.0
+        version: 7.4.0
+      workbox-strategies:
         specifier: ^7.4.0
         version: 7.4.0
 
