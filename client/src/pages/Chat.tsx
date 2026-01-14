@@ -22,16 +22,19 @@ export default function Chat() {
   const { id } = useParams<{ id: string }>();
   const conversationId = parseInt(id || "0");
   const [, setLocation] = useLocation();
-  const [showQuickActions, setShowQuickActions] = useState(false);
+  const [, setLocation] = useLocation();
 
+
+  // Register Bottom Nav Contextual Row (Quick Actions)
   // Register Bottom Nav Contextual Row (Quick Actions)
   const quickActionsRow = useMemo(() => (
     <QuickActionsRow
-      onOpenQuickActions={() => setShowQuickActions(true)}
       onSendProposal={() => setShowProjectWizard(true)}
       onBookNow={() => setShowBookingCalendar(true)}
+      quickActions={user?.role === 'artist' || user?.role === 'admin' ? quickActions : []}
+      onQuickActionRequest={handleQuickAction}
     />
-  ), []);
+  ), [setShowProjectWizard, setShowBookingCalendar, quickActions, user?.role, handleQuickAction]);
 
   useRegisterBottomNavRow("quick-actions", quickActionsRow);
 
