@@ -1,4 +1,4 @@
-import { and, desc, eq, not } from "drizzle-orm";
+import { and, desc, eq, not, sql } from "drizzle-orm";
 import {
     conversations,
     InsertConversation,
@@ -74,7 +74,7 @@ export async function updateConversationTimestamp(conversationId: number) {
 
     await db
         .update(conversations)
-        .set({ lastMessageAt: new Date().toISOString() })
+        .set({ lastMessageAt: sql`NOW()` })
         .where(eq(conversations.id, conversationId));
 }
 
@@ -245,7 +245,7 @@ export async function upsertSocialMessageSync(
     if (existing) {
         await db
             .update(socialMessageSync)
-            .set({ ...sync, updatedAt: new Date() })
+            .set({ ...sync, updatedAt: sql`NOW()` })
             .where(eq(socialMessageSync.id, existing.id));
         return getSocialMessageSync(sync.artistId, sync.platform as any);
     } else {
