@@ -32,102 +32,131 @@ export default function BottomNav() {
 
     const { rowIndex, isContextualVisible, setContextualVisible, contextualRow } = useBottomNav();
 
-    // Gesture State
+    // Animation Controls & Motion Values
     const controls = useAnimation();
     const y = useMotionValue(0);
     const mainRowRef = useRef<HTMLDivElement>(null);
-    const axisLocked = useRef<'x' | 'y' | null>(null);
 
-    // Sync animation with state changes
+    // Manual Drag State
+    const isDragging = useRef(false);
+    const startPoint = useRef({ x: 0, y: 0 }); // Pointer start
+    const axisLocked = useRef<'x' | 'y' | null>(null);
+    const initialOffset = useRef(0); // Where Y motion value started
+    const scrollStart = useRef(0); // Where X scroll started
+
+    // Sync animation with state changes when NOT dragging
     useEffect(() => {
-        controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 });
+        if (!isDragging.current) {
+            controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 });
+        }
     }, [isContextualVisible, controls]);
 
-    const handlePanStart = () => {
+    // Pointer Events Handlers
+    const handlePointerDown = (e: React.PointerEvent) => {
+        // Essential: capture pointer to track movement even if it leaves element
+        e.currentTarget.setPointerCapture(e.pointerId);
+
+        isDragging.current = true;
+        startPoint.current = { x: e.clientX, y: e.clientY };
         axisLocked.current = null;
+
+        // Capture current state
+        initialOffset.current = y.get();
+        if (mainRowRef.current) {
+            scrollStart.current = mainRowRef.current.scrollLeft;
+        }
+
+        console.log('[BottomNav] Pointer Down', { x: e.clientX, y: e.clientY });
     };
 
-    const handlePan = (event: any, info: any) => {
-        const { offset, delta } = info;
-        const absX = Math.abs(offset.x);
-        const absY = Math.abs(offset.y);
+    const handlePointerMove = (e: React.PointerEvent) => {
+        if (!isDragging.current) return;
 
-        // Axis Locking Logic
+        const dx = e.clientX - startPoint.current.x;
+        const dy = e.clientY - startPoint.current.y;
+        const absDx = Math.abs(dx);
+        const absDy = Math.abs(dy);
+
+        // Axis Locking (Threshold > 14px)
         if (!axisLocked.current) {
-            if (absX > 10 || absY > 10) { // Threshold ~10-12px
-                if (absY > absX * 1.15) {
+            if (absDx + absDy > 14) {
+                if (absDy > absDx * 1.2) {
                     axisLocked.current = 'y';
-                    // If locking vertical, verify we have context to swipe to
+                    // Check if vertical action is possible
                     if (!contextualRow && !isContextualVisible) {
-                        axisLocked.current = 'x'; // Force X if no vertical action possible
+                        axisLocked.current = 'x'; // Fallback to scroll if no row to switch to
                     }
-                } else if (absX > absY * 1.15) {
+                } else if (absDx > absDy * 1.2) {
                     axisLocked.current = 'x';
                 }
+
+                console.log('[BottomNav] Axis Locked', axisLocked.current);
             }
         }
 
-        if (axisLocked.current === 'y' && contextualRow) {
-            // Manual Vertical Translation
-            // Base Y is 0 (Row 0) or -ROW_HEIGHT (Row 1)
-            // dragging UP (negative delta) from 0 -> goes to -ROW_HEIGHT
-            // dragging DOWN (positive delta) from -ROW_HEIGHT -> goes to 0
+        if (axisLocked.current === 'y') {
+            // Vertical Paging Logic
+            // Clamp translation:
+            // If starting at 0 (Row 0), can go up to -ROW_HEIGHT
+            // If starting at -ROW_HEIGHT (Row 1), can go down to 0
+
+            // Logic: Target Y = Start base + dy
+            // Clamped between -ROW_HEIGHT and 0
 
             const currentBase = isContextualVisible ? -ROW_HEIGHT : 0;
-            let newY = currentBase + offset.y;
+            let targetY = currentBase + dy;
 
-            // Clamp
-            // Min: -ROW_HEIGHT (Full Context Visible)
-            // Max: 0 (Main Nav Visible)
-            // Add some elasticity if desired, but strict clamping prevents 'flying'
-            if (newY > 0) newY = newY * 0.2; // Elastic pull down
-            if (newY < -ROW_HEIGHT) newY = -ROW_HEIGHT + (newY + ROW_HEIGHT) * 0.2; // Elastic pull up
+            // Elasticity / Clamping
+            if (targetY > 0) targetY = targetY * 0.2; // Dragging down from top
+            if (targetY < -ROW_HEIGHT) targetY = -ROW_HEIGHT + (targetY + ROW_HEIGHT) * 0.2; // Dragging up from bottom
 
-            y.set(newY);
+            y.set(targetY);
 
-        } else if (axisLocked.current === 'x' || !axisLocked.current) {
-            // Horizontal Scroll - Manual Handling since touch-action: none matches
+            console.log('[BottomNav] Y Drag', { dy, targetY });
+
+        } else if (axisLocked.current === 'x') {
+            // Horizontal Scrolling
             if (mainRowRef.current) {
-                mainRowRef.current.scrollLeft -= delta.x;
+                mainRowRef.current.scrollLeft = scrollStart.current - dx;
             }
         }
     };
 
-    const handlePanEnd = (event: any, info: any) => {
-        if (axisLocked.current === 'y' && contextualRow) {
-            const { offset, velocity } = info;
-            const currentY = y.get(); // This drives the animation frame, but we need decision logic
+    const handlePointerUp = (e: React.PointerEvent) => {
+        if (!isDragging.current) return;
+        isDragging.current = false;
+        e.currentTarget.releasePointerCapture(e.pointerId);
 
-            const isRow0 = !isContextualVisible;
+        if (axisLocked.current === 'y') {
+            const dy = e.clientY - startPoint.current.y;
+            const absDy = Math.abs(dy);
             const threshold = ROW_HEIGHT * 0.25;
 
-            let targetRow = isContextualVisible ? 1 : 0;
+            // Velocity approximation could be added, but threshold is robust
+            const isRow0 = !isContextualVisible;
 
-            // Flip Logic
+            let targetRow = isContextualVisible ? 1 : 0; // default to staying put
+
             if (isRow0) {
-                // Trying to go to Row 1 (Swipe Up)
-                // offset.y is negative
-                if (offset.y < -threshold || velocity.y < -200) {
-                    targetRow = 1;
-                }
+                // On Row 0. Swipe UP (negative dy) > threshold commits to Row 1
+                if (dy < -threshold) targetRow = 1;
             } else {
-                // Trying to go to Row 0 (Swipe Down)
-                // offset.y is positive
-                if (offset.y > threshold || velocity.y > 200) {
-                    targetRow = 0;
-                }
+                // On Row 1. Swipe DOWN (positive dy) > threshold commits to Row 0
+                if (dy > threshold) targetRow = 0;
             }
 
-            // Commit
+            console.log('[BottomNav] Commit Check', { dy, threshold, targetRow });
+
             if (targetRow === 1) {
-                setContextualVisible(true);
+                if (!isContextualVisible) setContextualVisible(true);
                 controls.start({ y: -ROW_HEIGHT });
             } else {
-                setContextualVisible(false);
+                if (isContextualVisible) setContextualVisible(false);
                 controls.start({ y: 0 });
             }
+
         } else {
-            // Reset if needed (e.g. if we started dragging but didn't lock Y)
+            // Snap back if no lock or X lock (X doesn't snap Y)
             controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 });
         }
 
@@ -137,17 +166,18 @@ export default function BottomNav() {
     return (
         <nav
             className="fixed bottom-6 inset-x-6 z-50 floating-nav rounded-[2.5rem] bg-none pb-0 overflow-hidden h-[68px]"
-            // touch-action: none allows both x and y to be captured by JS
             style={{ touchAction: "none" }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            onPointerLeave={handlePointerUp}
         >
             <motion.div
-                className="flex flex-col h-auto relative" // Auto height to fit children
+                className="flex flex-col h-auto relative"
                 animate={controls}
-                style={{ y }} // Bind MotionValue
+                style={{ y }}
                 transition={{ type: "spring", stiffness: 400, damping: 40 }}
-                onPanStart={handlePanStart}
-                onPan={handlePan}
-                onPanEnd={handlePanEnd}
             >
                 {/* Row 0: Main Nav */}
                 <div className="h-[68px] shrink-0">
@@ -163,6 +193,9 @@ export default function BottomNav() {
                                             "flex-col h-auto py-2 px-3 gap-1 hover:bg-transparent min-w-[70px] snap-center shrink-0 transition-all duration-300 relative",
                                             active ? "text-primary scale-105" : "text-muted-foreground opacity-70 hover:opacity-100"
                                         )}
+                                    // Stop propagation on buttons to effectively use them? 
+                                    // Actually no, we want swipes to start even if on a button.
+                                    // If a button is clicked without drag, standard click event fires.
                                     >
                                         <div className="relative">
                                             <item.icon className={cn("w-6 h-6 mb-0.5", active && "fill-current/20")} />
@@ -185,12 +218,17 @@ export default function BottomNav() {
                     </BottomNavRow>
                 </div>
 
-                {/* Row 1: Contextual Row (if exists) */}
+                {/* Row 1: Contextual Row - Always render if exists! */}
                 {contextualRow && (
                     <div className="h-[68px] shrink-0">
                         {contextualRow}
                     </div>
                 )}
+                {/* 
+                   If contextualRow is conditionally rendered, we still need space?
+                   The current implementation renders <div> if contextualRow is truthy.
+                   If not truthy, we just have 1 row. y is clamped to 0. Correct.
+                */}
             </motion.div>
         </nav>
     );
