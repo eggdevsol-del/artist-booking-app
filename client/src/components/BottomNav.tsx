@@ -6,7 +6,7 @@ import { Link, useLocation } from "wouter";
 import { useTotalUnreadCount } from "@/lib/selectors/conversation.selectors";
 import { BottomNavRow } from "./BottomNavRow";
 import { useBottomNav } from "@/contexts/BottomNavContext";
-import { motion, useAnimation, useMotionValue } from "framer-motion";
+import { motion, useAnimation, useMotionValue, animate } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { MAIN_NAV_ITEMS } from "@/_core/bottomNav/defaultNav";
 
@@ -45,9 +45,7 @@ export default function BottomNav() {
 
     const { rowIndex, isContextualVisible, setContextualVisible, contextualRow } = useBottomNav();
 
-    import { motion, useAnimation, useMotionValue, animate } from "framer-motion";
-    import { useEffect, useRef } from "react";
-    // ... imports
+
 
     // ... inside component
     // Animation Controls & Motion Values
