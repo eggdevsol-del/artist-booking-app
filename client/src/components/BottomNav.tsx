@@ -45,30 +45,31 @@ export default function BottomNav() {
 
     const { rowIndex, isContextualVisible, setContextualVisible, contextualRow } = useBottomNav();
 
+    import { motion, useAnimation, useMotionValue, animate } from "framer-motion";
+    import { useEffect, useRef } from "react";
+    // ... imports
+
+    // ... inside component
     // Animation Controls & Motion Values
     const controls = useAnimation();
     const y = useMotionValue(0);
+    const x = useMotionValue(0); // Horizontal transform
     const mainRowRef = useRef<HTMLDivElement>(null);
 
     // Manual Drag State
     const isDragging = useRef(false);
-    const startPoint = useRef({ x: 0, y: 0 }); // Pointer start
+    const startPoint = useRef({ x: 0, y: 0 });
     const axisLocked = useRef<'x' | 'y' | null>(null);
-    const initialOffset = useRef(0); // Where Y motion value started
-    const scrollStart = useRef(0); // Where X scroll started
-    const totalMove = useRef(0); // To track total movement for click detection
+    const initialOffset = useRef(0);
+    const pageIndex = useRef(0); // Horizontal Page Index
+    const pageWidth = useRef(0);
+    const maxPages = useRef(0);
+    const totalMove = useRef(0);
     const captureLayerRef = useRef<HTMLDivElement>(null);
 
-    // Sync animation with state changes when NOT dragging
-    useEffect(() => {
-        if (!isDragging.current) {
-            controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 });
-        }
-    }, [isContextualVisible, controls]);
+    // ... useEffect for Y (unchanged)
 
-    // Pointer Events Handlers attached to Capture Layer
     const handlePointerDown = (e: React.PointerEvent) => {
-        // Essential: capture pointer
         if (captureLayerRef.current) {
             captureLayerRef.current.setPointerCapture(e.pointerId);
         }
@@ -78,13 +79,20 @@ export default function BottomNav() {
         axisLocked.current = null;
         totalMove.current = 0;
 
-        // Capture current state
         initialOffset.current = y.get();
+
+        // Measure for Horizontal Logic
         if (mainRowRef.current) {
-            scrollStart.current = mainRowRef.current.scrollLeft;
+            const containerWidth = mainRowRef.current.parentElement?.clientWidth || window.innerWidth;
+            const contentWidth = mainRowRef.current.scrollWidth;
+            pageWidth.current = containerWidth;
+            // Calculate max pages based on content fitting
+            maxPages.current = Math.max(0, Math.ceil(contentWidth / containerWidth) - 1);
+
+            // Note: If contentWidth <= containerWidth, maxPages is 0.
         }
 
-        console.log('[BottomNav] Pointer Down', { x: e.clientX, y: e.clientY });
+        console.log('[BottomNav] Pointer Down', { x: e.clientX, y: e.clientY, page: pageIndex.current });
     };
 
     const handlePointerMove = (e: React.PointerEvent) => {
@@ -95,47 +103,49 @@ export default function BottomNav() {
         const absDx = Math.abs(dx);
         const absDy = Math.abs(dy);
 
-        // Track total movement for click detection
         totalMove.current = Math.max(totalMove.current, Math.hypot(dx, dy));
 
-        // Axis Locking (Threshold > 8px - reduced for robustness)
         if (!axisLocked.current) {
             if (absDx + absDy > 8) {
-                // Strict 1.2 ratio for vertical lock
-                if (absDy > absDx * 1.2) {
+                if (absDy > absDx * 1.25) { // Increased vertical threshold slightly for better H-scroll detection bias?
                     axisLocked.current = 'y';
-                    // Check if vertical action is possible
                     if (!contextualRow && !isContextualVisible) {
-                        axisLocked.current = 'x'; // Fallback to scroll if no row to switch to
+                        axisLocked.current = 'x';
                     }
-                } else if (absDx > absDy * 1.2) {
+                } else if (absDx > absDy * 1.25) {
                     axisLocked.current = 'x';
                 }
-
-                console.log('[BottomNav] Axis Locked', axisLocked.current);
             }
         }
 
         if (axisLocked.current === 'y') {
-            // Vertical Paging Paging
             const currentBase = isContextualVisible ? -ROW_HEIGHT : 0;
             let targetY = currentBase + dy;
 
-            // Elasticity / Clamping
             if (targetY > 0) targetY = targetY * 0.2;
             if (targetY < -ROW_HEIGHT) targetY = -ROW_HEIGHT + (targetY + ROW_HEIGHT) * 0.2;
 
             y.set(targetY);
 
-            console.log('[BottomNav] Y Drag', { dy, targetY });
-
         } else if (axisLocked.current === 'x') {
-            // Horizontal Scrolling
-            if (mainRowRef.current) {
-                mainRowRef.current.scrollLeft = scrollStart.current - dx;
+            // Horizontal Paging Move (Continuous)
+            // Formula: x = -pageIndex * width + dragOffsetX
+            let targetX = -pageIndex.current * pageWidth.current + dx;
+
+            // Elasticity at edges
+            const minX = -maxPages.current * pageWidth.current;
+            const maxX = 0;
+
+            if (targetX > maxX) {
+                targetX = maxX + (targetX - maxX) * 0.3; // Left edge resistance
+            } else if (targetX < minX) {
+                targetX = minX + (targetX - minX) * 0.3; // Right edge resistance
             }
+
+            x.set(targetX);
         }
     };
+
 
     const handlePointerUp = (e: React.PointerEvent) => {
         if (!isDragging.current) return;
@@ -146,16 +156,13 @@ export default function BottomNav() {
 
         // Click Detection / Passthrough (Threshold < 6px)
         if (totalMove.current < 6 && captureLayerRef.current) {
-            console.log('[BottomNav] Tap Detected - Passthrough Click');
-            // Hide capture layer momentarily to find element below
+            // ... (Passthrough logic unchanged)
             captureLayerRef.current.style.visibility = 'hidden';
             const target = document.elementFromPoint(e.clientX, e.clientY);
             captureLayerRef.current.style.visibility = 'visible';
 
             if (target && target instanceof HTMLElement) {
                 target.click();
-                // If the target is inside a button link, we might need to find the closest button/link?
-                // Standard click() bubbles, so clicking the icon inside the button works.
             }
             controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 }); // Ensure stable state
             return;
@@ -174,8 +181,6 @@ export default function BottomNav() {
                 if (dy > threshold) targetRow = 0;
             }
 
-            console.log('[BottomNav] Commit Check', { dy, threshold, targetRow });
-
             if (targetRow === 1) {
                 if (!isContextualVisible) setContextualVisible(true);
                 controls.start({ y: -ROW_HEIGHT });
@@ -183,8 +188,31 @@ export default function BottomNav() {
                 if (isContextualVisible) setContextualVisible(false);
                 controls.start({ y: 0 });
             }
-        } else {
+        }
+        else if (axisLocked.current === 'x') {
+            const dx = e.clientX - startPoint.current.x;
+            const thresh = pageWidth.current * 0.25;
+
+            // Commit Direction
+            if (dx < -thresh) {
+                // Next Page
+                pageIndex.current = Math.min(pageIndex.current + 1, maxPages.current);
+            } else if (dx > thresh) {
+                // Prev Page
+                pageIndex.current = Math.max(pageIndex.current - 1, 0);
+            }
+
+            // Snap Animation
+            animate(x, -pageIndex.current * pageWidth.current, {
+                type: "spring", stiffness: 400, damping: 40
+            });
+        }
+        else {
+            // Reset if no lock or failed lock
             controls.start({ y: isContextualVisible ? -ROW_HEIGHT : 0 });
+            animate(x, -pageIndex.current * pageWidth.current, {
+                type: "spring", stiffness: 400, damping: 40
+            });
         }
 
         axisLocked.current = null;
@@ -229,7 +257,7 @@ export default function BottomNav() {
             >
                 {/* Row 0: Main Nav */}
                 <div className="h-[68px] shrink-0">
-                    <BottomNavRow ref={mainRowRef}>
+                    <BottomNavRow ref={mainRowRef} style={{ x }}>
                         {navItems.map((item) => {
                             const active = isActive(item.path);
 
