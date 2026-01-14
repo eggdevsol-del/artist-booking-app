@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { WizardShell, WizardStepConfig } from "@/ui/wizard";
 
 type WizardStep = 'service' | 'frequency' | 'review' | 'success';
 
@@ -282,74 +283,59 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
         </div>
     );
 
+    // -- Step Configuration --
+
+    const stepsConfigs: WizardStepConfig[] = [
+        {
+            id: 'service',
+            label: 'Select Service',
+            render: renderServiceStep,
+            canNext: !!selectedService,
+            onNext: () => setStep('frequency'),
+            nextLabel: 'Next',
+            hideBack: true
+        },
+        {
+            id: 'frequency',
+            label: 'Select Frequency',
+            render: renderFrequencyStep,
+            canNext: true,
+            onNext: () => setStep('review'),
+            nextLabel: 'Find Dates'
+        },
+        {
+            id: 'review',
+            label: 'Review & Send',
+            render: renderReviewStep,
+            canNext: !!availability && !sendMessageMutation.isPending,
+            isNextLoading: sendMessageMutation.isPending,
+            onNext: handleConfirmBooking,
+            nextLabel: 'Send Proposal'
+        },
+        {
+            id: 'success',
+            label: 'Success',
+            render: renderSuccessStep,
+            hideNext: true,
+            hideBack: true,
+            customFooter: null // Footer buttons are inside the renderSuccessStep
+        }
+    ];
+
+    const currentStepIndex = stepsConfigs.findIndex(s => s.id === step);
+
     return (
-        <Dialog open={isOpen} onOpenChange={(v) => !v && handleClose()}>
-            <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col p-1 gap-0 border border-white/10 bg-background/95 backdrop-blur-[20px] shadow-2xl rounded-[2.5rem] overflow-hidden text-white outline-none">
-                <DialogHeader className="p-8 pb-2 shrink-0 border-b border-white/5">
-                    <DialogTitle className="text-2xl font-bold tracking-tight text-center">
-                        {step === 'service' && "Select Service"}
-                        {step === 'frequency' && "Select Frequency"}
-                        {step === 'review' && "Review & Send"}
-                        {step === 'success' && "Success"}
-                    </DialogTitle>
-                </DialogHeader>
-
-                <div className="px-8 py-2 overflow-y-auto flex-1 scrollbar-hide">
-                    {step === 'service' && renderServiceStep()}
-                    {step === 'frequency' && renderFrequencyStep()}
-                    {step === 'review' && renderReviewStep()}
-                    {step === 'success' && renderSuccessStep()}
-                </div>
-
-                {step !== 'success' && (
-                    <DialogFooter className="flex flex-row justify-between items-center p-8 pt-4 shrink-0 gap-4">
-                        <div className="flex-1">
-                            {step !== 'service' ? (
-                                <Button
-                                    variant="ghost"
-                                    onClick={() => setStep(prev => prev === 'review' ? 'frequency' : 'service')}
-                                    className="text-white/50 hover:text-white hover:bg-white/5 -ml-4 font-bold"
-                                >
-                                    Back
-                                </Button>
-                            ) : <div />}
-                        </div>
-
-                        <div className="flex-1 flex justify-end">
-                            {step === 'service' && (
-                                <Button
-                                    disabled={!selectedService}
-                                    onClick={() => setStep('frequency')}
-                                    className="rounded-full px-8 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/25 disabled:opacity-50 disabled:shadow-none transition-all"
-                                >
-                                    Next
-                                </Button>
-                            )}
-
-                            {step === 'frequency' && (
-                                <Button
-                                    onClick={() => setStep('review')}
-                                    className="rounded-full px-8 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/25 transition-all"
-                                >
-                                    Find Dates
-                                </Button>
-                            )}
-
-                            {step === 'review' && (
-                                <Button
-                                    disabled={!availability || sendMessageMutation.isPending}
-                                    onClick={handleConfirmBooking}
-                                    className="rounded-full px-8 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/30 transition-all w-full sm:w-auto"
-                                >
-                                    {sendMessageMutation.isPending ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : null}
-                                    Send Proposal
-                                </Button>
-                            )}
-                        </div>
-                    </DialogFooter>
-                )}
-            </DialogContent>
-        </Dialog>
+        <WizardShell
+            isOpen={isOpen}
+            onClose={handleClose}
+            title={stepsConfigs[currentStepIndex]?.label}
+            steps={stepsConfigs}
+            currentStepIndex={currentStepIndex}
+            onStepChange={(index) => {
+                const newStep = stepsConfigs[index]?.id as WizardStep;
+                if (newStep) setStep(newStep);
+            }}
+        />
     );
 
 }

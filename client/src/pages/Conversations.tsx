@@ -23,15 +23,7 @@ export default function Conversations() {
     refetchInterval: 10000,
   });
 
-  const [viewedConsultations, setViewedConsultations] = useState<Set<number>>(() => {
-    try {
-      const stored = localStorage.getItem('viewedConsultations');
-      return stored ? new Set(JSON.parse(stored)) : new Set();
-    } catch (e) {
-      console.error("Failed to parse viewedConsultations", e);
-      return new Set();
-    }
-  });
+
 
   const [isConsultationsOpen, setIsConsultationsOpen] = useState(true);
 
@@ -43,10 +35,31 @@ export default function Conversations() {
     },
   });
 
+  const utils = trpc.useUtils();
   const updateConsultationMutation = trpc.consultations.update.useMutation({
-    onSuccess: () => {
-      refetch();
-      refetchPending();
+    onMutate: async (variables) => {
+      // Optimistic update
+      await utils.consultations.list.cancel();
+      const previousData = utils.consultations.list.getData();
+
+      if (previousData) {
+        // Optimistically mark as viewed
+        utils.consultations.list.setData(undefined, previousData.map(c =>
+          c.id === variables.id ? { ...c, viewed: 1 } : c // Assuming server returns 1/0 or boolean? Current code assumes numeric 1/0 or boolean based on usage
+        ));
+      }
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      // Rollback
+      if (context?.previousData) {
+        utils.consultations.list.setData(undefined, context.previousData);
+      }
+    },
+    onSettled: () => {
+      utils.consultations.list.invalidate();
+      // Also refetch conversations as a consultation update might create one?
+      // Actually creating conversation is separate.
     }
   });
 
@@ -125,19 +138,13 @@ export default function Conversations() {
                     key={consult.id}
                     className="p-5 cursor-pointer transition-all duration-300 border-0 bg-gradient-to-r from-[#5b4eff]/20 to-[#5b4eff]/5 backdrop-blur-xl rounded-[2.5rem] relative group border border-white/10 hover:border-[#5b4eff]/30 shadow-lg"
                     onClick={async () => {
-                      // Mark consultation as viewed immediately
+                      // Mark consultation as viewed immediately (optimistic update handled in mutation)
                       updateConsultationMutation.mutate({
                         id: consult.id,
                         viewed: 1
                       });
 
                       try {
-                        // Local optimistic update (keep existing logic)
-                        const newViewed = new Set(viewedConsultations);
-                        newViewed.add(consult.id);
-                        setViewedConsultations(newViewed);
-                        localStorage.setItem('viewedConsultations', JSON.stringify(Array.from(newViewed)));
-
                         // Create or get conversation with this client
                         const result = await createConversationMutation.mutateAsync({
                           clientId: consult.clientId,

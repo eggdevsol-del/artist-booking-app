@@ -2,9 +2,11 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Calendar, Image, LayoutDashboard, MessageCircle, Settings, Wallet } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { useTotalUnreadCount } from "@/lib/selectors/conversation.selectors";
 
 export default function BottomNav() {
     const [location] = useLocation();
+    const totalUnreadCount = useTotalUnreadCount();
 
     const isActive = (p: string) => {
         if (p === "/" && location === "/") return true;
@@ -32,11 +34,18 @@ export default function BottomNav() {
                                 variant="ghost"
                                 size="sm"
                                 className={cn(
-                                    "flex-col h-auto py-2 px-3 gap-1 hover:bg-transparent min-w-[70px] snap-center shrink-0 transition-all duration-300",
+                                    "flex-col h-auto py-2 px-3 gap-1 hover:bg-transparent min-w-[70px] snap-center shrink-0 transition-all duration-300 relative",
                                     active ? "text-primary scale-105" : "text-muted-foreground opacity-70 hover:opacity-100"
                                 )}
                             >
-                                <item.icon className={cn("w-6 h-6 mb-0.5", active && "fill-current/20")} />
+                                <div className="relative">
+                                    <item.icon className={cn("w-6 h-6 mb-0.5", active && "fill-current/20")} />
+                                    {item.label === "Messages" && totalUnreadCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white shadow-sm ring-2 ring-background">
+                                            {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
+                                        </span>
+                                    )}
+                                </div>
                                 <span className={cn("text-[10px] font-medium transition-all", active ? "font-bold" : "font-normal")}>
                                     {item.label}
                                 </span>
