@@ -20,9 +20,58 @@ import { toast } from "sonner";
 
 export default function Chat() {
   const { id } = useParams<{ id: string }>();
-  // ... (rest of imports unchanged)
+  const conversationId = parseInt(id || "0");
+  const [, setLocation] = useLocation();
 
-  // ... inside Chat component
+  const {
+    user,
+    authLoading,
+    conversation,
+    convLoading,
+    messages,
+    messagesLoading,
+    quickActions,
+    availableServices,
+
+    // State
+    messageText, setMessageText,
+    showClientInfo, setShowClientInfo,
+    showBookingCalendar, setShowBookingCalendar,
+    showProjectWizard, setShowProjectWizard,
+    projectStartDate, setProjectStartDate,
+
+    // Derived
+    isArtist,
+    otherUserName,
+    consultationData,
+    calendarDays,
+
+    // Handlers
+    handleSendMessage,
+    handleImageUpload,
+    handleQuickAction,
+    handleClientConfirmDates,
+    handleClientAcceptProposal,
+    handleArtistBookProject,
+    nextMonth,
+    prevMonth,
+
+    // Mutations used for loading states
+    sendMessageMutation,
+    pinConsultationMutation,
+    bookProjectMutation,
+    uploadingImage,
+
+    // Refs
+    scrollRef,
+    bottomRef,
+    hasScrolledRef,
+
+    // Client Confirm State
+    showClientConfirmDialog, setShowClientConfirmDialog,
+    clientConfirmDates, setClientConfirmDates,
+
+  } = useChatController(conversationId);
 
   // Register Bottom Nav Contextual Row (Quick Actions + System Actions)
   const quickActionsRow = useMemo(() => {
