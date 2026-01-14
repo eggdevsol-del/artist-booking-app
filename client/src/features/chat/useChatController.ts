@@ -155,7 +155,7 @@ export function useChatController(conversationId: number) {
 
     // -- Handlers --
 
-    const handleSendMessage = () => {
+    const handleSendMessage = useCallback(() => {
         if (!messageText.trim()) return;
         sendMessageMutation.mutate({
             conversationId,
@@ -163,9 +163,9 @@ export function useChatController(conversationId: number) {
             messageType: "text",
             consultationId: paramConsultationId ? parseInt(paramConsultationId) : undefined,
         });
-    };
+    }, [messageText, conversationId, paramConsultationId, sendMessageMutation]);
 
-    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
         if (!file.type.startsWith("image/")) {
@@ -192,10 +192,9 @@ export function useChatController(conversationId: number) {
             setUploadingImage(false);
         };
         reader.readAsDataURL(file);
-        // Note: Caller is responsible for clearing input value if needed, or we rely on React key reset
-    };
+    }, [uploadImageMutation, setUploadingImage]);
 
-    const handleQuickAction = (action: any) => {
+    const handleQuickAction = useCallback((action: any) => {
         if (action.actionType === "find_availability") {
             setShowProjectWizard(true);
             return;
@@ -209,9 +208,9 @@ export function useChatController(conversationId: number) {
                 messageType: "text",
             });
         }
-    };
+    }, [conversationId, sendMessageMutation, setShowProjectWizard]);
 
-    const handleClientConfirmDates = async () => {
+    const handleClientConfirmDates = useCallback(async () => {
         if (!clientConfirmMessageId || !clientConfirmMetadata) return;
 
         const selectedDateStrings = clientConfirmDates
@@ -242,9 +241,9 @@ export function useChatController(conversationId: number) {
 
         setShowClientConfirmDialog(false);
         toast.success("Dates confirmed!");
-    };
+    }, [clientConfirmMessageId, clientConfirmMetadata, clientConfirmDates, conversationId, sendMessageMutation, setShowClientConfirmDialog]);
 
-    const handleClientAcceptProposal = (message: any, metadata: any) => {
+    const handleClientAcceptProposal = useCallback((message: any, metadata: any) => {
         if (!metadata.proposedDates && !metadata.dates) return;
         const bookingDates = metadata.dates || metadata.proposedDates || [];
 
@@ -290,9 +289,9 @@ export function useChatController(conversationId: number) {
                 });
             }
         });
-    };
+    }, [conversationId, bookProjectMutation, updateMetadataMutation, sendMessageMutation]);
 
-    const handleArtistBookProject = (metadata: any) => {
+    const handleArtistBookProject = useCallback((metadata: any) => {
         if (!metadata.confirmedDates || !metadata.serviceName) return;
 
         const appointments = metadata.confirmedDates.map((dateStr: string) => {
@@ -312,16 +311,16 @@ export function useChatController(conversationId: number) {
             conversationId,
             appointments
         });
-    };
+    }, [conversationId, bookProjectMutation]);
 
     // Calendar Logic
-    const nextMonth = () => {
-        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
-    };
+    const nextMonth = useCallback(() => {
+        setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+    }, [setCurrentMonth]);
 
-    const prevMonth = () => {
-        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
-    };
+    const prevMonth = useCallback(() => {
+        setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+    }, [setCurrentMonth]);
 
     const calendarDays = useMemo(() => {
         const year = currentMonth.getFullYear();
