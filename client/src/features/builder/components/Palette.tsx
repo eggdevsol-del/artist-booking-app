@@ -5,13 +5,17 @@ import { cn } from "@/lib/utils";
 
 interface PaletteProps {
     onAddComponent: (key: string) => void;
+    isMobile?: boolean;
 }
 
-export function Palette({ onAddComponent }: PaletteProps) {
+export function Palette({ onAddComponent, isMobile }: PaletteProps) {
     const categories: ComponentCategory[] = ["layout", "content", "navigation", "calendar", "utility"];
 
     return (
-        <div className="w-64 border-r border-white/10 bg-black/40 backdrop-blur-xl flex flex-col shrink-0 overflow-y-auto no-scrollbar">
+        <div className={cn(
+            "border-white/10 bg-black/40 backdrop-blur-xl flex flex-col shrink-0 overflow-y-auto no-scrollbar",
+            isMobile ? "w-full h-full border-0" : "w-64 border-r h-full"
+        )}>
             <div className="p-4 border-b border-white/10">
                 <h3 className="text-sm font-bold text-white uppercase tracking-wider">Palette</h3>
             </div>

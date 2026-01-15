@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { BUILDER_CONFIG } from "@/config/builderConfig";
 import { Button } from "@/UI Library/Button";
 import { Card } from "@/UI Library/Card";
+import { cn } from "@/lib/utils";
 import { Palette } from "../features/builder/components/Palette";
 import { Inspector } from "../features/builder/components/Inspector";
 import { COMPONENT_REGISTRY } from "../features/builder/registry";
@@ -24,11 +25,16 @@ import {
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { DraggableBlock } from "../features/builder/components/DraggableBlock";
+import { SheetShell } from "@/components/ui/overlays/sheet-shell";
+import { PlusCircle, Settings2, Smartphone, Monitor } from "lucide-react";
 
 export default function BuilderPage() {
     const [schemas, setSchemas] = useState<PageSchema[]>([]);
     const [activeSchemaId, setActiveSchemaId] = useState<string | null>(null);
     const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+    const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+    const [isInspectorOpen, setIsInspectorOpen] = useState(false);
+    const [previewMode, setPreviewMode] = useState<"mobile" | "desktop">("mobile");
 
     // Set Title
     useEffect(() => {
@@ -155,30 +161,87 @@ export default function BuilderPage() {
                     <span className="font-bold tracking-tight">Builder <span className="text-white/20">/</span> {schema?.name}</span>
                 </div>
 
-                <div className="ml-auto flex items-center gap-3">
+                <div className="ml-auto flex items-center gap-2 sm:gap-3">
+                    {/* Desktop/Mobile Preview Toggle */}
+                    <div className="hidden sm:flex items-center bg-white/5 rounded-lg p-1 border border-white/10 mr-2">
+                        <button
+                            onClick={() => setPreviewMode("mobile")}
+                            className={cn("p-1.5 rounded-md transition-all", previewMode === "mobile" ? "bg-primary text-black" : "text-white/40 hover:text-white")}
+                        >
+                            <Smartphone className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                            onClick={() => setPreviewMode("desktop")}
+                            className={cn("p-1.5 rounded-md transition-all", previewMode === "desktop" ? "bg-primary text-black" : "text-white/40 hover:text-white")}
+                        >
+                            <Monitor className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+
                     <Button
                         size="sm"
                         variant="ghost"
-                        className="text-[10px] uppercase font-bold text-white/50 hover:text-white"
+                        className="hidden sm:flex text-[10px] uppercase font-bold text-white/50 hover:text-white"
                         onClick={() => {
                             if (schema) Persistence.exportSchema(schema);
                         }}
                     >
                         Export
                     </Button>
-                    <div className="h-4 w-[1px] bg-white/10" />
-                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Dev Tooling</span>
+                    <div className="hidden sm:block h-4 w-[1px] bg-white/10" />
+                    <span className="hidden sm:inline text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Dev Tooling</span>
+
+                    {/* Mobile Only Toggles */}
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        className="lg:hidden text-white/70"
+                        onClick={() => setIsPaletteOpen(true)}
+                    >
+                        <PlusCircle className="w-5 h-5" />
+                    </Button>
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        className="lg:hidden text-white/70"
+                        onClick={() => setIsInspectorOpen(true)}
+                    >
+                        <Settings2 className="w-5 h-5" />
+                    </Button>
                 </div>
             </header>
 
-            <div className="flex-1 flex overflow-hidden">
-                <Palette onAddComponent={handleAddComponent} />
+            <div className="flex-1 flex overflow-hidden relative">
+                {/* Desktop Palette */}
+                <div className="hidden lg:flex">
+                    <Palette onAddComponent={handleAddComponent} />
+                </div>
+
+                {/* Mobile Palette Drawer */}
+                <SheetShell
+                    isOpen={isPaletteOpen}
+                    onClose={() => setIsPaletteOpen(false)}
+                    title="Add Component"
+                    side="left"
+                >
+                    <div className="h-full bg-transparent">
+                        <Palette onAddComponent={(key) => {
+                            handleAddComponent(key);
+                            setIsPaletteOpen(false);
+                        }} isMobile />
+                    </div>
+                </SheetShell>
 
                 {/* Canvas Area */}
-                <main className="flex-1 bg-[#0a0a0a] flex flex-col items-center overflow-y-auto no-scrollbar py-12 px-4 relative">
-                    <div className="w-full max-w-md bg-background min-h-[812px] shadow-2xl rounded-[40px] border-[8px] border-white/5 overflow-hidden flex flex-col relative">
-                        {/* Mock Phone Notch */}
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-50" />
+                <main className="flex-1 bg-[#0a0a0a] flex flex-col items-center overflow-y-auto no-scrollbar py-6 sm:py-12 px-2 sm:px-4 relative">
+                    <div className={cn(
+                        "w-full bg-background shadow-2xl transition-all duration-500 rounded-[2rem] sm:rounded-[2.5rem] border-[4px] sm:border-[8px] border-white/5 overflow-hidden flex flex-col relative",
+                        previewMode === "mobile" ? "max-w-[375px] aspect-[9/19.5] sm:min-h-[780px]" : "max-w-4xl min-h-[600px] h-fit"
+                    )}>
+                        {/* Mock Phone Notch - Only in Mobile Mode */}
+                        {previewMode === "mobile" && (
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 sm:w-32 h-4 sm:h-6 bg-black rounded-b-xl sm:rounded-b-2xl z-50" />
+                        )}
 
                         <div className="flex-1 overflow-y-auto no-scrollbar p-6 pt-10">
                             {schema && (
@@ -232,10 +295,29 @@ export default function BuilderPage() {
                     </div>
                 </main>
 
-                <Inspector
-                    selectedBlock={selectedBlock}
-                    onChange={handleUpdateBlock}
-                />
+                {/* Desktop Inspector */}
+                <div className="hidden lg:flex">
+                    <Inspector
+                        selectedBlock={selectedBlock}
+                        onChange={handleUpdateBlock}
+                    />
+                </div>
+
+                {/* Mobile Inspector Drawer */}
+                <SheetShell
+                    isOpen={isInspectorOpen}
+                    onClose={() => setIsInspectorOpen(false)}
+                    title="Block Inspector"
+                    side="right"
+                >
+                    <div className="h-full bg-transparent">
+                        <Inspector
+                            selectedBlock={selectedBlock}
+                            onChange={handleUpdateBlock}
+                            isMobile
+                        />
+                    </div>
+                </SheetShell>
             </div>
         </div>
     );

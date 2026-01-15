@@ -3,16 +3,21 @@ import { COMPONENT_REGISTRY } from "../registry";
 import { Input } from "@/UI Library/Input";
 import { Label } from "@/UI Library/Label";
 import { Switch } from "@/UI Library/Switch";
+import { cn } from "@/lib/utils";
 
 interface InspectorProps {
     selectedBlock: BlockNode | null;
     onChange: (id: string, props: Record<string, any>) => void;
+    isMobile?: boolean;
 }
 
-export function Inspector({ selectedBlock, onChange }: InspectorProps) {
+export function Inspector({ selectedBlock, onChange, isMobile }: InspectorProps) {
     if (!selectedBlock) {
         return (
-            <div className="w-72 border-l border-white/10 bg-black/40 backdrop-blur-xl flex flex-col shrink-0 items-center justify-center p-8 text-center">
+            <div className={cn(
+                "border-white/10 bg-black/40 backdrop-blur-xl flex flex-col shrink-0 items-center justify-center p-8 text-center",
+                isMobile ? "w-full h-full border-0" : "w-72 border-l h-full"
+            )}>
                 <p className="text-sm text-white/30 italic">Select a block to inspect its properties</p>
             </div>
         );
@@ -26,7 +31,10 @@ export function Inspector({ selectedBlock, onChange }: InspectorProps) {
     };
 
     return (
-        <div className="w-72 border-l border-white/10 bg-black/40 backdrop-blur-xl flex flex-col shrink-0 overflow-y-auto no-scrollbar">
+        <div className={cn(
+            "border-white/10 bg-black/40 backdrop-blur-xl flex flex-col shrink-0 overflow-y-auto no-scrollbar",
+            isMobile ? "w-full h-full border-0" : "w-72 border-l h-full"
+        )}>
             <div className="p-4 border-b border-white/10">
                 <h3 className="text-sm font-bold text-white uppercase tracking-wider">Inspector</h3>
                 <p className="text-[10px] text-primary font-bold mt-1 tracking-tighter uppercase">{entry.displayName}</p>
