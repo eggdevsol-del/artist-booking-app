@@ -319,11 +319,8 @@ export default function BottomNav() {
             className="fixed bottom-6 inset-x-6 z-50 floating-nav rounded-[2.5rem] bg-none pb-0 overflow-hidden h-[68px] select-none touch-none overscroll-contain"
         >
             {process.env.NODE_ENV === 'development' && (
-                <div className="fixed top-0 left-0 bg-black/80 text-white text-[10px] p-2 z-[9999] pointer-events-none font-mono">
-                    ROLE={debugInfo.role} |
-                    SCOPE={debugInfo.scope} |
-                    ROUTE={typeof debugInfo.route === 'string' ? debugInfo.route.substring(0, 15) : ''} |
-                    ROW={debugInfo.row}
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[9px] px-2 py-0.5 rounded-full z-[9999] pointer-events-none font-mono whitespace-nowrap border border-white/10 shadow-sm backdrop-blur-md">
+                    ROLE:{debugInfo.role} <span className="text-white/30">|</span> SCOPE:{debugInfo.scope} <span className="text-white/30">|</span> RT:{typeof debugInfo.route === 'string' ? debugInfo.route.substring(0, 8) : ''} <span className="text-white/30">|</span> RW:{debugInfo.row}
                 </div>
             )}
 
