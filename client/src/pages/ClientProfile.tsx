@@ -34,36 +34,52 @@ export default function ClientProfile() {
     };
 
     // BottomNav Registration
-    useRegisterBottomNavRow("client-profile", [
-        {
-            id: "edit-toggle",
-            label: isEditMode ? "Done" : "Edit",
-            icon: isEditMode ? <ToggleRight className="text-primary" /> : <ToggleLeft />,
-            onClick: () => setIsEditMode(!isEditMode)
-        },
-        {
-            id: "new-board",
-            label: "New Board",
-            icon: <LayoutTemplate />,
-            onClick: () => {
-                setActiveTabId("boards"); // Jump to boards
-                const title = prompt("New Board Title:");
-                if (title) createMoodboard.mutate({ title });
-            }
-        },
-        {
-            id: "profile-pic",
-            label: "Profile Pic",
-            icon: <User />,
-            onClick: handleProfilePicUpload
-        },
-        {
-            id: "edit-bio",
-            label: "Bio",
-            icon: <Edit3 />,
-            onClick: () => setIsBioModalOpen(true)
-        }
-    ]);
+    useRegisterBottomNavRow("client-profile", (
+        <>
+            {[
+                {
+                    id: "edit-toggle",
+                    label: isEditMode ? "Done" : "Edit",
+                    icon: isEditMode ? ToggleRight : ToggleLeft,
+                    onClick: () => setIsEditMode(!isEditMode),
+                    active: isEditMode
+                },
+                {
+                    id: "new-board",
+                    label: "New Board",
+                    icon: LayoutTemplate,
+                    onClick: () => {
+                        setActiveTabId("boards");
+                        const title = prompt("New Board Title:");
+                        if (title) createMoodboard.mutate({ title });
+                    }
+                },
+                {
+                    id: "profile-pic",
+                    label: "Profile Pic",
+                    icon: User,
+                    onClick: handleProfilePicUpload
+                },
+                {
+                    id: "edit-bio",
+                    label: "Bio",
+                    icon: Edit3,
+                    onClick: () => setIsBioModalOpen(true)
+                }
+            ].map(item => (
+                <button
+                    key={item.id}
+                    onClick={item.onClick}
+                    className="flex flex-col items-center justify-center h-full py-2 px-3 gap-1 min-w-[70px] snap-center shrink-0 transition-all duration-300 text-muted-foreground opacity-70 hover:opacity-100 active:scale-95"
+                >
+                    <item.icon className={`w-6 h-6 mb-0.5 ${item.active ? "text-primary fill-current/20" : ""}`} />
+                    <span className={`text-[10px] font-medium ${item.active ? "text-primary font-bold" : ""}`}>
+                        {item.label}
+                    </span>
+                </button>
+            ))}
+        </>
+    ));
 
     const tabs = useMemo(() => [
         {
