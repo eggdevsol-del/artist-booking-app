@@ -19,7 +19,7 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
     const [containerWidth, setContainerWidth] = useState(0);
 
     // Refs
-    const containerRef = useRef<HTMLDivElement>(null);
+    const viewportRef = useRef<HTMLDivElement>(null);
     const lastMeasureRef = useRef(0);
     const isDraggingRef = useRef(false);
     const isSnappingRef = useRef(false);
@@ -29,14 +29,15 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
     const x = useMotionValue(0);
     const controls = useAnimation();
 
-    // Measurement Logic
+    // 1) ResizeObserver Measurement
     useEffect(() => {
-        if (!containerRef.current) return;
+        if (!viewportRef.current) return;
 
         let rafId: number;
         const observer = new ResizeObserver((entries) => {
             cancelAnimationFrame(rafId);
             rafId = requestAnimationFrame(() => {
+                // Do NOT set measurement state while active
                 if (isDraggingRef.current || isSnappingRef.current) return;
 
                 for (const entry of entries) {
@@ -49,7 +50,13 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
             });
         });
 
-        observer.observe(containerRef.current);
+        observer.observe(viewportRef.current);
+
+        // Initial run
+        const initialWidth = Math.round(viewportRef.current.getBoundingClientRect().width);
+        lastMeasureRef.current = initialWidth;
+        setContainerWidth(initialWidth);
+
         return () => {
             observer.disconnect();
             cancelAnimationFrame(rafId);
@@ -57,7 +64,6 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
     }, []);
 
     // Authority: Snap Helper
-    // Single controlled way to change position
     const snapToIndex = useCallback(async (index: number, width: number) => {
         if (width === 0) return;
 
@@ -78,7 +84,7 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
         snapToIndex(index, containerWidth);
     }, [containerWidth, snapToIndex]);
 
-    // 1) Refactored defaultTab sync: Only runs when defaultTab value actually changes
+    // sync defaultTab (stable identity check)
     useEffect(() => {
         if (defaultTab !== lastDefaultTabRef.current) {
             lastDefaultTabRef.current = defaultTab;
@@ -89,22 +95,12 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
         }
     }, [defaultTab, tabs, activeIndex, handleTabJump]);
 
-    // 3) Handle tabs changes: clamp index if length changes, without reset
-    useEffect(() => {
-        if (activeIndex >= tabs.length) {
-            const clamped = Math.max(0, tabs.length - 1);
-            setActiveIndex(clamped);
-            snapToIndex(clamped, containerWidth);
-        }
-    }, [tabs.length, activeIndex, containerWidth, snapToIndex]);
-
-    // Initial Mount / ContainerWidth Snap
+    // Handle manual width sync (only on mount or valid resize)
     useEffect(() => {
         if (containerWidth > 0 && !isDraggingRef.current && !isSnappingRef.current) {
-            // Initial position sync on first width known
             x.set(-activeIndex * containerWidth);
         }
-    }, [containerWidth]); // Only run when width flips from 0 to something
+    }, [containerWidth, activeIndex, x]);
 
     // Notify Parent
     useEffect(() => {
@@ -140,13 +136,16 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
         await snapToIndex(newIndex, containerWidth);
     }, [containerWidth, tabs.length, x, snapToIndex]);
 
+    // 2) Gated dragging and pixel-based constraints
+    const canDrag = containerWidth > 100;
+    const trackWidthPx = containerWidth * tabs.length;
     const dragConstraints = useMemo(() => {
-        if (containerWidth === 0) return { left: 0, right: 0 };
+        if (!canDrag) return { left: 0, right: 0 };
         return {
-            left: -((tabs.length - 1) * containerWidth),
+            left: -(trackWidthPx - containerWidth),
             right: 0
         };
-    }, [containerWidth, tabs.length]);
+    }, [canDrag, trackWidthPx, containerWidth]);
 
     return (
         <div className="flex flex-col h-full bg-background relative overflow-hidden">
@@ -156,6 +155,7 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
                 </div>
             )}
 
+            {/* Header Tabs */}
             <div className="flex items-center px-4 mb-2 shrink-0 overflow-x-auto no-scrollbar gap-6 z-10 relative bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 {tabs.map((tab, index) => (
                     <button
@@ -165,7 +165,7 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
                             "text-sm font-medium transition-colors whitespace-nowrap pb-2 border-b-2",
                             activeIndex === index
                                 ? "text-primary border-primary"
-                                : "text-muted-foreground border-transparent hover:text-foreground"
+                                : "text-muted-foreground border-transparent hover:text-white"
                         )}
                     >
                         {tab.label}
@@ -173,13 +173,19 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
                 ))}
             </div>
 
-            <div ref={containerRef} className="flex-1 w-full relative overflow-hidden touch-pan-y">
+            {/* 3) Viewport wrapper with touch gestures and containment */}
+            <div
+                ref={viewportRef}
+                className="flex-1 w-full relative overflow-hidden"
+                style={{ touchAction: "pan-y", overscrollBehavior: "contain" }}
+            >
                 {containerWidth > 0 && (
                     <motion.div
                         className="flex h-full"
-                        style={{ x, width: `${tabs.length * 100}%`, cursor: "grab" }}
+                        style={{ x, width: trackWidthPx, cursor: "grab" }}
                         whileTap={{ cursor: "grabbing" }}
-                        drag="x"
+                        drag={canDrag ? "x" : false}
+                        dragDirectionLock
                         dragConstraints={dragConstraints}
                         dragElastic={0}
                         dragMomentum={false}
@@ -190,8 +196,8 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
                         {tabs.map((tab) => (
                             <div
                                 key={tab.id}
-                                className="h-full overflow-y-auto overflow-x-hidden no-scrollbar pb-24"
-                                style={{ width: containerWidth }}
+                                className="h-full overflow-y-auto overflow-x-hidden no-scrollbar pb-24 shrink-0 grow-0"
+                                style={{ flex: "0 0 auto", width: containerWidth }}
                             >
                                 <div className="px-4 h-full">{tab.content}</div>
                             </div>
