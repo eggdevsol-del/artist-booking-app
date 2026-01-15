@@ -28,6 +28,7 @@ import CompleteProfile from "./pages/CompleteProfile";
 import Clients from "./pages/Clients";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ClientProfile from "./pages/ClientProfile";
 
 function Router() {
   const [location] = useLocation();
@@ -57,8 +58,8 @@ function Router() {
         <Route path="/notifications-management" component={NotificationsManagement} />
         <Route path="/work-hours" component={WorkHours} />
         <Route path="/quick-actions" component={QuickActionsManagement} />
-        <Route path="/complete-profile" component={CompleteProfile} />
         <Route path="/clients" component={Clients} />
+        <Route path="/profile" component={ClientProfile} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

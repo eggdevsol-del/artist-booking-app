@@ -12,25 +12,27 @@ import { systemRouter } from "./system";
 import { uploadRouter } from "./upload";
 
 import { bookingRouter } from "./booking";
+import { clientProfileRouter } from "./clientProfile";
 import { dashboardRouter } from "./dashboard";
 import { portfolioRouter } from "./portfolio";
 import { walletRouter } from "./wallet";
 
 export const appRouter = router({
-    auth: authRouter,
-    system: systemRouter,
-    artistSettings: artistSettingsRouter,
-    conversations: conversationsRouter,
-    messages: messagesRouter,
     appointments: appointmentsRouter,
+    artistSettings: artistSettingsRouter,
+    auth: authRouter,
     booking: bookingRouter,
-    notifications: notificationTemplatesRouter,
+    clientProfile: clientProfileRouter,
     consultations: consultationsRouter,
-    policies: policiesRouter,
-    quickActions: quickActionsRouter,
-    upload: uploadRouter,
+    conversations: conversationsRouter,
     dashboard: dashboardRouter,
+    messages: messagesRouter,
+    notifications: notificationTemplatesRouter,
+    policies: policiesRouter,
     portfolio: portfolioRouter,
+    quickActions: quickActionsRouter,
+    system: systemRouter,
+    upload: uploadRouter,
     wallet: walletRouter,
 });
 
