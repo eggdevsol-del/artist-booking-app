@@ -183,7 +183,7 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
                         {/* 2) Dedicated Horizontal Gesture Capture Layer */}
                         <motion.div
                             className="absolute inset-0 z-30"
-                            style={{ x: canDrag ? 0 : undefined }} // Overlay itself doesn't move visuals, but provides drag context
+                            style={{ x: canDrag ? x : undefined }} // Overlay moves with x to maintain drag consistency
                             drag={canDrag ? "x" : false}
                             dragDirectionLock
                             dragConstraints={dragConstraints}
@@ -191,8 +191,6 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
                             dragMomentum={false}
                             onDragStart={handleDragStart}
                             onDragEnd={handleDragEnd}
-                            // Attach the shared MotionValue x to the drag
-                            _dragValue={x}
                         />
 
                         {/* 3) Visual Track (Underneath) */}
