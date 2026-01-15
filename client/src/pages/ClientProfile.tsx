@@ -1,128 +1,125 @@
+import { useState, useMemo } from "react";
 import { useClientProfileController } from "@/features/profile/useClientProfileController";
 import { ProfileHeader } from "@/features/profile/components/ProfileHeader";
-import { StatsRow } from "@/features/profile/components/StatsRow";
-import { MoodboardList, PhotoGrid, HistoryTimeline } from "@/features/profile/components/ProfileSections";
+import { SwipeableTabs } from "@/features/profile/components/SwipeableTabs";
+import { MoodboardCard } from "@/features/profile/components/MoodboardCard";
+import { PhotosCard, HistoryCard, SavedCard } from "@/features/profile/components/ContentCards";
+import { EditBioModal } from "@/features/profile/components/EditBioModal";
 import { useRegisterBottomNavRow } from "@/contexts/BottomNavContext";
-import { useBottomNav } from "@/contexts/BottomNavContext";
-import { Button } from "@/components/ui/button";
-import { ArrowUp, Edit, Image as ImageIcon, Layout, Plus, RotateCcw } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { Edit3, User, ToggleLeft, ToggleRight, LayoutTemplate } from "lucide-react";
 
 export default function ClientProfile() {
     const {
         profile,
-        spend,
-        history,
+        trustBadges,
         boards,
         photos,
-        trustBadges,
-        isLoading,
-        scrollToSection,
-        // Refs
-        topRef,
-        boardsRef,
-        photosRef,
-        historyRef
+        history,
+        createMoodboard,
+        deleteMoodboard,
+        addMoodboardImage,
+        updateBio,
+        updateAvatar
     } = useClientProfileController();
 
-    const { isContextualVisible } = useBottomNav();
-    const isEditMode = isContextualVisible;
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [isBioModalOpen, setIsBioModalOpen] = useState(false);
+    const [activeTabId, setActiveTabId] = useState("boards");
 
-    // Define the Contextual Row content
-    // We combine Row 1 (Actions) and Row 2 (Jumps) into one scrollable row for v1 compatibility.
-    const ProfileActions = (
-        <div className="flex items-center gap-2 px-1">
-            {/* Row 1: Profile Actions */}
-            <Button variant="ghost" size="sm" className="flex-col h-auto py-2 px-3 gap-1 min-w-[70px]">
-                <Edit className="w-6 h-6 mb-0.5" />
-                <span className="text-[10px] font-medium">Edit</span>
-            </Button>
-            <Button variant="ghost" size="sm" className="flex-col h-auto py-2 px-3 gap-1 min-w-[70px]">
-                <Plus className="w-6 h-6 mb-0.5" />
-                <span className="text-[10px] font-medium">Board</span>
-            </Button>
-            <Button variant="ghost" size="sm" className="flex-col h-auto py-2 px-3 gap-1 min-w-[70px]">
-                <ImageIcon className="w-6 h-6 mb-0.5" />
-                <span className="text-[10px] font-medium">Photos</span>
-            </Button>
+    // File Input Ref for Profile Pic
+    const handleProfilePicUpload = () => {
+        // Mock upload for now
+        const url = prompt("Enter new avatar URL:");
+        if (url) updateAvatar.mutate({ avatarUrl: url });
+    };
 
-            <Separator orientation="vertical" className="h-8 bg-white/10 mx-1" />
+    // BottomNav Registration
+    useRegisterBottomNavRow("client-profile", [
+        {
+            id: "edit-toggle",
+            label: isEditMode ? "Done" : "Edit",
+            icon: isEditMode ? <ToggleRight className="text-primary" /> : <ToggleLeft />,
+            onClick: () => setIsEditMode(!isEditMode)
+        },
+        {
+            id: "new-board",
+            label: "New Board",
+            icon: <LayoutTemplate />,
+            onClick: () => {
+                setActiveTabId("boards"); // Jump to boards
+                const title = prompt("New Board Title:");
+                if (title) createMoodboard.mutate({ title });
+            }
+        },
+        {
+            id: "profile-pic",
+            label: "Profile Pic",
+            icon: <User />,
+            onClick: handleProfilePicUpload
+        },
+        {
+            id: "edit-bio",
+            label: "Bio",
+            icon: <Edit3 />,
+            onClick: () => setIsBioModalOpen(true)
+        }
+    ]);
 
-            {/* Row 2: Jump Actions */}
-            <Button
-                variant="ghost"
-                size="sm"
-                className="flex-col h-auto py-2 px-3 gap-1 min-w-[70px]"
-                onClick={() => scrollToSection('boards')}
-            >
-                <Layout className="w-6 h-6 mb-0.5 text-muted-foreground" />
-                <span className="text-[10px] font-medium text-muted-foreground">Boards</span>
-            </Button>
-            <Button
-                variant="ghost"
-                size="sm"
-                className="flex-col h-auto py-2 px-3 gap-1 min-w-[70px]"
-                onClick={() => scrollToSection('photos')}
-            >
-                <ImageIcon className="w-6 h-6 mb-0.5 text-muted-foreground" />
-                <span className="text-[10px] font-medium text-muted-foreground">Gallery</span>
-            </Button>
-            <Button
-                variant="ghost"
-                size="sm"
-                className="flex-col h-auto py-2 px-3 gap-1 min-w-[70px]"
-                onClick={() => scrollToSection('history')}
-            >
-                <RotateCcw className="w-6 h-6 mb-0.5 text-muted-foreground" />
-                <span className="text-[10px] font-medium text-muted-foreground">History</span>
-            </Button>
-            <Button
-                variant="ghost"
-                size="sm"
-                className="flex-col h-auto py-2 px-3 gap-1 min-w-[70px]"
-                onClick={() => scrollToSection('top')}
-            >
-                <ArrowUp className="w-6 h-6 mb-0.5 text-muted-foreground" />
-                <span className="text-[10px] font-medium text-muted-foreground">Top</span>
-            </Button>
-        </div>
-    );
-
-    useRegisterBottomNavRow("profile-actions", ProfileActions);
-
-    if (isLoading || !profile) {
-        return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
-    }
+    const tabs = useMemo(() => [
+        {
+            id: "boards",
+            label: "Moodboards",
+            content: (
+                <MoodboardCard
+                    boards={boards || []}
+                    isEditMode={isEditMode}
+                    onCreateBoard={async (t) => createMoodboard.mutate({ title: t })}
+                    onDeleteBoard={async (id) => deleteMoodboard.mutate({ boardId: id })}
+                    onAddImage={async (id, url) => addMoodboardImage.mutate({ boardId: id, imageUrl: url })}
+                />
+            )
+        },
+        {
+            id: "photos",
+            label: "Photos",
+            content: <PhotosCard photos={photos || []} isEditMode={isEditMode} />
+        },
+        {
+            id: "history",
+            label: "History",
+            content: <HistoryCard history={history || []} />
+        },
+        {
+            id: "saved",
+            label: "Saved",
+            content: <SavedCard />
+        }
+    ], [boards, photos, history, isEditMode, createMoodboard, deleteMoodboard, addMoodboardImage]);
 
     return (
-        <div className="min-h-screen bg-background pb-32">
-            {/* Header Anchor */}
-            <div ref={topRef} />
-
-            <ProfileHeader user={profile} badges={trustBadges} />
-
-            <StatsRow
-                counts={{
-                    boards: boards?.length || 0,
-                    photos: photos?.length || 0,
-                    history: history?.length || 0
-                }}
-                onJump={scrollToSection}
-            />
-
-            <div className="space-y-2">
-                <div ref={boardsRef}>
-                    <MoodboardList boards={boards || []} isEditMode={isEditMode} />
-                </div>
-
-                <div ref={photosRef}>
-                    <PhotoGrid photos={photos || []} isEditMode={isEditMode} />
-                </div>
-
-                <div ref={historyRef}>
-                    <HistoryTimeline history={history || []} />
-                </div>
+        <div className="flex flex-col h-full bg-gradient-to-b from-background to-background/80">
+            {/* Header */}
+            <div className="shrink-0">
+                <ProfileHeader
+                    user={profile}
+                    trustBadges={trustBadges}
+                    isEditMode={isEditMode}
+                    onEditAvatar={handleProfilePicUpload}
+                />
             </div>
+
+            {/* Swipeable Cards */}
+            <div className="flex-1 min-h-0 relative">
+                <SwipeableTabs tabs={tabs} defaultTab={activeTabId} onTabChange={setActiveTabId} />
+            </div>
+
+            {/* Modals */}
+            <EditBioModal
+                isOpen={isBioModalOpen}
+                onClose={() => setIsBioModalOpen(false)}
+                initialBio={profile?.bio || ""}
+                onSave={async (bio) => updateBio.mutate({ bio })}
+            />
         </div>
     );
 }

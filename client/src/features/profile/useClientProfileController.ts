@@ -1,6 +1,5 @@
 import { trpc } from "@/lib/trpc";
-import { useMemo, useRef } from "react";
-import { useSearchParams } from "wouter";
+import { useMemo } from "react";
 
 export function useClientProfileController() {
     // Queries
@@ -9,6 +8,25 @@ export function useClientProfileController() {
     const { data: history, isLoading: loadingHistory } = trpc.clientProfile.getHistory.useQuery();
     const { data: boards, isLoading: loadingBoards } = trpc.clientProfile.getBoards.useQuery();
     const { data: photos, isLoading: loadingPhotos } = trpc.clientProfile.getPhotos.useQuery();
+
+    const utils = trpc.useContext();
+
+    // Mutations
+    const updateBio = trpc.clientProfile.updateBio.useMutation({
+        onSuccess: () => utils.clientProfile.getProfile.invalidate()
+    });
+    const updateAvatar = trpc.clientProfile.updateAvatar.useMutation({
+        onSuccess: () => utils.clientProfile.getProfile.invalidate()
+    });
+    const createMoodboard = trpc.clientProfile.createMoodboard.useMutation({
+        onSuccess: () => utils.clientProfile.getBoards.invalidate()
+    });
+    const deleteMoodboard = trpc.clientProfile.deleteMoodboard.useMutation({
+        onSuccess: () => utils.clientProfile.getBoards.invalidate()
+    });
+    const addMoodboardImage = trpc.clientProfile.addMoodboardImage.useMutation({
+        onSuccess: () => utils.clientProfile.getBoards.invalidate()
+    });
 
     // Trust Badge Logic (Selector)
     const trustBadges = useMemo(() => {
@@ -28,23 +46,6 @@ export function useClientProfileController() {
         return badges;
     }, [spend]);
 
-    // Smooth Scroll Refs
-    const boardsRef = useRef<HTMLDivElement>(null);
-    const photosRef = useRef<HTMLDivElement>(null);
-    const historyRef = useRef<HTMLDivElement>(null);
-    const topRef = useRef<HTMLDivElement>(null);
-
-    const scrollToSection = (section: 'boards' | 'photos' | 'history' | 'top') => {
-        const refs = {
-            boards: boardsRef,
-            photos: photosRef,
-            history: historyRef,
-            top: topRef
-        };
-
-        refs[section]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
     return {
         // Data
         profile,
@@ -57,13 +58,11 @@ export function useClientProfileController() {
         // Loading States
         isLoading: loadingProfile || loadingSpend || loadingHistory || loadingBoards || loadingPhotos,
 
-        // Refs
-        boardsRef,
-        photosRef,
-        historyRef,
-        topRef,
-
-        // Handlers
-        scrollToSection
+        // Mutations
+        updateBio,
+        updateAvatar,
+        createMoodboard,
+        deleteMoodboard,
+        addMoodboardImage
     };
 }

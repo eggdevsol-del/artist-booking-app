@@ -339,6 +339,25 @@ export const notificationOutbox = mysqlTable("notification_outbox", {
 		index("idx_status_next_attempt").on(table.status, table.nextAttemptAt),
 	]);
 
+export const moodboards = mysqlTable("moodboards", {
+	id: int().autoincrement().notNull(),
+	clientId: varchar({ length: 64 }).notNull().references(() => users.id, { onDelete: "cascade" }),
+	title: varchar({ length: 255 }).notNull(),
+	createdAt: timestamp({ mode: 'string' }).default(sql`(now())`),
+	updatedAt: timestamp({ mode: 'string' }).default(sql`(now())`),
+}, (table) => [
+	primaryKey({ columns: [table.id], name: "moodboards_id" }),
+]);
+
+export const moodboardItems = mysqlTable("moodboard_items", {
+	id: int().autoincrement().notNull(),
+	moodboardId: int().notNull().references(() => moodboards.id, { onDelete: "cascade" }),
+	imageUrl: text().notNull(),
+	createdAt: timestamp({ mode: 'string' }).default(sql`(now())`),
+}, (table) => [
+	primaryKey({ columns: [table.id], name: "moodboard_items_id" }),
+]);
+
 
 export type InsertConsultation = InferInsertModel<typeof consultations>;
 export type SelectConsultation = InferSelectModel<typeof consultations>;
@@ -361,6 +380,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 	voucherTemplates: many(voucherTemplates),
 	issuedVouchersAsArtist: many(issuedVouchers, { relationName: "artist_issued_vouchers" }),
 	issuedVouchersAsClient: many(issuedVouchers, { relationName: "client_issued_vouchers" }),
+	moodboards: many(moodboards),
 }));
 
 export const appointmentsRelations = relations(appointments, ({ one }) => ({
@@ -463,5 +483,20 @@ export const issuedVouchersRelations = relations(issuedVouchers, ({ one }) => ({
 		fields: [issuedVouchers.clientId],
 		references: [users.id],
 		relationName: "client_issued_vouchers"
+	}),
+}));
+
+export const moodboardsRelations = relations(moodboards, ({ one, many }) => ({
+	client: one(users, {
+		fields: [moodboards.clientId],
+		references: [users.id],
+	}),
+	items: many(moodboardItems),
+}));
+
+export const moodboardItemsRelations = relations(moodboardItems, ({ one }) => ({
+	moodboard: one(moodboards, {
+		fields: [moodboardItems.moodboardId],
+		references: [moodboards.id],
 	}),
 }));

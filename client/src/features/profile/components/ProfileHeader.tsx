@@ -1,25 +1,33 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { MapPin } from "lucide-react";
+import { MapPin, Camera } from "lucide-react";
 
 interface ProfileHeaderProps {
     user: any;
-    badges: { id: string; label: string; type: 'gold' | 'platinum' }[];
+    trustBadges: { id: string; label: string; type: 'gold' | 'platinum' }[];
+    isEditMode: boolean;
+    onEditAvatar: () => void;
 }
 
-export function ProfileHeader({ user, badges }: ProfileHeaderProps) {
+export function ProfileHeader({ user, trustBadges, isEditMode, onEditAvatar }: ProfileHeaderProps) {
     if (!user) return null;
 
     return (
         <div className="flex flex-col items-center pt-8 pb-6 px-4 text-center">
-            <div className="relative mb-4">
-                <Avatar className="w-24 h-24 border-4 border-white/5 shadow-xl">
+            <div className="relative mb-4 group cursor-pointer" onClick={isEditMode ? onEditAvatar : undefined}>
+                <Avatar className="w-24 h-24 border-4 border-white/5 shadow-xl transition-transform active:scale-95">
                     <AvatarImage src={user.avatar} className="object-cover" />
                     <AvatarFallback className="text-2xl bg-primary/20 text-primary font-bold">
                         {user.name?.charAt(0) || 'C'}
                     </AvatarFallback>
                 </Avatar>
-                {/* Optional: Add online status indicator if realtime is active */}
+
+                {/* Edit Overlay */}
+                {isEditMode && (
+                    <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 animate-in fade-in zoom-in duration-200 opacity-100">
+                        <Camera className="w-8 h-8 text-white" />
+                    </div>
+                )}
             </div>
 
             <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 mb-1">
@@ -31,9 +39,9 @@ export function ProfileHeader({ user, badges }: ProfileHeaderProps) {
             )}
 
             {/* Trust Badges - Row */}
-            {badges.length > 0 && (
+            {trustBadges && trustBadges.length > 0 && (
                 <div className="flex flex-wrap justify-center gap-2 mb-3">
-                    {badges.map(badge => (
+                    {trustBadges.map(badge => (
                         <Badge
                             key={badge.id}
                             variant="secondary"
