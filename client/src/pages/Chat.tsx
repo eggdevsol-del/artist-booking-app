@@ -82,14 +82,14 @@ export default function Chat() {
   const quickActionsRow = useMemo(() => {
     const isAuthorized = user?.role === 'artist' || user?.role === 'admin';
 
-    // System Actions (Fixed)
-    const systemActions: ChatAction[] = [
+    // System Actions (Fixed) - Only for Artists
+    const systemActions: ChatAction[] = isAuthorized ? [
       {
         id: 'chat.book',
         label: 'Book',
         icon: Calendar,
         onClick: () => setShowBookingCalendar(true),
-        highlight: true // Optional: highlight system actions?
+        highlight: true
       },
       {
         id: 'chat.proposal',
@@ -98,7 +98,7 @@ export default function Chat() {
         onClick: () => setShowProjectWizard(true),
         highlight: true
       }
-    ];
+    ] : [];
 
     // User Configured Actions
     const userActions: ChatAction[] = isAuthorized && quickActions ? quickActions.map(qa => {
@@ -116,12 +116,11 @@ export default function Chat() {
       };
     }) : [];
 
-    // Validated Composition (Guard against regression)
+    // Validated Composition
     const allActions = [...systemActions, ...userActions];
 
-    // Runtime Guard
-    if (allActions[0].id !== 'chat.book' || allActions[1].id !== 'chat.proposal') {
-      console.error("System actions missing or out of order in Chat BottomNav!");
+    if (allActions.length === 0) {
+      return null;
     }
 
     return (

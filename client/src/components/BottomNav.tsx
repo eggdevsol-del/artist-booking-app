@@ -36,7 +36,7 @@ export default function BottomNav() {
     };
 
     // Config comes from canonical source
-    const { isContextualVisible, setContextualVisible, contextualRow, navItems } = useBottomNav();
+    const { isContextualVisible, setContextualVisible, contextualRow, navItems, scope } = useBottomNav();
 
     // Animation Controls & Motion Values
     const controls = useAnimation();
@@ -122,11 +122,15 @@ export default function BottomNav() {
                 maxMain: maxOffsets.current.main,
                 offsetCtx: scrollOffsets.current.contextual,
                 maxCtx: maxOffsets.current.contextual,
-                dragging: isDragging.current
+                dragging: isDragging.current,
+                scope: scope || 'unknown',
+                role: scope, // derived from scope for now
+                route: location,
+                row: isContextualVisible ? 1 : 0
             });
         }
 
-    }, [xMain, xContextual]);
+    }, [xMain, xContextual, scope, location, isContextualVisible]);
 
     // Observe Resizes
     useEffect(() => {
@@ -316,10 +320,10 @@ export default function BottomNav() {
         >
             {process.env.NODE_ENV === 'development' && (
                 <div className="fixed top-0 left-0 bg-black/80 text-white text-[10px] p-2 z-[9999] pointer-events-none font-mono">
-                    VP: {debugInfo.vp}px |
-                    Main: {debugInfo.offsetMain}/{debugInfo.maxMain} |
-                    Ctx: {debugInfo.offsetCtx}/{debugInfo.maxCtx} |
-                    Drag: {String(debugInfo.dragging)}
+                    ROLE={debugInfo.role} |
+                    SCOPE={debugInfo.scope} |
+                    ROUTE={typeof debugInfo.route === 'string' ? debugInfo.route.substring(0, 15) : ''} |
+                    ROW={debugInfo.row}
                 </div>
             )}
 

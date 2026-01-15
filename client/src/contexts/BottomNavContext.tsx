@@ -18,15 +18,15 @@ interface BottomNavContextType {
     setContextualVisible: (visible: boolean) => void;
     // Current row index (0 = default, 1 = contextual)
     rowIndex: number;
+    // Current Scope (for debug overlay)
+    scope: Scope;
 }
 
 const BottomNavContext = createContext<BottomNavContextType | undefined>(undefined);
 
 export function BottomNavProvider({ children }: { children: React.ReactNode }) {
     const { user } = useAuth();
-    // Default to 'client' for safety if not authenticated or specified, but 'artist' is the legacy default.
-    // User requested "derived from authenticated user role". 
-    // We treat 'admin' or others as 'artist' for now if they exist, or strictly 'artist'.
+    // Default to 'client' for safety if not authenticated or specified.
     const rawRole = user?.role;
     const scope: Scope = rawRole === 'artist' ? 'artist' : 'client';
 
@@ -35,11 +35,18 @@ export function BottomNavProvider({ children }: { children: React.ReactNode }) {
         client: {}
     });
 
-    // We keep activeId 'global' but it only resolves if present in current scope.
+    // activeId is global, but resolved against current scope.
     const [activeId, setActiveId] = useState<string | null>(null);
     const [isContextualVisible, setIsContextualVisible] = useState(false);
 
     // Derived contextual row based on current scope
+    // Fallback: If no specific row for this ID in this scope, we show nothing (strict) or default?
+    // User request: "If a route/row is missing in the current scope, fall back ONLY to that scope’s defaults".
+    // Since we don't have per-scope default rows defined in registry yet (other than main row 0), 
+    // and `contextualRow` effectively REPLACES the view or ADDS to it? 
+    // Actually, Row 1 is additive. If null, we just show Row 0. 
+    // So "fallback" here means "don't show a broken artist row for a client". 
+    // Our strict lookup `registry[scope][activeId]` ensures this.
     const contextualRow = activeId ? (registry[scope][activeId] || null) : null;
 
     // Derived nav items
@@ -92,6 +99,7 @@ export function BottomNavProvider({ children }: { children: React.ReactNode }) {
                 registerRow,
                 setContextualVisible,
                 rowIndex,
+                scope,
             }}
         >
             {children}
@@ -113,6 +121,11 @@ export function useRegisterBottomNavRow(id: string, content: ReactNode) {
     const scope: Scope = user?.role === 'artist' ? 'artist' : 'client';
 
     useEffect(() => {
+        // Logging for sanity check in dev
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`[BottomNavRegistry] scope=${scope} route=${id} row=1 (contextual)`);
+        }
+
         // Register into the CURRENT scope at effect time.
         // If scope changes, this effect re-runs (due to scope dependency)
         const unregister = registerRow(scope, id, content);
