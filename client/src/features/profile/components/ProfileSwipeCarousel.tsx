@@ -84,7 +84,7 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
         snapToIndex(index, containerWidth);
     }, [containerWidth, snapToIndex]);
 
-    // sync defaultTab (stable identity check)
+    // sync defaultTab
     useEffect(() => {
         if (defaultTab !== lastDefaultTabRef.current) {
             lastDefaultTabRef.current = defaultTab;
@@ -95,7 +95,7 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
         }
     }, [defaultTab, tabs, activeIndex, handleTabJump]);
 
-    // Handle manual width sync (only on mount or valid resize)
+    // Handle manual width sync
     useEffect(() => {
         if (containerWidth > 0 && !isDraggingRef.current && !isSnappingRef.current) {
             x.set(-activeIndex * containerWidth);
@@ -136,7 +136,6 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
         await snapToIndex(newIndex, containerWidth);
     }, [containerWidth, tabs.length, x, snapToIndex]);
 
-    // 2) Gated dragging and pixel-based constraints
     const canDrag = containerWidth > 100;
     const trackWidthPx = containerWidth * tabs.length;
     const dragConstraints = useMemo(() => {
@@ -173,36 +172,49 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
                 ))}
             </div>
 
-            {/* 3) Viewport wrapper with touch gestures and containment */}
+            {/* Viewport wrapper */}
             <div
                 ref={viewportRef}
                 className="flex-1 w-full relative overflow-hidden"
                 style={{ touchAction: "pan-y", overscrollBehavior: "contain" }}
             >
                 {containerWidth > 0 && (
-                    <motion.div
-                        className="flex h-full"
-                        style={{ x, width: trackWidthPx, cursor: "grab" }}
-                        whileTap={{ cursor: "grabbing" }}
-                        drag={canDrag ? "x" : false}
-                        dragDirectionLock
-                        dragConstraints={dragConstraints}
-                        dragElastic={0}
-                        dragMomentum={false}
-                        animate={controls}
-                        onDragStart={handleDragStart}
-                        onDragEnd={handleDragEnd}
-                    >
-                        {tabs.map((tab) => (
-                            <div
-                                key={tab.id}
-                                className="h-full overflow-y-auto overflow-x-hidden no-scrollbar pb-24 shrink-0 grow-0"
-                                style={{ flex: "0 0 auto", width: containerWidth }}
-                            >
-                                <div className="px-4 h-full">{tab.content}</div>
-                            </div>
-                        ))}
-                    </motion.div>
+                    <>
+                        {/* 2) Dedicated Horizontal Gesture Capture Layer */}
+                        <motion.div
+                            className="absolute inset-0 z-30"
+                            style={{ x: canDrag ? 0 : undefined }} // Overlay itself doesn't move visuals, but provides drag context
+                            drag={canDrag ? "x" : false}
+                            dragDirectionLock
+                            dragConstraints={dragConstraints}
+                            dragElastic={0.02}
+                            dragMomentum={false}
+                            onDragStart={handleDragStart}
+                            onDragEnd={handleDragEnd}
+                            // Attach the shared MotionValue x to the drag
+                            _dragValue={x}
+                        />
+
+                        {/* 3) Visual Track (Underneath) */}
+                        <motion.div
+                            className="flex h-full pointer-events-none relative z-10"
+                            style={{
+                                x,
+                                width: trackWidthPx,
+                            }}
+                            animate={controls}
+                        >
+                            {tabs.map((tab) => (
+                                <div
+                                    key={tab.id}
+                                    className="h-full overflow-y-auto overflow-x-hidden no-scrollbar pb-24 shrink-0 grow-0 pointer-events-auto"
+                                    style={{ flex: "0 0 auto", width: containerWidth }}
+                                >
+                                    <div className="px-4 h-full">{tab.content}</div>
+                                </div>
+                            ))}
+                        </motion.div>
+                    </>
                 )}
             </div>
         </div>
