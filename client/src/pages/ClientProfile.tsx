@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useClientProfileController } from "@/features/profile/useClientProfileController";
 import { ProfileHeader } from "@/features/profile/components/ProfileHeader";
-import { SwipeableTabs } from "@/features/profile/components/SwipeableTabs";
+import { ProfileSwipeCarousel } from "@/features/profile/components/ProfileSwipeCarousel";
 import { MoodboardCard } from "@/features/profile/components/MoodboardCard";
 import { PhotosCard, HistoryCard, SavedCard } from "@/features/profile/components/ContentCards";
 import { EditBioModal } from "@/features/profile/components/EditBioModal";
@@ -126,7 +126,7 @@ export default function ClientProfile() {
 
             {/* Swipeable Cards */}
             <div className="flex-1 min-h-0 relative">
-                <SwipeableTabs tabs={tabs} defaultTab={activeTabId} onTabChange={setActiveTabId} />
+                <ProfileSwipeCarousel tabs={tabs} defaultTab={activeTabId} onTabChange={setActiveTabId} />
             </div>
 
             {/* Modals */}
