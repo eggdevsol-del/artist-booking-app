@@ -7,7 +7,6 @@ import { BottomNavRow } from "./BottomNavRow";
 import { useBottomNav } from "@/contexts/BottomNavContext";
 import { motion, useAnimation, useMotionValue, animate, MotionValue } from "framer-motion";
 import { useEffect, useRef, useCallback, useState } from "react";
-import { MAIN_NAV_ITEMS } from "@/_core/bottomNav/defaultNav";
 
 /* 
    ################################################################################
@@ -37,9 +36,7 @@ export default function BottomNav() {
     };
 
     // Config comes from canonical source
-    const navItems = MAIN_NAV_ITEMS;
-
-    const { isContextualVisible, setContextualVisible, contextualRow } = useBottomNav();
+    const { isContextualVisible, setContextualVisible, contextualRow, navItems } = useBottomNav();
 
     // Animation Controls & Motion Values
     const controls = useAnimation();

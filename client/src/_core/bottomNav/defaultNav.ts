@@ -1,7 +1,7 @@
 import { Calendar, Image, LayoutDashboard, MessageCircle, Settings, Wallet } from "lucide-react";
 import { BottomNavButton } from "./types";
 
-export const MAIN_NAV_ITEMS: BottomNavButton[] = [
+export const ARTIST_NAV_ITEMS: BottomNavButton[] = [
     { id: "dashboard", path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "messages", path: "/conversations", label: "Messages", icon: MessageCircle, badgeCount: 0 }, // Badge logic handles count dynamically
     { id: "calendar", path: "/calendar", label: "Calendar", icon: Calendar },
@@ -9,3 +9,12 @@ export const MAIN_NAV_ITEMS: BottomNavButton[] = [
     { id: "wallet", path: "/wallet", label: "Wallet", icon: Wallet },
     { id: "settings", path: "/settings", label: "Settings", icon: Settings },
 ];
+
+export const CLIENT_NAV_ITEMS: BottomNavButton[] = [
+    { id: "dashboard", path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "messages", path: "/conversations", label: "Messages", icon: MessageCircle },
+    { id: "settings", path: "/settings", label: "Settings", icon: Settings },
+];
+
+// Default to artist for backward compatibility or initial load
+export const MAIN_NAV_ITEMS = ARTIST_NAV_ITEMS;
