@@ -27,19 +27,21 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
     const x = useMotionValue(0);
     const controls = useAnimation();
 
-    // Measurement Logic (Debounced + Threshold)
+    // Measurement Logic (Debounced + Threshold + Rounded)
     useEffect(() => {
         if (!containerRef.current) return;
 
         let rafId: number;
 
         const observer = new ResizeObserver((entries) => {
-            // Debounce via RAF to avoid thrashing in one frame
             cancelAnimationFrame(rafId);
             rafId = requestAnimationFrame(() => {
                 for (const entry of entries) {
-                    const width = entry.contentRect.width;
-                    if (Math.abs(width - lastMeasureRef.current) > 2) {
+                    // Round to avoid sub-pixel jitter
+                    const width = Math.round(entry.contentRect.width);
+
+                    // Threshold: Only update if changed by > 1px
+                    if (Math.abs(width - lastMeasureRef.current) > 1) {
                         lastMeasureRef.current = width;
                         setContainerWidth(width);
                     }
@@ -59,14 +61,17 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
         if (defaultTab) {
             const found = tabs.findIndex(t => t.id === defaultTab);
             if (found >= 0 && found !== activeIndex) {
+                // We don't snap here immediately; let the main snap effect handle it
                 setActiveIndex(found);
             }
         }
     }, [defaultTab, tabs, activeIndex]);
 
     // Snap Effect
+    // This is the Single Source of Truth for position updates based on state
     useEffect(() => {
         // Only snap if we have a valid width and are NOT dragging
+        // This ensures no fighting with user input
         if (containerWidth > 0 && !isDraggingRef.current) {
             const targetX = -activeIndex * containerWidth;
             controls.start({
@@ -74,49 +79,49 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
                 transition: { type: "spring", stiffness: 300, damping: 30, bounce: 0 }
             });
         }
-    }, [activeIndex, containerWidth, controls]);
+    }, [activeIndex, containerWidth, controls]); // Intentionally exhaustive
 
-    // Notify Parent
+    // Notify Parent of changes
     useEffect(() => {
-        onTabChange?.(tabs[activeIndex].id);
+        if (tabs[activeIndex]) {
+            onTabChange?.(tabs[activeIndex].id);
+        }
     }, [activeIndex, tabs, onTabChange]);
 
 
     // Handlers
     const handleDragStart = () => {
         isDraggingRef.current = true;
+        controls.stop(); // CRITICAL: Stop any ongoing animation to prevent fighting
     };
 
     const handleDragEnd = (event: any, info: PanInfo) => {
         isDraggingRef.current = false;
         if (containerWidth === 0) return;
 
-        const offset = info.offset.x;
-        const velocity = info.velocity.x;
         const currentX = x.get();
+        const velocity = info.velocity.x;
 
-        // Calculate predicted index based on drag
-        // We can just use the final position / width
-        // But let's stick to the "intent" logic (threshold or velocity) relative to START
-        // Actually, easiest robust way:
-
+        // Calculate ideal index based on current position
         const idealIndex = -currentX / containerWidth;
         let newIndex = Math.round(idealIndex);
 
-        // Velocity override
-        if (velocity < -300) {
-            newIndex = Math.ceil(idealIndex); // Swipe Left -> ceil
-        } else if (velocity > 300) {
-            newIndex = Math.floor(idealIndex); // Swipe Right -> floor
+        // Velocity override for intuitive swipe
+        // Higher threshold to prevent accidental flips
+        if (velocity < -500) {
+            newIndex = Math.ceil(idealIndex); // Swipe Left -> Next
+        } else if (velocity > 500) {
+            newIndex = Math.floor(idealIndex); // Swipe Right -> Prev
         }
 
-        // Clamp
+        // Clamp to valid bounds
         newIndex = Math.max(0, Math.min(newIndex, tabs.length - 1));
 
-        setActiveIndex(newIndex);
-
-        // Explicitly snap NOW (in case index didn't change, we still need to snap back)
-        if (newIndex === activeIndex) {
+        if (newIndex !== activeIndex) {
+            setActiveIndex(newIndex);
+            // The Effect will pick up this change and animate
+        } else {
+            // Index didn't change, but we moved. We must snap back manually.
             controls.start({
                 x: -newIndex * containerWidth,
                 transition: { type: "spring", stiffness: 300, damping: 30, bounce: 0 }
@@ -131,7 +136,7 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
             {/* Dev Overlay */}
             {process.env.NODE_ENV === 'development' && (
                 <div className="absolute top-0 right-0 z-50 bg-black/80 text-white text-[9px] p-1 pointer-events-none font-mono border-l border-b border-white/10">
-                    W:{Math.round(containerWidth)} | IDX:{activeIndex} | X:{Math.round(x.get())} | DRG:{isDraggingRef.current ? 'Y' : 'N'}
+                    W:{containerWidth} | IDX:{activeIndex} | DRG:{isDraggingRef.current ? 'Y' : 'N'}
                 </div>
             )}
 
@@ -153,7 +158,7 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
                 ))}
             </div>
 
-            {/* Viewport - Static Measure Target */}
+            {/* Viewport */}
             <div
                 ref={containerRef}
                 className="flex-1 w-full relative overflow-hidden touch-pan-y"
@@ -169,8 +174,8 @@ export function ProfileSwipeCarousel({ tabs, defaultTab, onTabChange }: ProfileS
                         whileTap={{ cursor: "grabbing" }}
                         drag="x"
                         dragConstraints={{ left: maxDrag, right: 0 }}
-                        dragElastic={0.05}
-                        dragMomentum={false}
+                        dragElastic={0} // STRICT: No elasticity to prevent bounce-back glitches
+                        dragMomentum={false} // STRICT: No momentum, we handle snap
                         animate={controls}
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
