@@ -30,21 +30,15 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ClientProfile from "./pages/ClientProfile";
 
-import { BUILDER_CONFIG } from "./config/builderConfig";
-import BuilderPage from "./pages/BuilderPage";
-
 function Router() {
   const [location] = useLocation();
-  const hideBottomNavPaths = ["/", "/login", "/signup", "/complete-profile", "/__builder"];
+  const hideBottomNavPaths = ["/", "/login", "/signup", "/complete-profile"];
   const shouldShowBottomNav = !hideBottomNavPaths.includes(location) && !location.startsWith("/404");
 
   return (
     <div className={`min-h-screen ${shouldShowBottomNav ? "pb-16" : ""}`}>
       <Switch>
-        <Route path="/">
-          {BUILDER_CONFIG.BUILDER_DEFAULT_HOME ? <BuilderPage /> : <Home />}
-        </Route>
-        <Route path="/__builder" component={BuilderPage} />
+        <Route path="/" component={Home} />
         <Route path="/login" component={Login} />
         <Route path="/signup" component={Signup} />
 
