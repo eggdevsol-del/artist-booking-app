@@ -36,8 +36,6 @@ const TITLES = ["Business", "Social", "Personal"];
 // --- Components ---
 
 function TaskCard({ task }: { task: Task }) {
-    // Requirement: Muted, deeper tones. No increased saturation.
-    // Using standard Tailwind 900 colors/opacity for depth without neon effects.
     const priorityColor = {
         high: "bg-red-900/80",
         medium: "bg-orange-900/80",
@@ -45,14 +43,9 @@ function TaskCard({ task }: { task: Task }) {
     }[task.priority];
 
     return (
-        // Requirement: slightly reduce perceived softness -> rounded-2xl (vs 3rem)
-        // No glow -> shadow-none
-        // Muted, semi-transparent -> bg-white/5 
         <Card className="p-4 pr-6 relative overflow-hidden transition-all duration-300 border-white/5 active:scale-[0.98] shadow-none rounded-2xl bg-white/5 hover:bg-white/10">
             <div className="flex items-start gap-4 z-10 relative">
-                {/* Priority Bar */}
                 <div className={cn("w-1.5 h-10 rounded-full flex-shrink-0 mt-1", priorityColor)} />
-
                 <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-foreground text-lg leading-tight mb-1">
                         {task.title}
@@ -83,8 +76,9 @@ function EmptyState({ category }: { category: string }) {
 
 export default function Dashboard() {
     const [activeIndex, setActiveIndex] = useState(0);
+    const selectedDate = new Date();
 
-    // Framer motion variants for sheet transition
+    // Framer motion variants
     const variants = {
         enter: (direction: number) => ({
             x: direction > 0 ? "100%" : "-100%",
@@ -120,104 +114,106 @@ export default function Dashboard() {
     const tasks = TASKS[activeCategory] || [];
 
     return (
-        <div className="min-h-screen flex flex-col pb-20 relative">
-
-            {/* Background Wrapper Overlay - Requirement 1 */}
-            {/* "Dark-mode black-leaning gradient. Very subtle, long gradient transition." */}
-            {/* Overlaying a dark gradient on top of the global background to shift it towards black without replacing it. */}
-            {/* pointer-events-none ensures we don't block interaction */}
+        <div className="h-screen max-h-[100dvh] flex flex-col overflow-hidden relative bg-black">
+            {/* Background Wrapper Overlay */}
             <div
                 className="fixed inset-0 pointer-events-none z-0"
                 style={{
-                    background: "radial-gradient(circle at 50% 10%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 100%)",
+                    background: "radial-gradient(circle at 50% 10%, rgba(30, 30, 40, 0.4) 0%, rgba(0,0,0,0.8) 100%)",
                 }}
             />
-            {/* Additional dark base if needed for "black-leaning" */}
-            <div className="fixed inset-0 pointer-events-none z-0 bg-black/20 mix-blend-multiply" />
 
-
-            {/* Page Header */}
-            <header className="mobile-header px-4 py-4 z-10">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-                </div>
+            {/* 1. Page Header (Fixed) */}
+            <header className="px-4 py-4 z-10 shrink-0">
+                <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
             </header>
 
-            {/* Focus Corridor */}
-            <div className="flex-shrink-0 py-4 px-4 z-10 w-full overflow-hidden">
-                <div className="flex items-center justify-between max-w-md mx-auto">
-                    {TITLES.map((title, index) => {
-                        const isActive = index === activeIndex;
-                        return (
-                            <div
-                                key={title}
-                                onClick={() => {
-                                    const dir = index > activeIndex ? 1 : -1;
-                                    if (index !== activeIndex) {
-                                        setPage([index, dir]);
-                                        setActiveIndex(index);
-                                    }
-                                }}
-                                className={cn(
-                                    "text-lg font-bold tracking-tight transition-all duration-300 ease-out cursor-pointer",
-                                    isActive
-                                        ? "text-foreground opacity-100"
-                                        : "text-muted-foreground/60" // Reduced opacity further for calm
-                                )}
-                                style={{
-                                    filter: isActive ? "none" : "blur(1.5px)",
-                                    pointerEvents: isActive ? "auto" : "none"
-                                }}
-                            >
-                                {title}
-                            </div>
-                        );
-                    })}
-                </div>
+            {/* 2. Top Context Area (Non-interactive) */}
+            <div className="px-6 pt-4 pb-8 z-10 shrink-0 flex flex-col justify-center h-[20vh] opacity-80">
+                <p className="text-4xl font-light text-foreground/90 tracking-tight">
+                    {selectedDate.toLocaleDateString("en-US", { weekday: "long" })}
+                </p>
+                <p className="text-muted-foreground text-lg font-medium mt-1">
+                    {selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric" })}
+                </p>
             </div>
 
-            {/* Sheet Container */}
-            <div className="flex-1 relative w-full overflow-hidden z-10">
-                <AnimatePresence initial={false} custom={direction}>
-                    <motion.div
-                        key={page}
-                        custom={direction}
-                        variants={variants}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{
-                            x: { type: "spring", stiffness: 300, damping: 30 },
-                            opacity: { duration: 0.2 },
-                        }}
-                        drag="x"
-                        dragConstraints={{ left: 0, right: 0 }}
-                        dragElastic={0.2}
-                        onDragEnd={(e, { offset, velocity }) => {
-                            const swipe = swipePower(offset.x, velocity.x);
+            {/* 3. Task Sheet (Active Zone) */}
+            <div className="flex-1 z-20 flex flex-col bg-white/5 backdrop-blur-2xl rounded-t-[2.5rem] border-t border-white/5 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] overflow-hidden">
 
-                            if (swipe < -swipeConfidenceThreshold) {
-                                paginate(1);
-                            } else if (swipe > swipeConfidenceThreshold) {
-                                paginate(-1);
-                            }
-                        }}
-                        dragDirectionLock
-                        className="absolute top-0 left-0 w-full h-full px-4 overflow-y-auto mobile-scroll pb-24 touch-pan-y"
-                    >
-                        {/* Sheet Content */}
-                        <div className="space-y-4 pt-2 max-w-md mx-auto min-h-full">
-                            {tasks.length > 0 ? (
-                                tasks.map(task => (
-                                    <TaskCard key={task.id} task={task} />
-                                ))
-                            ) : (
-                                <EmptyState category={TITLES[activeIndex]} />
-                            )}
-                            <div className="h-8" />
-                        </div>
-                    </motion.div>
-                </AnimatePresence>
+                {/* Sheet Header (Anchored) */}
+                <div className="shrink-0 pt-6 pb-2 px-6 border-b border-white/5">
+                    <div className="flex items-center justify-between max-w-sm">
+                        {TITLES.map((title, index) => {
+                            const isActive = index === activeIndex;
+                            return (
+                                <button
+                                    key={title}
+                                    onClick={() => {
+                                        const dir = index > activeIndex ? 1 : -1;
+                                        if (index !== activeIndex) {
+                                            setPage([index, dir]);
+                                            setActiveIndex(index);
+                                        }
+                                    }}
+                                    className={cn(
+                                        "text-lg font-bold tracking-tight transition-all duration-300 ease-out py-2 outline-none",
+                                        isActive
+                                            ? "text-foreground opacity-100"
+                                            : "text-muted-foreground/50 hover:text-muted-foreground/80"
+                                    )}
+                                    style={{
+                                        filter: isActive ? "none" : "blur(0.5px)",
+                                    }}
+                                >
+                                    {title}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Sheet Content (Swipeable + Scrollable) */}
+                <div className="flex-1 relative w-full overflow-hidden">
+                    <AnimatePresence initial={false} custom={direction}>
+                        <motion.div
+                            key={page}
+                            custom={direction}
+                            variants={variants}
+                            initial="enter"
+                            animate="center"
+                            exit="exit"
+                            transition={{
+                                x: { type: "spring", stiffness: 300, damping: 30 },
+                                opacity: { duration: 0.2 },
+                            }}
+                            drag="x"
+                            dragConstraints={{ left: 0, right: 0 }}
+                            dragElastic={0.2}
+                            onDragEnd={(e, { offset, velocity }) => {
+                                const swipe = swipePower(offset.x, velocity.x);
+                                if (swipe < -swipeConfidenceThreshold) {
+                                    paginate(1);
+                                } else if (swipe > swipeConfidenceThreshold) {
+                                    paginate(-1);
+                                }
+                            }}
+                            dragDirectionLock
+                            className="absolute top-0 left-0 w-full h-full px-4 pt-4 overflow-y-auto mobile-scroll pb-24 touch-pan-y"
+                        >
+                            <div className="space-y-3 pb-8 max-w-lg mx-auto">
+                                {tasks.length > 0 ? (
+                                    tasks.map(task => (
+                                        <TaskCard key={task.id} task={task} />
+                                    ))
+                                ) : (
+                                    <EmptyState category={TITLES[activeIndex]} />
+                                )}
+                            </div>
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+
             </div>
         </div>
     );
