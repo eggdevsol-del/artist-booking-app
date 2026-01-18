@@ -37,9 +37,9 @@ const TITLES = ["Business", "Social", "Personal"];
 
 function TaskCard({ task }: { task: Task }) {
     const priorityGradient = {
-        high: "linear-gradient(90deg, rgba(127, 29, 29, 0.6) 0%, rgba(127, 29, 29, 0.15) 2%, rgba(127, 29, 29, 0) 100%)",
-        medium: "linear-gradient(90deg, rgba(124, 45, 18, 0.6) 0%, rgba(124, 45, 18, 0.15) 2%, rgba(124, 45, 18, 0) 100%)",
-        low: "linear-gradient(90deg, rgba(6, 78, 59, 0.6) 0%, rgba(6, 78, 59, 0.15) 2%, rgba(6, 78, 59, 0) 100%)"
+        high: "linear-gradient(90deg, rgba(127, 29, 29, 0.85) 0%, rgba(127, 29, 29, 0.3) 2%, rgba(127, 29, 29, 0) 25%)",
+        medium: "linear-gradient(90deg, rgba(124, 45, 18, 0.85) 0%, rgba(124, 45, 18, 0.3) 2%, rgba(124, 45, 18, 0) 25%)",
+        low: "linear-gradient(90deg, rgba(6, 78, 59, 0.85) 0%, rgba(6, 78, 59, 0.3) 2%, rgba(6, 78, 59, 0) 25%)"
     }[task.priority];
 
     return (
