@@ -1,16 +1,14 @@
-
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
-import { Loader2, Calendar, AlertCircle, CheckCircle2, Clock, Layers, ChevronRight, Check } from "lucide-react";
+import { Loader2, Calendar, AlertCircle, CheckCircle2, Clock, Layers, ChevronRight, Check, X, ArrowLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { RadioGroup } from "@/components/ui/radio-group";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { WizardShell, WizardStepConfig } from "@/ui/wizard";
+import { cn } from "@/lib/utils";
 
 type WizardStep = 'service' | 'frequency' | 'review' | 'success';
 
@@ -18,7 +16,7 @@ interface BookingWizardProps {
     isOpen: boolean;
     onClose: () => void;
     conversationId: number;
-    artistServices: any[]; // Ideally typed from router
+    artistServices: any[];
     artistSettings?: any;
     onBookingSuccess: () => void;
     overlayName?: string;
@@ -36,7 +34,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
     // 1. Availability Query (Only runs on Review step)
     const {
         data: availability,
-        isPending: isLoadingAvailability, // Alias to keep variable name or change it
+        isPending: isLoadingAvailability,
         error: availabilityError
     } = trpc.booking.checkAvailability.useQuery({
         conversationId,
@@ -52,7 +50,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
         retry: false,
     });
 
-    // 2. Send Proposal Mutation (Send Message instead of Booking)
+    // 2. Send Proposal Mutation
     const utils = trpc.useUtils();
     const sendMessageMutation = trpc.messages.send.useMutation({
         onSuccess: () => {
@@ -87,8 +85,8 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
             price: Number(selectedService.price),
             totalCost: totalCost,
             frequency: frequency,
-            dates: availability.dates, // Use 'dates' consistently
-            proposedDates: availability.dates, // Keep for backward compat
+            dates: availability.dates,
+            proposedDates: availability.dates,
             status: 'pending',
             bsb: artistSettings?.bsb,
             accountNumber: artistSettings?.accountNumber,
@@ -107,6 +105,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
     const reset = () => {
         setStep('service');
         setSelectedService(null);
+        setFrequency("consecutive");
     };
 
     const handleClose = () => {
@@ -114,232 +113,259 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
         onClose();
     };
 
-    // -- Render Steps --
+    const goBack = () => {
+        if (step === 'frequency') setStep('service');
+        if (step === 'review') setStep('frequency');
+    };
 
-    const renderServiceStep = () => (
-        <div className="space-y-4 pt-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-primary/80 mb-4 pl-1">SELECT SERVICE</p>
-            <ScrollArea className="h-[380px] pr-4 -mr-4">
-                <div className="grid grid-cols-1 gap-4 pr-4">
-                    {artistServices.map(service => (
-                        <div
-                            key={service.id}
-                            className={`group relative p-6 cursor-pointer transition-all duration-300 rounded-[2rem] border ${selectedService?.id === service.id
-                                ? 'bg-primary/10 border-primary shadow-[0_0_30px_rgba(91,78,255,0.15)]'
-                                : 'bg-card border-white/5 hover:border-white/10 hover:bg-white/5'
-                                }`}
-                            onClick={() => setSelectedService(service)}
-                        >
-                            <div className="flex justify-between items-start mb-4">
-                                <div>
-                                    <h4 className={`font-bold text-xl mb-1 ${selectedService?.id === service.id ? 'text-primary-foreground' : 'text-foreground'}`}>
-                                        {service.name}
-                                    </h4>
-                                    <div className="flex items-center gap-3 mt-3">
-                                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0a0a0a] text-white/50 text-xs font-medium border border-white/5">
-                                            <Clock className="w-3 h-3" />
-                                            {service.duration} mins
-                                        </span>
-                                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0a0a0a] text-white/50 text-xs font-medium border border-white/5">
-                                            <Layers className="w-3 h-3" />
-                                            {service.sittings || 1} sitting{(service.sittings || 1) > 1 ? 's' : ''}
-                                        </span>
-                                    </div>
-                                </div>
-                                <span className="font-bold text-lg text-primary">
-                                    ${service.price}
-                                </span>
-                            </div>
-
-                            <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center absolute bottom-6 right-6 transition-colors ${selectedService?.id === service.id ? 'border-primary bg-primary' : 'border-white/20'}`}>
-                                {selectedService?.id === service.id && <Check className="w-3.5 h-3.5 text-white" strokeWidth={4} />}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </ScrollArea>
-        </div>
-    );
-
-    const renderFrequencyStep = () => (
-        <div className="space-y-6 pt-2">
-            <div className="bg-card border border-white/10 p-6 rounded-[2rem] flex items-center justify-between">
-                <div>
-                    <h4 className="font-bold text-foreground text-lg">{selectedService?.name}</h4>
-                    <p className="text-sm text-white/50 mt-1">
-                        {selectedService?.sittings || 1} sittings • {selectedService?.duration} mins each
-                    </p>
-                </div>
-                <div className="text-right">
-                    <span className="block font-bold text-2xl text-primary">${selectedService?.price}</span>
-                    <span className="text-[10px] text-white/30 uppercase tracking-wider font-bold">PER SESSION</span>
-                </div>
-            </div>
-
-            <div className="space-y-4">
-                <Label className="text-xs font-bold uppercase tracking-widest text-white/40 pl-1">FREQUENCY</Label>
-                <RadioGroup value={frequency} onValueChange={(v: any) => setFrequency(v)} className="grid grid-cols-1 gap-3">
-                    {[
-                        { id: 'consecutive', label: 'Consecutive Days', sub: 'Best for intensive projects' },
-                        { id: 'weekly', label: 'Weekly', sub: 'Same day each week' },
-                        { id: 'biweekly', label: 'Bi-Weekly', sub: 'Every two weeks' },
-                        { id: 'monthly', label: 'Monthly', sub: 'Once a month' }
-                    ].map((opt) => (
-                        <div key={opt.id} className={`group relative flex items-center space-x-4 border p-5 rounded-[1.5rem] cursor-pointer transition-all duration-300 ${frequency === opt.id
-                            ? 'bg-primary/10 border-primary shadow-[0_0_15px_rgba(91,78,255,0.1)]'
-                            : 'bg-card border-white/5 hover:bg-white/5'
-                            }`}
-                            onClick={() => setFrequency(opt.id as any)}
-                        >
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${frequency === opt.id ? 'border-primary' : 'border-white/20 ml-1'}`}>
-                                {frequency === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
-                            </div>
-                            <div className="flex-1">
-                                <Label htmlFor={opt.id} className={`text-base font-bold cursor-pointer block transition-colors ${frequency === opt.id ? 'text-foreground' : 'text-muted-foreground'}`}>{opt.label}</Label>
-                                <p className="text-xs text-white/40 mt-1 font-medium">{opt.sub}</p>
-                            </div>
-                        </div>
-                    ))}
-                </RadioGroup>
-            </div>
-        </div>
-    );
-
-    const renderReviewStep = () => (
-        <div className="space-y-6 pt-2">
-            {isLoadingAvailability && (
-                <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                    <Loader2 className="w-10 h-10 animate-spin text-[#5b4eff]" />
-                    <p className="text-sm font-medium text-white/50 animate-pulse">Scanning calendar...</p>
-                </div>
-            )}
-
-            {availabilityError && (
-                <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl">
-                    <h5 className="font-bold text-red-500 flex items-center gap-2 mb-2 text-sm">
-                        <AlertCircle className="w-4 h-4" />
-                        Calculation Failed
-                    </h5>
-                    <p className="text-xs text-red-400/80 leading-relaxed">
-                        {availabilityError.message}
-                    </p>
-                </div>
-            )}
-
-            {availability && (
-                <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="p-6 bg-[#1a1a1a] rounded-[2rem] border border-white/5 flex flex-col items-center justify-center text-center">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-2">TOTAL COST</span>
-                            <span className="text-3xl font-bold text-white tracking-tight">${availability.totalCost}</span>
-                        </div>
-                        <div className="p-6 bg-[#1a1a1a] rounded-[2rem] border border-white/5 flex flex-col items-center justify-center text-center">
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-white/30 mb-2">SITTINGS</span>
-                            <span className="text-3xl font-bold text-white tracking-tight">{selectedService?.sittings || 1}</span>
-                        </div>
-                    </div>
-
-                    <div className="bg-[#1a1a1a] border border-white/5 rounded-[2rem] overflow-hidden p-6 pb-2">
-                        <div className="flex items-center justify-between mb-6 px-1">
-                            <span className="text-xs font-bold uppercase tracking-widest text-white/40">PROPOSED SCHEDULE</span>
-                            <span className="text-[10px] font-bold bg-[#5b4eff]/20 text-[#7c74ff] px-3 py-1 rounded-full">{availability.dates.length} Dates</span>
-                        </div>
-                        <ScrollArea className="h-[210px] pr-2 -mr-2">
-                            <div className="space-y-4 pb-4">
-                                {availability.dates.map((date: string | Date, i: number) => (
-                                    <div key={i} className="flex items-center gap-5 group">
-                                        <div className="w-10 h-10 rounded-full bg-[#0a0a0a] border border-white/5 flex items-center justify-center text-white/30 font-bold text-sm group-hover:text-[#5b4eff] group-hover:border-[#5b4eff]/50 transition-colors">
-                                            {String(i + 1).padStart(2, '0')}
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="text-base font-bold text-white">{format(new Date(date), "EEEE,")}</p>
-                                            <p className="text-base font-bold text-white">{format(new Date(date), "MMMM do")}</p>
-                                        </div>
-                                        <div className="text-xs font-bold text-[#b4b0ff] bg-[#5b4eff]/10 px-3 py-1.5 rounded-full border border-[#5b4eff]/20">
-                                            {format(new Date(date), "h:mm a")}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </ScrollArea>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-
-    const renderSuccessStep = () => (
-        <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center">
-            <div className="w-24 h-24 bg-primary/20 rounded-full flex items-center justify-center mb-2">
-                <CheckCircle2 className="w-12 h-12 text-primary" />
-            </div>
-            <div className="space-y-2">
-                <h3 className="text-3xl font-bold text-white tracking-tight">Proposal Sent!</h3>
-                <p className="text-white/50 text-base max-w-xs mx-auto leading-relaxed">
-                    The project proposal has been sent to the client.
-                </p>
-            </div>
-            <Button onClick={handleClose} className="w-full h-14 rounded-full text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 mt-4">
-                Return to Chat
-            </Button>
-        </div>
-    );
-
-    // -- Step Configuration --
-
-    const stepsConfigs: WizardStepConfig[] = [
-        {
-            id: 'service',
-            label: 'Select Service',
-            render: renderServiceStep,
-            canNext: !!selectedService,
-            onNext: () => setStep('frequency'),
-            nextLabel: 'Next',
-            hideBack: true
-        },
-        {
-            id: 'frequency',
-            label: 'Select Frequency',
-            render: renderFrequencyStep,
-            canNext: true,
-            onNext: () => setStep('review'),
-            nextLabel: 'Find Dates'
-        },
-        {
-            id: 'review',
-            label: 'Review & Send',
-            render: renderReviewStep,
-            canNext: !!availability && !sendMessageMutation.isPending,
-            isNextLoading: sendMessageMutation.isPending,
-            onNext: handleConfirmBooking,
-            nextLabel: 'Send Proposal'
-        },
-        {
-            id: 'success',
-            label: 'Success',
-            render: renderSuccessStep,
-            hideNext: true,
-            hideBack: true,
-            customFooter: null // Footer buttons are inside the renderSuccessStep
+    // -- Header Titles --
+    const getStepTitle = () => {
+        switch (step) {
+            case 'service': return "Select Service";
+            case 'frequency': return "Select Frequency";
+            case 'review': return "Review Proposal";
+            case 'success': return "Proposal Sent";
         }
-    ];
+    };
 
-    const currentStepIndex = stepsConfigs.findIndex(s => s.id === step);
+    // -- Render Content --
 
     return (
-        <WizardShell
-            isOpen={isOpen}
-            onClose={handleClose}
-            title={stepsConfigs[currentStepIndex]?.label}
-            steps={stepsConfigs}
-            currentStepIndex={currentStepIndex}
-            onStepChange={(index) => {
-                const newStep = stepsConfigs[index]?.id as WizardStep;
-                if (newStep) setStep(newStep);
-            }}
-            overlayName={overlayName}
-            overlayId={overlayId}
-        />
-    );
+        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+            {/* Full Screen Modal Shell */}
+            <DialogContent
+                className="fixed inset-0 z-[100] w-full h-[100dvh] max-w-none rounded-none border-none p-0 bg-background outline-none flex flex-col gap-0 overflow-hidden sm:max-w-none"
+                style={{ background: 'var(--bg-gradient)', backgroundAttachment: 'fixed' }}
+            >
 
+                {/* 1. Page Header (Fixed) */}
+                <header className="px-4 py-4 z-10 shrink-0 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        {step !== 'service' && step !== 'success' && (
+                            <Button variant="ghost" size="icon" className="rounded-full bg-white/5 hover:bg-white/10 text-foreground" onClick={goBack}>
+                                <ArrowLeft className="w-5 h-5" />
+                            </Button>
+                        )}
+                        <DialogTitle className="text-2xl font-bold text-foreground">{getStepTitle()}</DialogTitle>
+                    </div>
+                    <Button variant="ghost" size="icon" className="rounded-full bg-white/5 hover:bg-white/10 text-foreground" onClick={handleClose}>
+                        <X className="w-5 h-5" />
+                    </Button>
+                </header>
+
+                {/* 2. Top Context Area (Summary of progress) */}
+                <div className="px-6 pt-4 pb-8 z-10 shrink-0 flex flex-col justify-center h-[15vh] opacity-80 transition-all duration-300">
+                    {step === 'service' && <p className="text-4xl font-light text-foreground/90 tracking-tight">Booking</p>}
+                    {step === 'frequency' && (
+                        <div>
+                            <p className="text-lg font-bold text-primary">{selectedService?.name}</p>
+                            <p className="text-sm text-muted-foreground">{selectedService?.duration}min • ${selectedService?.price}</p>
+                        </div>
+                    )}
+                    {step === 'review' && (
+                        <div>
+                            <p className="text-4xl font-light text-foreground/90 tracking-tight">Summary</p>
+                            <p className="text-sm text-muted-foreground mt-1">{frequency} • {selectedService?.name}</p>
+                        </div>
+                    )}
+                    {step === 'success' && <p className="text-4xl font-light text-foreground/90 tracking-tight">Done</p>}
+                </div>
+
+                {/* 3. Sheet Container */}
+                <div className="flex-1 z-20 flex flex-col bg-white/5 backdrop-blur-2xl rounded-t-[2.5rem] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] overflow-hidden relative">
+                    {/* Top Edge Highlight */}
+                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-white/20 to-transparent opacity-50 pointer-events-none" />
+
+                    {/* Scrollable Content */}
+                    <div className="flex-1 w-full h-full px-4 pt-8 overflow-y-auto mobile-scroll touch-pan-y">
+                        <div className="pb-32 max-w-lg mx-auto space-y-4">
+
+                            {/* STEP: SERVICE */}
+                            {step === 'service' && (
+                                <div className="space-y-4">
+                                    {artistServices.map(service => (
+                                        <Card
+                                            key={service.id}
+                                            className={cn(
+                                                "group relative p-4 pr-6 cursor-pointer border-0 rounded-2xl transition-all duration-300",
+                                                selectedService?.id === service.id
+                                                    ? "bg-primary/20 hover:bg-primary/20"
+                                                    : "bg-white/5 hover:bg-white/10"
+                                            )}
+                                            onClick={() => {
+                                                setSelectedService(service);
+                                                // Auto-advance
+                                                setTimeout(() => setStep('frequency'), 200);
+                                            }}
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h4 className="font-bold text-lg text-foreground mb-1 group-hover:text-primary transition-colors">
+                                                        {service.name}
+                                                    </h4>
+                                                    <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
+                                                        <span className="flex items-center gap-1">
+                                                            <Clock className="w-3.5 h-3.5" />
+                                                            {service.duration}m
+                                                        </span>
+                                                        <span className="flex items-center gap-1">
+                                                            <Layers className="w-3.5 h-3.5" />
+                                                            {service.sittings || 1} sitting{(service.sittings || 1) > 1 ? 's' : ''}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="block font-bold text-lg text-primary">${service.price}</span>
+                                                </div>
+                                            </div>
+
+                                            {selectedService?.id === service.id && (
+                                                <div className="absolute inset-0 rounded-2xl border-2 border-primary pointer-events-none" />
+                                            )}
+                                        </Card>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* STEP: FREQUENCY */}
+                            {step === 'frequency' && (
+                                <div className="space-y-4">
+                                    <RadioGroup value={frequency} onValueChange={(v: any) => setFrequency(v)} className="grid grid-cols-1 gap-3">
+                                        {[
+                                            { id: 'consecutive', label: 'Consecutive Days', sub: 'Best for intensive projects' },
+                                            { id: 'weekly', label: 'Weekly', sub: 'Same day each week' },
+                                            { id: 'biweekly', label: 'Bi-Weekly', sub: 'Every two weeks' },
+                                            { id: 'monthly', label: 'Monthly', sub: 'Once a month' }
+                                        ].map((opt) => (
+                                            <Card
+                                                key={opt.id}
+                                                className={cn(
+                                                    "relative p-4 cursor-pointer border-0 rounded-2xl transition-all duration-300 flex items-center gap-4",
+                                                    frequency === opt.id
+                                                        ? "bg-primary/20"
+                                                        : "bg-white/5 hover:bg-white/10"
+                                                )}
+                                                onClick={() => setFrequency(opt.id as any)}
+                                            >
+                                                <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors", frequency === opt.id ? "border-primary" : "border-white/20")}>
+                                                    {frequency === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-foreground">{opt.label}</h4>
+                                                    <p className="text-xs text-muted-foreground">{opt.sub}</p>
+                                                </div>
+
+                                                {frequency === opt.id && (
+                                                    <div className="absolute inset-0 rounded-2xl border-2 border-primary pointer-events-none" />
+                                                )}
+                                            </Card>
+                                        ))}
+                                    </RadioGroup>
+
+                                    <Button
+                                        className="w-full h-12 rounded-full font-bold shadow-lg shadow-primary/20 mt-8"
+                                        onClick={() => setStep('review')}
+                                    >
+                                        Find Available Dates
+                                    </Button>
+                                </div>
+                            )}
+
+                            {/* STEP: REVIEW */}
+                            {step === 'review' && (
+                                <div className="space-y-6">
+                                    {isLoadingAvailability && (
+                                        <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                                            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                                            <p className="text-sm font-medium text-muted-foreground animate-pulse">Scanning calendar...</p>
+                                        </div>
+                                    )}
+
+                                    {availabilityError && (
+                                        <Card className="p-5 bg-destructive/10 border-0 rounded-2xl">
+                                            <h5 className="font-bold text-destructive flex items-center gap-2 mb-2 text-sm">
+                                                <AlertCircle className="w-4 h-4" />
+                                                Calculation Failed
+                                            </h5>
+                                            <p className="text-xs text-destructive/80 leading-relaxed">
+                                                {availabilityError.message}
+                                            </p>
+                                        </Card>
+                                    )}
+
+                                    {availability && (
+                                        <>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <Card className="p-4 bg-white/5 border-0 rounded-2xl flex flex-col items-center justify-center text-center">
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">TOTAL COST</span>
+                                                    <span className="text-2xl font-bold text-foreground tracking-tight">${availability.totalCost}</span>
+                                                </Card>
+                                                <Card className="p-4 bg-white/5 border-0 rounded-2xl flex flex-col items-center justify-center text-center">
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">SITTINGS</span>
+                                                    <span className="text-2xl font-bold text-foreground tracking-tight">{selectedService?.sittings || 1}</span>
+                                                </Card>
+                                            </div>
+
+                                            <Card className="bg-white/5 border-0 rounded-2xl overflow-hidden p-4">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">PROPOSED SCHEDULE</span>
+                                                    <span className="text-[10px] font-bold bg-primary/20 text-primary px-2 py-0.5 rounded-full">{availability.dates.length} Dates</span>
+                                                </div>
+                                                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                                    {availability.dates.map((date: string | Date, i: number) => (
+                                                        <div key={i} className="flex items-center gap-4">
+                                                            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground font-bold text-xs">
+                                                                {i + 1}
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <p className="text-sm font-bold text-foreground">{format(new Date(date), "EEEE, MMM do")}</p>
+                                                                <p className="text-xs text-muted-foreground">{format(new Date(date), "yyyy")}</p>
+                                                            </div>
+                                                            <div className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">
+                                                                {format(new Date(date), "h:mm a")}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </Card>
+
+                                            <Button
+                                                className="w-full h-12 rounded-full font-bold shadow-lg shadow-primary/20 mt-4"
+                                                onClick={handleConfirmBooking}
+                                                disabled={sendMessageMutation.isPending}
+                                            >
+                                                {sendMessageMutation.isPending ? "Sending..." : "Send Proposal"}
+                                            </Button>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* STEP: SUCCESS */}
+                            {step === 'success' && (
+                                <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center">
+                                    <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mb-2">
+                                        <CheckCircle2 className="w-10 h-10 text-primary" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h3 className="text-2xl font-bold text-foreground tracking-tight">Proposal Sent!</h3>
+                                        <p className="text-muted-foreground text-sm max-w-xs mx-auto leading-relaxed">
+                                            The project proposal has been sent to the client.
+                                        </p>
+                                    </div>
+                                    <Button
+                                        onClick={handleClose}
+                                        className="w-full h-12 rounded-full font-bold shadow-lg shadow-primary/20 mt-4"
+                                    >
+                                        Return to Chat
+                                    </Button>
+                                </div>
+                            )}
+
+                        </div>
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
 }
