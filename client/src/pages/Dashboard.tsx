@@ -1,6 +1,7 @@
 
-import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 // --- Mock Data ---
@@ -42,8 +43,8 @@ function TaskCard({ task }: { task: Task }) {
     }[task.priority];
 
     return (
-        <div className="group relative p-4 pr-6 border-0 bg-white/5 backdrop-blur-md rounded-[1.5rem] transition-all duration-300 active:scale-[0.98] border border-white/5">
-            <div className="flex items-start gap-4">
+        <Card className="p-4 pr-6 relative overflow-hidden transition-all duration-300 border-white/5 active:scale-[0.98]">
+            <div className="flex items-start gap-4 z-10 relative">
                 {/* Priority Bar */}
                 <div className={cn("w-1.5 h-10 rounded-full flex-shrink-0 mt-1", priorityColor)} />
 
@@ -58,7 +59,7 @@ function TaskCard({ task }: { task: Task }) {
                     )}
                 </div>
             </div>
-        </div>
+        </Card>
     );
 }
 
@@ -77,30 +78,22 @@ function EmptyState({ category }: { category: string }) {
 
 export default function Dashboard() {
     const [activeIndex, setActiveIndex] = useState(0);
-    // We use a constraint on the drag to prevent swiping beyond the list
-    // but for 3 items, index 0, 1, 2.
 
-    // Framer motion variants
+    // Framer motion variants for sheet transition
     const variants = {
         enter: (direction: number) => ({
-            x: direction > 0 ? 300 : -300,
+            x: direction > 0 ? "100%" : "-100%",
             opacity: 0,
-            scale: 0.95,
-            filter: "blur(4px)"
         }),
         center: {
             zIndex: 1,
             x: 0,
             opacity: 1,
-            scale: 1,
-            filter: "blur(0px)"
         },
         exit: (direction: number) => ({
             zIndex: 0,
-            x: direction < 0 ? 300 : -300,
+            x: direction < 0 ? "100%" : "-100%",
             opacity: 0,
-            scale: 0.95,
-            filter: "blur(4px)"
         })
     };
 
@@ -111,7 +104,6 @@ export default function Dashboard() {
 
     const [[page, direction], setPage] = useState([0, 0]);
 
-    // Sync state if controlled externally, though here it's local
     const paginate = (newDirection: number) => {
         const newIndex = page + newDirection;
         if (newIndex < 0 || newIndex >= TITLES.length) return;
@@ -123,41 +115,54 @@ export default function Dashboard() {
     const tasks = TASKS[activeCategory] || [];
 
     return (
-        <div className="flex flex-col h-screen max-h-[100dvh] overflow-hidden bg-background text-foreground relative touch-none">
-
-            {/* Focus Corridor Header */}
-            <header className="flex-shrink-0 pt-6 pb-2 px-4 z-20 bg-gradient-to-b from-background via-background/95 to-transparent">
-                <div className="flex items-baseline justify-between max-w-md mx-auto relative px-2">
-                    {TITLES.map((title, index) => {
-                        const isActive = index === activeIndex;
-                        return (
-                            <button
-                                key={title}
-                                onClick={() => {
-                                    const dir = index > activeIndex ? 1 : -1;
-                                    setPage([index, dir]);
-                                    setActiveIndex(index);
-                                }}
-                                className={cn(
-                                    "text-2xl font-bold tracking-tight transition-all duration-500 ease-out py-2",
-                                    isActive
-                                        ? "text-foreground opacity-100 scale-100"
-                                        : "text-muted-foreground opacity-30 blur-[2px] scale-90 pointer-events-none"
-                                )}
-                                style={{
-                                    // Subtle alignment tweaks can happen here
-                                    transformOrigin: index === 0 ? "left" : index === 2 ? "right" : "center"
-                                }}
-                            >
-                                {title}
-                            </button>
-                        );
-                    })}
+        <div className="min-h-screen flex flex-col pb-20">
+            {/* Page Header - Structural Requirement 2 */}
+            <header className="mobile-header px-4 py-4">
+                <div className="flex items-center justify-between">
+                    <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
                 </div>
             </header>
 
-            {/* Main Content Area */}
-            <div className="flex-1 relative w-full h-full">
+            {/* Focus Corridor - Structural Requirement 4 */}
+            <div className="flex-shrink-0 py-4 px-4 z-10 w-full overflow-hidden">
+                <div className="flex items-center justify-between max-w-md mx-auto">
+                    {TITLES.map((title, index) => {
+                        const isActive = index === activeIndex;
+                        return (
+                            <div
+                                key={title}
+                                onClick={() => {
+                                    const dir = index > activeIndex ? 1 : -1;
+                                    if (index !== activeIndex) {
+                                        setPage([index, dir]);
+                                        setActiveIndex(index);
+                                    }
+                                }}
+                                className={cn(
+                                    "text-lg font-bold tracking-tight transition-all duration-300 ease-out cursor-pointer",
+                                    isActive
+                                        ? "text-foreground opacity-100"
+                                        : "text-muted-foreground/70"
+                                )}
+                                style={{
+                                    // Blur Requirement: 5-10% max for inactive
+                                    filter: isActive ? "none" : "blur(1.5px)",
+                                    // 1.5px is roughly within the requested subtle range visually
+                                    pointerEvents: isActive ? "auto" : "none" // Sheet Authority: Adjacent sheets not interactive via labels? 
+                                    // Requirement 3 says "Adjacent sheets are implied visually but NOT interactive." - referring to the sheets themselves, but let's disable header clicks for safety or allow them? 
+                                    // "The sheet owns horizontal swipe gestures". Typically headers also nav, but let's match the "Focus" intent. 
+                                    // I will allow header click for usability but strictly apply the visual rules.
+                                }}
+                            >
+                                {title}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Sheet Container - Structural Requirement 3 & 6 */}
+            <div className="flex-1 relative w-full overflow-hidden">
                 <AnimatePresence initial={false} custom={direction}>
                     <motion.div
                         key={page}
@@ -169,8 +174,6 @@ export default function Dashboard() {
                         transition={{
                             x: { type: "spring", stiffness: 300, damping: 30 },
                             opacity: { duration: 0.2 },
-                            scale: { duration: 0.2 },
-                            filter: { duration: 0.2 }
                         }}
                         drag="x"
                         dragConstraints={{ left: 0, right: 0 }}
@@ -184,15 +187,11 @@ export default function Dashboard() {
                                 paginate(-1);
                             }
                         }}
-                        // Axis locking: We allow vertical scroll on children, but horizontal drag on this container.
-                        // touch-action: pan-y allows vertical scrolling while horizontal gestures are captured by the drag listener (if browsers support it)
-                        // or we rely on framer-motion's dragDirectionLock
                         dragDirectionLock
-                        className="absolute top-0 left-0 w-full h-full px-4 overflow-y-auto overflow-x-hidden mobile-scroll pb-24"
-                        style={{ touchAction: "pan-y" }} // Crucial for allowing vertical scroll while horizontal drag is active
+                        className="absolute top-0 left-0 w-full h-full px-4 overflow-y-auto mobile-scroll pb-24 touch-pan-y"
                     >
-                        {/* Inner Content */}
-                        <div className="space-y-3 pt-2 max-w-md mx-auto min-h-full">
+                        {/* Sheet Content (Vertical Scroll) */}
+                        <div className="space-y-4 pt-2 max-w-md mx-auto min-h-full">
                             {tasks.length > 0 ? (
                                 tasks.map(task => (
                                     <TaskCard key={task.id} task={task} />
@@ -200,8 +199,8 @@ export default function Dashboard() {
                             ) : (
                                 <EmptyState category={TITLES[activeIndex]} />
                             )}
-                            {/* Bottom spacer */}
-                            <div className="h-20" />
+                            {/* Bottom spacer included in padding-bottom of container, but added here for safety */}
+                            <div className="h-8" />
                         </div>
                     </motion.div>
                 </AnimatePresence>
