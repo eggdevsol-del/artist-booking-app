@@ -36,22 +36,28 @@ const TITLES = ["Business", "Social", "Personal"];
 // --- Components ---
 
 function TaskCard({ task }: { task: Task }) {
-    const priorityColor = {
-        high: "bg-red-900/80",
-        medium: "bg-orange-900/80",
-        low: "bg-emerald-900/80"
+    const priorityGradient = {
+        high: "linear-gradient(90deg, rgba(127, 29, 29, 0.6) 0%, rgba(127, 29, 29, 0.15) 2%, rgba(127, 29, 29, 0) 100%)",
+        medium: "linear-gradient(90deg, rgba(124, 45, 18, 0.6) 0%, rgba(124, 45, 18, 0.15) 2%, rgba(124, 45, 18, 0) 100%)",
+        low: "linear-gradient(90deg, rgba(6, 78, 59, 0.6) 0%, rgba(6, 78, 59, 0.15) 2%, rgba(6, 78, 59, 0) 100%)"
     }[task.priority];
 
     return (
-        <Card className="p-4 pr-6 relative overflow-hidden transition-all duration-300 border-white/5 active:scale-[0.98] shadow-none rounded-2xl bg-white/5 hover:bg-white/10">
-            <div className="flex items-start gap-4 z-10 relative">
-                <div className={cn("w-1.5 h-10 rounded-full flex-shrink-0 mt-1", priorityColor)} />
+        <Card className="group p-4 pr-6 relative overflow-hidden transition-all duration-500 border-white/5 active:scale-[0.98] shadow-none rounded-2xl bg-white/5 hover:bg-white/10">
+
+            {/* Priority Gradient Overlay */}
+            <div
+                className="absolute inset-y-0 left-0 w-1/3 pointer-events-none select-none transition-opacity duration-500"
+                style={{ background: priorityGradient }}
+            />
+
+            <div className="flex items-start gap-4 z-10 relative pl-2">
                 <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-foreground text-lg leading-tight mb-1">
+                    <h3 className="font-bold text-foreground text-lg leading-tight mb-1 group-hover:text-white transition-colors duration-300">
                         {task.title}
                     </h3>
                     {task.context && (
-                        <p className="text-sm text-muted-foreground leading-relaxed">
+                        <p className="text-sm text-muted-foreground leading-relaxed group-hover:text-muted-foreground/80 transition-colors duration-300">
                             {task.context}
                         </p>
                     )}
