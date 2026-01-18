@@ -114,21 +114,17 @@ export default function Dashboard() {
     const tasks = TASKS[activeCategory] || [];
 
     return (
-        <div className="h-screen max-h-[100dvh] flex flex-col overflow-hidden relative bg-black">
-            {/* Background Wrapper Overlay */}
-            <div
-                className="fixed inset-0 pointer-events-none z-0"
-                style={{
-                    background: "radial-gradient(circle at 50% 10%, rgba(30, 30, 40, 0.4) 0%, rgba(0,0,0,0.8) 100%)",
-                }}
-            />
+        // FIX 1 & 2: Use fixed positioning to guarantee viewport height and no scrolling.
+        // Removed 'bg-black' to allow body gradient (SSOT) to show through.
+        // Added 'pb-20' to account for fixed bottom nav.
+        <div className="fixed inset-0 w-full h-[100dvh] flex flex-col overflow-hidden pb-20">
 
             {/* 1. Page Header (Fixed) */}
             <header className="px-4 py-4 z-10 shrink-0">
                 <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
             </header>
 
-            {/* 2. Top Context Area (Non-interactive) */}
+            {/* 2. Top Context Area (Non-interactive, Fixed) */}
             <div className="px-6 pt-4 pb-8 z-10 shrink-0 flex flex-col justify-center h-[20vh] opacity-80">
                 <p className="text-4xl font-light text-foreground/90 tracking-tight">
                     {selectedDate.toLocaleDateString("en-US", { weekday: "long" })}
@@ -138,7 +134,8 @@ export default function Dashboard() {
                 </p>
             </div>
 
-            {/* 3. Task Sheet (Active Zone) */}
+            {/* 3. Task Sheet (Active Zone, Flexible but contained) */}
+            {/* FIX 3 & 4: Sheet container is overflow-hidden, only inner list scrolls */}
             <div className="flex-1 z-20 flex flex-col bg-white/5 backdrop-blur-2xl rounded-t-[2.5rem] border-t border-white/5 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] overflow-hidden">
 
                 {/* Sheet Header (Anchored) */}
@@ -199,8 +196,10 @@ export default function Dashboard() {
                                 }
                             }}
                             dragDirectionLock
-                            className="absolute top-0 left-0 w-full h-full px-4 pt-4 overflow-y-auto mobile-scroll pb-24 touch-pan-y"
+                            // FIX 5: Scrollable area is vertically scrollable (overflow-y-auto)
+                            className="absolute top-0 left-0 w-full h-full px-4 pt-4 overflow-y-auto mobile-scroll touch-pan-y"
                         >
+                            {/* Add padding at bottom to avoid content being cut off by rounded corners or strict clipping */}
                             <div className="space-y-3 pb-8 max-w-lg mx-auto">
                                 {tasks.length > 0 ? (
                                     tasks.map(task => (
