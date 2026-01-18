@@ -49,33 +49,7 @@ export function ProjectProposalModal({
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
 
-    const ProposalSummary = () => (
-        <div className="grid grid-cols-3 gap-3">
-            <Card className="p-4 bg-white/5 border border-white/10 rounded-xl flex flex-col items-center justify-center text-center">
-                <div className="mb-2 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                    <DollarSign className="w-4 h-4" />
-                </div>
-                <span className="text-xl font-bold text-foreground tracking-tight">${totalCost}</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">Cost</span>
-            </Card>
-            <Card className="p-4 bg-white/5 border border-white/10 rounded-xl flex flex-col items-center justify-center text-center">
-                <div className="mb-2 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground">
-                    <Clock className="w-4 h-4" />
-                </div>
-                <span className="text-xl font-bold text-foreground tracking-tight">
-                    {hours}<span className="text-sm font-normal text-muted-foreground/60">h</span> {minutes > 0 && <>{minutes}<span className="text-sm font-normal text-muted-foreground/60">m</span></>}
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">Duration</span>
-            </Card>
-            <Card className="p-4 bg-white/5 border border-white/10 rounded-xl flex flex-col items-center justify-center text-center">
-                <div className="mb-2 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground">
-                    <CalendarIcon className="w-4 h-4" />
-                </div>
-                <span className="text-xl font-bold text-foreground tracking-tight">{sittings}</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">Sittings</span>
-            </Card>
-        </div>
-    );
+
 
     const ProposalDatesList = () => (
         <Card className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden p-4">
@@ -201,21 +175,41 @@ export function ProjectProposalModal({
                         </Button>
                     </header>
 
-                    {/* Top Context Area */}
-                    <div className="px-6 pt-4 pb-8 z-10 shrink-0 flex flex-col justify-center h-[15vh] opacity-80 transition-all duration-300">
-                        <p className="text-sm font-bold text-primary uppercase tracking-wider mb-1">Review Details</p>
-                        <p className="text-3xl font-light text-foreground/90 tracking-tight">{serviceName}</p>
-                    </div>
-
                     {/* Sheet Container */}
-                    <div className="flex-1 z-20 flex flex-col bg-white/5 backdrop-blur-2xl rounded-t-[2.5rem] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] overflow-hidden relative">
+                    <div className="flex-1 z-20 flex flex-col bg-white/5 backdrop-blur-2xl rounded-t-[2.5rem] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] overflow-hidden relative mt-4">
                         {/* Top Edge Highlight */}
                         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-white/20 to-transparent opacity-50 pointer-events-none" />
 
                         {/* Scrollable Content */}
                         <div className="flex-1 w-full h-full px-4 pt-8 overflow-y-auto mobile-scroll touch-pan-y">
                             <div className="pb-32 max-w-lg mx-auto space-y-4">
-                                <ProposalSummary />
+
+                                {/* Unified Sheet Header */}
+                                <div className="mb-8 px-2">
+                                    <p className="text-xs font-bold text-primary uppercase tracking-wider mb-2">Review Proposal</p>
+                                    <h2 className="text-4xl font-light text-foreground tracking-tight mb-6">{serviceName}</h2>
+
+                                    <div className="flex items-center gap-6 h-8">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-2xl font-bold text-foreground tracking-tight">${totalCost}</span>
+                                            <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground self-end mb-1.5">Total</span>
+                                        </div>
+                                        <div className="w-px h-full bg-white/10" />
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-2xl font-bold text-foreground tracking-tight">
+                                                {hours}<span className="text-lg font-normal text-muted-foreground/60 ml-0.5">h</span>
+                                                {minutes > 0 && <span className="ml-1">{minutes}<span className="text-lg font-normal text-muted-foreground/60 ml-0.5">m</span></span>}
+                                            </span>
+                                            <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground self-end mb-1.5">Duration</span>
+                                        </div>
+                                        <div className="w-px h-full bg-white/10" />
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-2xl font-bold text-foreground tracking-tight">{sittings}</span>
+                                            <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground self-end mb-1.5">Sittings</span>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <ProposalDatesList />
                                 <ProposalPolicies />
                                 <ProposalActions />
