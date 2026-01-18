@@ -1,9 +1,11 @@
-import { ModalShell } from "@/components/ui/overlays/modal-shell";
 import { format } from "date-fns";
-import { Check, Calendar as CalendarIcon, DollarSign, Clock, AlertCircle } from "lucide-react";
+import { Check, Calendar as CalendarIcon, DollarSign, Clock, AlertCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogTitle } from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { Card } from "@/components/ui/card";
 
 interface ProposalMetadata {
     type: "project_proposal";
@@ -48,92 +50,82 @@ export function ProjectProposalModal({
     const minutes = totalMinutes % 60;
 
     const ProposalSummary = () => (
-        <div className="grid grid-cols-3 gap-px bg-white/5 rounded-2xl overflow-hidden border border-white/5 mb-6">
-            <div className="bg-white/[0.02] p-4 flex flex-col items-center justify-center gap-1.5 hover:bg-white/[0.04] transition-colors">
-                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mb-1 ring-1 ring-primary/20">
-                    <DollarSign className="w-4 h-4 text-primary" />
+        <div className="grid grid-cols-3 gap-3">
+            <Card className="p-4 bg-white/5 border border-white/10 rounded-xl flex flex-col items-center justify-center text-center">
+                <div className="mb-2 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <DollarSign className="w-4 h-4" />
                 </div>
-                <div className="text-center">
-                    <span className="block font-bold text-lg text-white">${totalCost}</span>
-                    <span className="text-[10px] text-white/50 uppercase tracking-wider font-semibold">Total Cost</span>
+                <span className="text-xl font-bold text-foreground tracking-tight">${totalCost}</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">Cost</span>
+            </Card>
+            <Card className="p-4 bg-white/5 border border-white/10 rounded-xl flex flex-col items-center justify-center text-center">
+                <div className="mb-2 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground">
+                    <Clock className="w-4 h-4" />
                 </div>
-            </div>
-            <div className="bg-white/[0.02] p-4 flex flex-col items-center justify-center gap-1.5 hover:bg-white/[0.04] transition-colors">
-                <div className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center mb-1">
-                    <Clock className="w-4 h-4 text-white/80" />
+                <span className="text-xl font-bold text-foreground tracking-tight">
+                    {hours}<span className="text-sm font-normal text-muted-foreground/60">h</span> {minutes > 0 && <>{minutes}<span className="text-sm font-normal text-muted-foreground/60">m</span></>}
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">Duration</span>
+            </Card>
+            <Card className="p-4 bg-white/5 border border-white/10 rounded-xl flex flex-col items-center justify-center text-center">
+                <div className="mb-2 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground">
+                    <CalendarIcon className="w-4 h-4" />
                 </div>
-                <div className="text-center">
-                    <span className="block font-bold text-lg text-white">{hours}<span className="text-sm font-normal text-white/60">h</span> {minutes > 0 && <>{minutes}<span className="text-sm font-normal text-white/60">m</span></>}</span>
-                    <span className="text-[10px] text-white/50 uppercase tracking-wider font-semibold">Duration</span>
-                </div>
-            </div>
-            <div className="bg-white/[0.02] p-4 flex flex-col items-center justify-center gap-1.5 hover:bg-white/[0.04] transition-colors">
-                <div className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center mb-1">
-                    <CalendarIcon className="w-4 h-4 text-white/80" />
-                </div>
-                <div className="text-center">
-                    <span className="block font-bold text-lg text-white">{sittings}</span>
-                    <span className="text-[10px] text-white/50 uppercase tracking-wider font-semibold">Sittings</span>
-                </div>
-            </div>
+                <span className="text-xl font-bold text-foreground tracking-tight">{sittings}</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-0.5">Sittings</span>
+            </Card>
         </div>
     );
 
     const ProposalDatesList = () => (
-        <div className="space-y-4 mb-8">
-            <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-white/40">Schedule Breakdown</h4>
-                <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded-full text-white/50 font-medium">{dateList.length} Sessions</span>
+        <Card className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden p-4">
+            <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">SCHEDULE BREAKDOWN</span>
+                <span className="text-[10px] font-bold bg-primary/20 text-primary px-2 py-0.5 rounded-full">{dateList.length} Sessions</span>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
                 {dateList.map((dateStr, i) => (
-                    <div key={i} className="flex items-center gap-4 p-3.5 rounded-xl bg-white/[0.03] border border-white/5 group hover:bg-white/[0.06] transition-colors">
-                        <div className="w-12 h-12 rounded-lg bg-white/5 flex flex-col items-center justify-center flex-shrink-0 text-white/90 ring-1 ring-white/10 group-hover:bg-primary/20 group-hover:text-primary group-hover:ring-primary/30 transition-all">
-                            <span className="text-[10px] font-bold uppercase opacity-80">{format(new Date(dateStr), "MMM")}</span>
-                            <span className="text-lg font-bold leading-none">{format(new Date(dateStr), "d")}</span>
+                    <div key={i} className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground font-bold text-xs border border-white/10">
+                            #{i + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm text-white/95 truncate">{format(new Date(dateStr), "EEEE")}</p>
-                            <p className="text-xs text-white/50 flex items-center gap-1.5">
-                                <Clock className="w-3 h-3 opacity-70" />
-                                {format(new Date(dateStr), "h:mm a")}
-                                <span className="w-0.5 h-0.5 bg-white/20 rounded-full" />
-                                ~{serviceDuration} min
+                            <p className="font-bold text-sm text-foreground">{format(new Date(dateStr), "EEEE, MMM do")}</p>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                                {format(new Date(dateStr), "h:mm a")} • {format(new Date(dateStr), "yyyy")}
                             </p>
                         </div>
-                        <div className="text-right">
-                            <div className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/5 border border-white/5 text-[10px] font-bold text-white/70">
-                                #{i + 1}
-                            </div>
+                        <div className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-md whitespace-nowrap">
+                            {serviceDuration}m
                         </div>
                     </div>
                 ))}
             </div>
-        </div>
+        </Card>
     );
 
     const ProposalPolicies = () => (
-        <div className="space-y-4 mb-4">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-white/40">Policies & Terms</h4>
+        <Card className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden p-4">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">Policies & Terms</h4>
             <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="cancellation" className="border-white/5">
-                    <AccordionTrigger className="text-sm hover:no-underline hover:bg-white/[0.02] px-2 rounded-lg py-3">Cancellation Policy</AccordionTrigger>
-                    <AccordionContent className="text-white/60 px-2 pb-3">
+                    <AccordionTrigger className="text-sm hover:no-underline hover:bg-white/[0.02] px-2 rounded-lg py-3 text-foreground font-medium">Cancellation Policy</AccordionTrigger>
+                    <AccordionContent className="text-muted-foreground px-2 pb-3 text-xs leading-relaxed">
                         Deposits are non-refundable. Cancellations made within 48 hours of the appointment may forfeit the deposit. Please contact the artist directly for rescheduling.
                     </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="deposit" className="border-white/5">
-                    <AccordionTrigger className="text-sm hover:no-underline hover:bg-white/[0.02] px-2 rounded-lg py-3">Deposit Information</AccordionTrigger>
-                    <AccordionContent className="text-white/60 px-2 pb-3">
+                    <AccordionTrigger className="text-sm hover:no-underline hover:bg-white/[0.02] px-2 rounded-lg py-3 text-foreground font-medium">Deposit Information</AccordionTrigger>
+                    <AccordionContent className="text-muted-foreground px-2 pb-3 text-xs leading-relaxed">
                         A deposit of ${depositAmount || 0} is required to secure these dates. The remaining balance of ${totalCost - (depositAmount || 0)} is due upon completion of the service.
                     </AccordionContent>
                 </AccordionItem>
             </Accordion>
-        </div>
+        </Card>
     );
 
     const ProposalActions = () => (
-        <div className="grid grid-cols-2 gap-3 w-full">
+        <div className="grid grid-cols-2 gap-3 w-full pt-2">
             {!isArtist && status === 'pending' && (
                 <>
                     <Button
@@ -141,7 +133,7 @@ export function ProjectProposalModal({
                         size="lg"
                         onClick={onReject}
                         disabled={isPendingAction}
-                        className="h-14 border-white/10 bg-white/5 hover:bg-white/10 text-white hover:text-white"
+                        className="h-12 border-white/10 bg-white/5 hover:bg-white/10 text-foreground hover:text-foreground font-semibold rounded-xl"
                     >
                         Decline
                     </Button>
@@ -149,7 +141,7 @@ export function ProjectProposalModal({
                         size="lg"
                         onClick={onAccept}
                         disabled={isPendingAction}
-                        className="h-14 bg-primary hover:bg-primary/90 text-primary-foreground relative overflow-hidden group border-0 shadow-lg shadow-primary/20"
+                        className="h-12 bg-primary hover:bg-primary/90 text-primary-foreground relative overflow-hidden group border-0 shadow-lg shadow-primary/20 font-semibold rounded-xl"
                     >
                         {isPendingAction ? "Processing..." : "Accept & Continue"}
                     </Button>
@@ -158,7 +150,7 @@ export function ProjectProposalModal({
 
             {isArtist && status === 'pending' && (
                 <div className="col-span-2 flex flex-col gap-2">
-                    <Button variant="secondary" className="w-full h-12" disabled>
+                    <Button variant="secondary" className="w-full h-12 rounded-xl" disabled>
                         Edit Proposal
                     </Button>
                     <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-medium">
@@ -190,22 +182,48 @@ export function ProjectProposalModal({
     );
 
     return (
-        <ModalShell
-            isOpen={isOpen}
-            onClose={onClose}
-            title={serviceName}
-            description="Review the details of this project proposal."
-            overlayName="Project Proposal"
-            overlayId="chat.project_proposal"
-            footer={<ProposalActions />}
-            className="sm:max-w-[500px]"
-        >
-            <div className="space-y-1">
-                <ProposalSummary />
-                <ProposalDatesList />
-                <div className="my-6 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-                <ProposalPolicies />
-            </div>
-        </ModalShell>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogPrimitive.Portal>
+                {/* Backdrop */}
+                <DialogPrimitive.Overlay className="fixed inset-0 z-[100] bg-black/30 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+
+                {/* Content */}
+                <DialogPrimitive.Content
+                    className="fixed inset-0 z-[101] w-full h-[100dvh] outline-none flex flex-col gap-0 overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+                >
+                    {/* Header */}
+                    <header className="px-4 py-4 z-10 shrink-0 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <DialogTitle className="text-2xl font-bold text-foreground">Project Proposal</DialogTitle>
+                        </div>
+                        <Button variant="ghost" size="icon" className="rounded-full bg-white/5 hover:bg-white/10 text-foreground" onClick={onClose}>
+                            <X className="w-5 h-5" />
+                        </Button>
+                    </header>
+
+                    {/* Top Context Area */}
+                    <div className="px-6 pt-4 pb-8 z-10 shrink-0 flex flex-col justify-center h-[15vh] opacity-80 transition-all duration-300">
+                        <p className="text-sm font-bold text-primary uppercase tracking-wider mb-1">Review Details</p>
+                        <p className="text-3xl font-light text-foreground/90 tracking-tight">{serviceName}</p>
+                    </div>
+
+                    {/* Sheet Container */}
+                    <div className="flex-1 z-20 flex flex-col bg-white/5 backdrop-blur-2xl rounded-t-[2.5rem] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] overflow-hidden relative">
+                        {/* Top Edge Highlight */}
+                        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-white/20 to-transparent opacity-50 pointer-events-none" />
+
+                        {/* Scrollable Content */}
+                        <div className="flex-1 w-full h-full px-4 pt-8 overflow-y-auto mobile-scroll touch-pan-y">
+                            <div className="pb-32 max-w-lg mx-auto space-y-4">
+                                <ProposalSummary />
+                                <ProposalDatesList />
+                                <ProposalPolicies />
+                                <ProposalActions />
+                            </div>
+                        </div>
+                    </div>
+                </DialogPrimitive.Content>
+            </DialogPrimitive.Portal>
+        </Dialog>
     );
 }
