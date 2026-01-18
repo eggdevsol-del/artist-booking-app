@@ -36,14 +36,19 @@ const TITLES = ["Business", "Social", "Personal"];
 // --- Components ---
 
 function TaskCard({ task }: { task: Task }) {
+    // Requirement: Muted, deeper tones. No increased saturation.
+    // Using standard Tailwind 900 colors/opacity for depth without neon effects.
     const priorityColor = {
-        high: "bg-red-500",
-        medium: "bg-orange-500",
-        low: "bg-green-500"
+        high: "bg-red-900/80",
+        medium: "bg-orange-900/80",
+        low: "bg-emerald-900/80"
     }[task.priority];
 
     return (
-        <Card className="p-4 pr-6 relative overflow-hidden transition-all duration-300 border-white/5 active:scale-[0.98]">
+        // Requirement: slightly reduce perceived softness -> rounded-2xl (vs 3rem)
+        // No glow -> shadow-none
+        // Muted, semi-transparent -> bg-white/5 
+        <Card className="p-4 pr-6 relative overflow-hidden transition-all duration-300 border-white/5 active:scale-[0.98] shadow-none rounded-2xl bg-white/5 hover:bg-white/10">
             <div className="flex items-start gap-4 z-10 relative">
                 {/* Priority Bar */}
                 <div className={cn("w-1.5 h-10 rounded-full flex-shrink-0 mt-1", priorityColor)} />
@@ -115,15 +120,30 @@ export default function Dashboard() {
     const tasks = TASKS[activeCategory] || [];
 
     return (
-        <div className="min-h-screen flex flex-col pb-20">
-            {/* Page Header - Structural Requirement 2 */}
-            <header className="mobile-header px-4 py-4">
+        <div className="min-h-screen flex flex-col pb-20 relative">
+
+            {/* Background Wrapper Overlay - Requirement 1 */}
+            {/* "Dark-mode black-leaning gradient. Very subtle, long gradient transition." */}
+            {/* Overlaying a dark gradient on top of the global background to shift it towards black without replacing it. */}
+            {/* pointer-events-none ensures we don't block interaction */}
+            <div
+                className="fixed inset-0 pointer-events-none z-0"
+                style={{
+                    background: "radial-gradient(circle at 50% 10%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 100%)",
+                }}
+            />
+            {/* Additional dark base if needed for "black-leaning" */}
+            <div className="fixed inset-0 pointer-events-none z-0 bg-black/20 mix-blend-multiply" />
+
+
+            {/* Page Header */}
+            <header className="mobile-header px-4 py-4 z-10">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
                 </div>
             </header>
 
-            {/* Focus Corridor - Structural Requirement 4 */}
+            {/* Focus Corridor */}
             <div className="flex-shrink-0 py-4 px-4 z-10 w-full overflow-hidden">
                 <div className="flex items-center justify-between max-w-md mx-auto">
                     {TITLES.map((title, index) => {
@@ -142,16 +162,11 @@ export default function Dashboard() {
                                     "text-lg font-bold tracking-tight transition-all duration-300 ease-out cursor-pointer",
                                     isActive
                                         ? "text-foreground opacity-100"
-                                        : "text-muted-foreground/70"
+                                        : "text-muted-foreground/60" // Reduced opacity further for calm
                                 )}
                                 style={{
-                                    // Blur Requirement: 5-10% max for inactive
                                     filter: isActive ? "none" : "blur(1.5px)",
-                                    // 1.5px is roughly within the requested subtle range visually
-                                    pointerEvents: isActive ? "auto" : "none" // Sheet Authority: Adjacent sheets not interactive via labels? 
-                                    // Requirement 3 says "Adjacent sheets are implied visually but NOT interactive." - referring to the sheets themselves, but let's disable header clicks for safety or allow them? 
-                                    // "The sheet owns horizontal swipe gestures". Typically headers also nav, but let's match the "Focus" intent. 
-                                    // I will allow header click for usability but strictly apply the visual rules.
+                                    pointerEvents: isActive ? "auto" : "none"
                                 }}
                             >
                                 {title}
@@ -161,8 +176,8 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* Sheet Container - Structural Requirement 3 & 6 */}
-            <div className="flex-1 relative w-full overflow-hidden">
+            {/* Sheet Container */}
+            <div className="flex-1 relative w-full overflow-hidden z-10">
                 <AnimatePresence initial={false} custom={direction}>
                     <motion.div
                         key={page}
@@ -190,7 +205,7 @@ export default function Dashboard() {
                         dragDirectionLock
                         className="absolute top-0 left-0 w-full h-full px-4 overflow-y-auto mobile-scroll pb-24 touch-pan-y"
                     >
-                        {/* Sheet Content (Vertical Scroll) */}
+                        {/* Sheet Content */}
                         <div className="space-y-4 pt-2 max-w-md mx-auto min-h-full">
                             {tasks.length > 0 ? (
                                 tasks.map(task => (
@@ -199,7 +214,6 @@ export default function Dashboard() {
                             ) : (
                                 <EmptyState category={TITLES[activeIndex]} />
                             )}
-                            {/* Bottom spacer included in padding-bottom of container, but added here for safety */}
                             <div className="h-8" />
                         </div>
                     </motion.div>
