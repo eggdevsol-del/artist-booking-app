@@ -142,7 +142,10 @@ export default function Dashboard() {
 
             {/* 3. Task Sheet (Active Zone, Flexible but contained) */}
             {/* FIX 3 & 4: Sheet container is overflow-hidden, only inner list scrolls */}
-            <div className="flex-1 z-20 flex flex-col bg-white/5 backdrop-blur-2xl rounded-t-[2.5rem] border-t border-white/5 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] overflow-hidden">
+            <div className="flex-1 z-20 flex flex-col bg-white/5 backdrop-blur-2xl rounded-t-[2.5rem] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] overflow-hidden relative">
+
+                {/* Top Edge Highlight (Gradient Right -> Left) */}
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-white/20 to-transparent opacity-50 pointer-events-none" />
 
                 {/* Sheet Header (Anchored) */}
                 <div className="shrink-0 pt-6 pb-2 px-6 border-b border-white/5">
