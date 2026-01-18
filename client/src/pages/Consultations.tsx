@@ -11,6 +11,7 @@ import { Calendar, ChevronRight, Clock, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export default function Consultations() {
   const { user, loading } = useAuth();
@@ -68,11 +69,8 @@ export default function Consultations() {
 
   if (loading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground text-lg">Loading...</div>
       </div>
     );
   }
@@ -80,17 +78,17 @@ export default function Consultations() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-500";
+        return "bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]";
       case "responded":
-        return "bg-indigo-500";
+        return "bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.4)]";
       case "scheduled":
-        return "bg-blue-500";
+        return "bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.4)]";
       case "completed":
-        return "bg-green-500";
+        return "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]";
       case "cancelled":
-        return "bg-gray-500";
+        return "bg-slate-500";
       default:
-        return "bg-gray-500";
+        return "bg-slate-500";
     }
   };
 
@@ -99,165 +97,188 @@ export default function Consultations() {
   };
 
   return (
-    <div className="min-h-screen pb-20">
-      {/* Header */}
-      <header className="sticky top-0 z-10 border-b">
-        <div className="flex items-center justify-between p-4">
-          <h1 className="text-2xl font-bold">Consultations</h1>
-          <ModalShell
-            isOpen={showNewDialog}
-            onClose={() => setShowNewDialog(false)}
-            title="Request Consultation"
-            description="Select an artist and request a consultation appointment"
-            className="max-w-md"
-            overlayName="Request Consultation"
-            overlayId="consultations.new_request"
-            footer={
-              <div className="flex w-full gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setShowNewDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="flex-1"
-                  onClick={handleSubmit}
-                  disabled={createConsultationMutation.isPending}
-                >
-                  {createConsultationMutation.isPending ? "Submitting..." : "Submit Request"}
-                </Button>
-              </div>
-            }
-          >
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="artist">Select Artist *</Label>
-                <Select value={selectedArtistId} onValueChange={setSelectedArtistId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose an artist" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {artists.map((artist) => (
-                      <SelectItem key={artist.id} value={artist.id}>
-                        {artist.name || artist.email}
-                        {artist.instagramUsername && ` (@${artist.instagramUsername})`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+    <div className="fixed inset-0 w-full h-[100dvh] flex flex-col overflow-hidden">
 
-              <div className="space-y-2">
-                <Label htmlFor="subject">Subject *</Label>
-                <Input
-                  id="subject"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="e.g., Custom tattoo design"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description *</Label>
-                <Textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe what you'd like to discuss..."
-                  rows={5}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="preferred-date">Preferred Date (Optional)</Label>
-                <Input
-                  id="preferred-date"
-                  type="date"
-                  value={preferredDate}
-                  onChange={(e) => setPreferredDate(e.target.value)}
-                />
-              </div>
-            </div>
-          </ModalShell>
-        </div>
+      {/* 1. Page Header (Fixed) */}
+      <header className="px-4 py-4 z-10 shrink-0 flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-foreground">Consultations</h1>
+        <Button size="icon" variant="ghost" className="rounded-full bg-white/5 hover:bg-white/10 text-foreground" onClick={() => setShowNewDialog(true)}>
+          <Plus className="w-5 h-5" />
+        </Button>
       </header>
 
-      {/* Content */}
-      <main className="p-4 space-y-4">
-        {isLoading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading consultations...</p>
-          </div>
-        ) : consultations && consultations.length > 0 ? (
-          consultations.map((consultation) => (
-            <Card
-              key={consultation.id}
-              className="overflow-hidden cursor-pointer hover:bg-accent/5 transition-colors"
-              onClick={() => {
-                if (consultation.conversationId) {
-                  setLocation(`/chat/${consultation.conversationId}`);
-                } else {
-                  // Fallback to conversations list if no direct link (should be rare)
-                  setLocation("/conversations");
-                }
-              }}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">{consultation.subject}</CardTitle>
-                    <CardDescription className="mt-1">
-                      Artist: {consultation.artist?.name || consultation.artist?.email || consultation.artistId}
-                    </CardDescription>
-                  </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium text-white ${getStatusColor(consultation.status)}`}>
-                    {getStatusText(consultation.status)}
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">{consultation.description}</p>
+      {/* 2. Top Context Area (Stats/Info) */}
+      <div className="px-6 pt-4 pb-8 z-10 shrink-0 flex flex-col justify-center h-[20vh] opacity-80">
+        <p className="text-4xl font-light text-foreground/90 tracking-tight">Requests</p>
+        <p className="text-lg font-medium text-muted-foreground mt-1">
+          Manage your bookings
+        </p>
+      </div>
 
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  {consultation.preferredDate && (
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>{new Date(consultation.preferredDate).toLocaleDateString()}</span>
+      {/* 3. Sheet Container */}
+      <div className="flex-1 z-20 flex flex-col bg-white/5 backdrop-blur-2xl rounded-t-[2.5rem] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] overflow-hidden relative">
+
+        {/* Top Edge Highlight */}
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-white/20 to-transparent opacity-50 pointer-events-none" />
+
+        {/* Sheet Header: Filter/Sort could go here */}
+        <div className="shrink-0 pt-6 pb-2 px-6 border-b border-white/5">
+          <h2 className="text-xs font-bold text-muted-foreground tracking-widest uppercase">
+            Your History ({consultations?.length || 0})
+          </h2>
+        </div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 w-full h-full px-4 pt-4 overflow-y-auto mobile-scroll touch-pan-y">
+          <div className="pb-32 max-w-lg mx-auto space-y-3">
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading consultations...</p>
+              </div>
+            ) : consultations && consultations.length > 0 ? (
+              consultations.map((consultation) => (
+                <Card
+                  key={consultation.id}
+                  className="overflow-hidden cursor-pointer group border-0 bg-white/5 hover:bg-white/10 rounded-[2rem] transition-all duration-300 relative"
+                  onClick={() => {
+                    if (consultation.conversationId) {
+                      setLocation(`/chat/${consultation.conversationId}`);
+                    } else {
+                      setLocation("/conversations");
+                    }
+                  }}
+                >
+                  <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                  <div className="p-5 relative z-10">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">{consultation.subject}</h3>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          with {consultation.artist?.name || consultation.artist?.email || "Artist"}
+                        </p>
+                      </div>
+                      <div className={cn("w-3 h-3 rounded-full mt-1.5", getStatusColor(consultation.status))} />
                     </div>
-                  )}
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    <span>{consultation.createdAt ? new Date(consultation.createdAt).toLocaleDateString() : 'N/A'}</span>
-                  </div>
-                </div>
 
-                {consultation.status === "pending" && (
-                  <div className="flex items-center gap-2 pt-2 text-sm text-muted-foreground">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
-                    <span>Waiting for artist response</span>
+                    <p className="text-sm text-white/60 line-clamp-2 leading-relaxed mb-4">
+                      {consultation.description}
+                    </p>
+
+                    <div className="flex items-center gap-4 text-xs font-medium text-white/40 group-hover:text-white/60 transition-colors">
+                      {consultation.preferredDate && (
+                        <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-md">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>{new Date(consultation.preferredDate).toLocaleDateString()}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>{consultation.createdAt ? new Date(consultation.createdAt).toLocaleDateString() : 'N/A'}</span>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <div className="text-center py-12">
-            <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <h3 className="text-lg font-semibold mb-2">No Consultations Yet</h3>
-            <p className="text-muted-foreground mb-4">
-              Request a consultation to get started
-            </p>
-            <Button onClick={() => setShowNewDialog(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Request Consultation
+                </Card>
+              ))
+            ) : (
+              <div className="text-center py-12 px-6">
+                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-8 h-8 text-muted-foreground opacity-50" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">No Consultations Yet</h3>
+                <p className="text-muted-foreground mb-6 max-w-xs mx-auto text-sm">
+                  Request a consultation with an artist to start planning your next tattoo.
+                </p>
+                <Button onClick={() => setShowNewDialog(true)} size="lg" className="rounded-full px-8 shadow-lg shadow-primary/20">
+                  Start Request
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <ModalShell
+        isOpen={showNewDialog}
+        onClose={() => setShowNewDialog(false)}
+        title="Request Consultation"
+        description="Select an artist and request a consultation appointment"
+        className="max-w-md"
+        overlayName="Request Consultation"
+        overlayId="consultations.new_request"
+        footer={
+          <div className="flex w-full gap-2">
+            <Button
+              variant="outline"
+              className="flex-1 bg-transparent border-white/10 hover:bg-white/5"
+              onClick={() => setShowNewDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 shadow-lg shadow-primary/20"
+              onClick={handleSubmit}
+              disabled={createConsultationMutation.isPending}
+            >
+              {createConsultationMutation.isPending ? "Submitting..." : "Submit Request"}
             </Button>
           </div>
-        )}
-      </main>
+        }
+      >
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="artist">Select Artist *</Label>
+            <Select value={selectedArtistId} onValueChange={setSelectedArtistId}>
+              <SelectTrigger className="bg-white/5 border-white/10 h-11">
+                <SelectValue placeholder="Choose an artist" />
+              </SelectTrigger>
+              <SelectContent>
+                {artists.map((artist) => (
+                  <SelectItem key={artist.id} value={artist.id}>
+                    {artist.name || artist.email}
+                    {artist.instagramUsername && ` (@${artist.instagramUsername})`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="subject">Subject *</Label>
+            <Input
+              id="subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="e.g., Custom tattoo design"
+              className="bg-white/5 border-white/10 h-11"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description *</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe what you'd like to discuss..."
+              rows={5}
+              className="bg-white/5 border-white/10 min-h-[120px]"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="preferred-date">Preferred Date (Optional)</Label>
+            <Input
+              id="preferred-date"
+              type="date"
+              value={preferredDate}
+              onChange={(e) => setPreferredDate(e.target.value)}
+              className="bg-white/5 border-white/10 h-11"
+            />
+          </div>
+        </div>
+      </ModalShell>
     </div>
   );
 }
-

@@ -11,11 +11,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
+  Calendar as CalendarIcon
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type ViewMode = "month" | "week";
 
@@ -255,8 +257,8 @@ export default function Calendar() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-primary text-lg">Loading...</div>
+      <div className="fixed inset-0 flex items-center justify-center bg-background">
+        <div className="animate-pulse text-primary text-lg">Loading calendar...</div>
       </div>
     );
   }
@@ -264,185 +266,195 @@ export default function Calendar() {
   const isArtist = user?.role === "artist" || user?.role === "admin";
 
   return (
-    <div className="min-h-screen flex flex-col pb-20">
-      {/* Header */}
-      <header className="mobile-header px-4 py-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Calendar</h1>
-          <Button
-            size="sm"
-            variant="default"
-            onClick={goToToday}
-            className="tap-target"
-          >
-            Today
-          </Button>
-        </div>
+    <div className="fixed inset-0 w-full h-[100dvh] flex flex-col overflow-hidden">
+
+      {/* 1. Page Header (Fixed) */}
+      <header className="px-4 py-4 z-10 shrink-0 flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-foreground">Calendar</h1>
+        <Button
+          size="sm"
+          variant="default"
+          onClick={goToToday}
+          className="tap-target"
+        >
+          Today
+        </Button>
       </header>
 
-      {/* Navigation */}
-      <div className="px-4 py-3 flex items-center justify-between border-b border-border">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={goToPreviousPeriod}
-          className="tap-target"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </Button>
-
-        <h2 className="text-lg font-semibold text-foreground">
-          {currentDate.toLocaleDateString("en-US", {
-            month: "long",
-            year: "numeric",
-          })}
-        </h2>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={goToNextPeriod}
-          className="tap-target"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </Button>
+      {/* 2. Top Context Area (Date Display) */}
+      <div className="px-6 pt-4 pb-8 z-10 shrink-0 flex flex-col justify-center h-[20vh] opacity-80">
+        <p className="text-4xl font-light text-foreground/90 tracking-tight">
+          {currentDate.toLocaleDateString("en-US", { weekday: "long" })}
+        </p>
+        <p className="text-lg font-medium text-muted-foreground mt-1">
+          {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+        </p>
       </div>
 
-      {/* View Toggle */}
-      <div className="px-4 py-3 flex gap-2">
-        <Button
-          variant={viewMode === "week" ? "default" : "outline"}
-          onClick={() => setViewMode("week")}
-          className="flex-1"
-        >
-          Week
-        </Button>
-        <Button
-          variant={viewMode === "month" ? "default" : "outline"}
-          onClick={() => setViewMode("month")}
-          className="flex-1"
-        >
-          Month
-        </Button>
-      </div>
+      {/* 3. Sheet Container */}
+      <div className="flex-1 z-20 flex flex-col bg-white/5 backdrop-blur-2xl rounded-t-[2.5rem] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] overflow-hidden relative">
 
-      {/* Calendar Content */}
-      <main className="flex-1 px-4 py-4 mobile-scroll overflow-y-auto">
-        {viewMode === "week" ? (
-          <div className="space-y-3">
-            {getWeekDays().map((day) => {
-              const dayAppointments = getAppointmentsForDate(day);
-              return (
-                <Card
-                  key={day.toISOString()}
-                  className={`p-4 min-h-[120px] cursor-pointer hover:bg-accent/5 transition-colors ${isToday(day) ? "border-primary border-2" : ""
-                    }`}
-                  onClick={() => handleDateClick(day)}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        {day.toLocaleDateString("en-US", { weekday: "short" })}
-                      </p>
-                      <p className="text-2xl font-bold text-foreground">
-                        {day.getDate()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground">
-                        {dayAppointments.length} appointment
-                        {dayAppointments.length !== 1 ? "s" : ""}
-                      </p>
-                      {isArtist && (
-                        <Plus className="w-4 h-4 text-primary mt-1" />
+        {/* Top Edge Highlight */}
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-white/20 to-transparent opacity-50 pointer-events-none" />
+
+        {/* Sheet Header: Controls */}
+        <div className="shrink-0 pt-6 pb-2 px-6 border-b border-white/5 space-y-4">
+
+          {/* Month Navigation */}
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" size="icon" onClick={goToPreviousPeriod} className="rounded-full hover:bg-white/10 text-muted-foreground hover:text-foreground">
+              <ChevronLeft className="w-6 h-6" />
+            </Button>
+            <span className="text-lg font-semibold text-foreground tracking-tight">
+              {currentDate.toLocaleDateString("en-US", { month: "long" })}
+            </span>
+            <Button variant="ghost" size="icon" onClick={goToNextPeriod} className="rounded-full hover:bg-white/10 text-muted-foreground hover:text-foreground">
+              <ChevronRight className="w-6 h-6" />
+            </Button>
+          </div>
+
+          {/* View Toggle */}
+          <div className="flex gap-2 pb-2">
+            <Button
+              variant={viewMode === "week" ? "default" : "secondary"}
+              onClick={() => setViewMode("week")}
+              className={cn("flex-1 rounded-xl h-9", viewMode === "week" ? "" : "bg-white/5 text-muted-foreground hover:text-foreground")}
+            >
+              Week
+            </Button>
+            <Button
+              variant={viewMode === "month" ? "default" : "secondary"}
+              onClick={() => setViewMode("month")}
+              className={cn("flex-1 rounded-xl h-9", viewMode === "month" ? "" : "bg-white/5 text-muted-foreground hover:text-foreground")}
+            >
+              Month
+            </Button>
+          </div>
+
+        </div>
+
+        {/* Scrollable Calendar Content */}
+        <div className="flex-1 w-full h-full px-4 pt-4 overflow-y-auto mobile-scroll touch-pan-y">
+          <div className="pb-32 max-w-lg mx-auto">
+            {viewMode === "week" ? (
+              <div className="space-y-3">
+                {getWeekDays().map((day) => {
+                  const dayAppointments = getAppointmentsForDate(day);
+                  return (
+                    <Card
+                      key={day.toISOString()}
+                      className={cn(
+                        "p-4 min-h-[120px] cursor-pointer transition-all duration-300 border-0 bg-white/5 hover:bg-white/10 rounded-2xl",
+                        isToday(day) ? "ring-1 ring-primary/50 bg-primary/5" : ""
                       )}
-                    </div>
-                  </div>
-
-                  {dayAppointments.length > 0 ? (
-                    <div className="space-y-2">
-                      {dayAppointments.map((apt) => (
-                        <div
-                          key={apt.id}
-                          className="p-2 rounded-lg bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedAppointment(apt);
-                            setShowAppointmentDetailDialog(true);
-                          }}
-                        >
-                          <p className="text-sm font-semibold text-foreground">
-                            {apt.serviceName || apt.title}
+                      onClick={() => handleDateClick(day)}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                            {day.toLocaleDateString("en-US", { weekday: "short" })}
                           </p>
-                          {apt.clientName && (
-                            <p className="text-xs text-muted-foreground">
-                              {apt.clientName}
-                            </p>
-                          )}
-                          {apt.price && (
-                            <p className="text-xs text-primary font-medium">
-                              ${apt.price}
-                            </p>
-                          )}
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(apt.startTime).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}{" "}
-                            -{" "}
-                            {new Date(apt.endTime).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                          <p className={cn("text-2xl font-bold mt-0.5", isToday(day) ? "text-primary" : "text-foreground")}>
+                            {day.getDate()}
                           </p>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-center text-muted-foreground text-sm">
-                      No appointments
-                    </p>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="grid grid-cols-7 gap-2">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div
-                key={day}
-                className="text-center text-xs font-semibold text-muted-foreground py-2"
-              >
-                {day}
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground">
+                            {dayAppointments.length} appt{dayAppointments.length !== 1 ? "s" : ""}
+                          </p>
+                          {isArtist && (
+                            <div className="flex justify-end mt-1">
+                              <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center">
+                                <Plus className="w-3 h-3 text-white/70" />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {dayAppointments.length > 0 ? (
+                        <div className="space-y-2">
+                          {dayAppointments.map((apt) => (
+                            <div
+                              key={apt.id}
+                              className="p-2.5 rounded-xl bg-white/5 border border-white/5 cursor-pointer hover:bg-white/10 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedAppointment(apt);
+                                setShowAppointmentDetailDialog(true);
+                              }}
+                            >
+                              <div className="flex justify-between items-start">
+                                <p className="text-sm font-semibold text-foreground/90">
+                                  {apt.serviceName || apt.title}
+                                </p>
+                                <p className="text-xs font-mono text-muted-foreground">
+                                  {new Date(apt.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                </p>
+                              </div>
+
+                              {apt.clientName && (
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {apt.clientName}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center p-2 mt-2 border border-dashed border-white/10 rounded-lg">
+                          <span className="text-xs text-muted-foreground/40">Available</span>
+                        </div>
+                      )}
+                    </Card>
+                  );
+                })}
               </div>
-            ))}
-            {getMonthDays().map((day, index) => {
-              const dayAppointments = getAppointmentsForDate(day);
-              return (
-                <Card
-                  key={index}
-                  className={`aspect-square p-2 cursor-pointer hover:bg-accent/5 transition-colors ${isToday(day) ? "border-primary border-2" : ""
-                    } ${!isCurrentMonth(day) ? "opacity-40" : ""}`}
-                  onClick={() => handleDateClick(day)}
-                >
-                  <div className="text-center">
-                    <p
-                      className={`text-sm font-semibold ${isToday(day) ? "text-primary" : "text-foreground"
-                        }`}
-                    >
-                      {day.getDate()}
-                    </p>
-                    {dayAppointments.length > 0 && (
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary mx-auto mt-1" />
-                    )}
+            ) : (
+              <div className="grid grid-cols-7 gap-2">
+                {["S", "M", "T", "W", "T", "F", "S"].map((day) => (
+                  <div
+                    key={day}
+                    className="text-center text-xs font-bold text-muted-foreground/60 py-2 uppercase"
+                  >
+                    {day}
                   </div>
-                </Card>
-              );
-            })}
+                ))}
+                {getMonthDays().map((day, index) => {
+                  const dayAppointments = getAppointmentsForDate(day);
+                  return (
+                    <Card
+                      key={index}
+                      className={cn(
+                        "aspect-square p-1 cursor-pointer transition-colors border-0 bg-white/5 hover:bg-white/10 rounded-xl relative overflow-hidden",
+                        isToday(day) ? "ring-1 ring-primary bg-primary/10" : "",
+                        !isCurrentMonth(day) ? "opacity-30" : ""
+                      )}
+                      onClick={() => handleDateClick(day)}
+                    >
+                      <div className="flex flex-col items-center justify-center h-full">
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isToday(day) ? "text-primary font-bold" : "text-foreground"
+                          )}
+                        >
+                          {day.getDate()}
+                        </p>
+                        <div className="flex gap-0.5 mt-1 flex-wrap justify-center content-center max-w-[80%]">
+                          {dayAppointments.slice(0, 4).map((_, i) => (
+                            <div key={i} className="w-1 h-1 rounded-full bg-primary/70" />
+                          ))}
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </main>
+        </div>
+      </div>
 
       {/* Appointment Creation Dialog */}
       <ModalShell
@@ -489,7 +501,7 @@ export default function Calendar() {
                 setAppointmentForm({ ...appointmentForm, clientId: value })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="bg-white/5 border-white/10">
                 <SelectValue placeholder="Select a client" />
               </SelectTrigger>
               <SelectContent>
@@ -511,6 +523,7 @@ export default function Calendar() {
                 setAppointmentForm({ ...appointmentForm, title: e.target.value })
               }
               placeholder="e.g., Tattoo Session"
+              className="bg-white/5 border-white/10"
             />
           </div>
 
@@ -527,6 +540,7 @@ export default function Calendar() {
               }
               placeholder="Additional details..."
               rows={3}
+              className="bg-white/5 border-white/10"
             />
           </div>
 
@@ -543,6 +557,7 @@ export default function Calendar() {
                     startTime: e.target.value,
                   })
                 }
+                className="bg-white/5 border-white/10"
               />
             </div>
             <div className="space-y-2">
@@ -557,6 +572,7 @@ export default function Calendar() {
                     endTime: e.target.value,
                   })
                 }
+                className="bg-white/5 border-white/10"
               />
             </div>
           </div>
@@ -573,7 +589,7 @@ export default function Calendar() {
         overlayId="calendar.appointment_details"
         footer={
           selectedAppointment ? (
-            <div className="flex w-full gap-2 border-t pt-4">
+            <div className="flex w-full gap-2 border-t border-white/10 pt-4">
               <Button
                 variant="destructive"
                 onClick={() => {
@@ -592,7 +608,7 @@ export default function Calendar() {
                   setShowAppointmentDetailDialog(false);
                   setSelectedAppointment(null);
                 }}
-                className="flex-1"
+                className="flex-1 bg-transparent border-white/10 hover:bg-white/5"
               >
                 Close
               </Button>
@@ -602,68 +618,71 @@ export default function Calendar() {
       >
         {selectedAppointment && (
           <div className="space-y-4 pt-1">
-            <div>
-              <Label className="text-muted-foreground">Service</Label>
-              <p className="text-lg font-semibold">{selectedAppointment.serviceName || selectedAppointment.title}</p>
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-1 block">Service</Label>
+              <p className="text-xl font-bold text-foreground">{selectedAppointment.serviceName || selectedAppointment.title}</p>
             </div>
 
             {selectedAppointment.clientName && (
               <div>
                 <Label className="text-muted-foreground">Client</Label>
-                <p className="font-medium">{selectedAppointment.clientName}</p>
-                {selectedAppointment.clientEmail && (
-                  <p className="text-sm text-muted-foreground">{selectedAppointment.clientEmail}</p>
-                )}
+                <div className="flex items-center gap-3 mt-1">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                    {selectedAppointment.clientName.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="font-medium">{selectedAppointment.clientName}</p>
+                    {selectedAppointment.clientEmail && (
+                      <p className="text-sm text-muted-foreground">{selectedAppointment.clientEmail}</p>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
             {selectedAppointment.description && (
               <div>
                 <Label className="text-muted-foreground">Description</Label>
-                <p>{selectedAppointment.description}</p>
+                <p className="mt-1 text-sm bg-white/5 p-3 rounded-xl">{selectedAppointment.description}</p>
               </div>
             )}
 
-            <div>
-              <Label className="text-muted-foreground">Date & Time</Label>
-              <p className="font-medium">
-                {new Date(selectedAppointment.startTime).toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {new Date(selectedAppointment.startTime).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}{" "}
-                -{" "}
-                {new Date(selectedAppointment.endTime).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-muted-foreground">Date</Label>
+                <p className="font-medium mt-1">
+                  {new Date(selectedAppointment.startTime).toLocaleDateString('en-US', {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric'
+                  })}
+                </p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">Time</Label>
+                <p className="font-medium mt-1 font-mono text-sm">
+                  {new Date(selectedAppointment.startTime).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                  {" - "}
+                  {new Date(selectedAppointment.endTime).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              </div>
             </div>
 
             {selectedAppointment.price && (
               <div>
                 <Label className="text-muted-foreground">Price</Label>
-                <p className="text-lg font-semibold text-primary">${selectedAppointment.price}</p>
+                <p className="text-2xl font-bold text-primary mt-1">${selectedAppointment.price}</p>
               </div>
             )}
-
-            <div>
-              <Label className="text-muted-foreground">Status</Label>
-              <p className="capitalize">{selectedAppointment.status}</p>
-            </div>
           </div>
         )}
       </ModalShell>
-
-
     </div>
   );
 }
-

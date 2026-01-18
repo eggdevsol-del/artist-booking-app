@@ -38,50 +38,76 @@ export default function Portfolio() {
     }
 
     return (
-        <div className="min-h-screen py-6 px-4 pb-24">
-            <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold">
+        <div className="fixed inset-0 w-full h-[100dvh] flex flex-col overflow-hidden">
+
+            {/* 1. Page Header (Fixed) */}
+            <header className="px-4 py-4 z-10 shrink-0 flex items-center justify-between">
+                <h1 className="text-2xl font-bold text-foreground">
                     {isArtist ? "My Portfolio" : "Explore"}
                 </h1>
-                {isArtist && (
-                    <Button size="sm" variant="outline" className="gap-2">
-                        <Upload className="w-4 h-4" />
-                        Upload
-                    </Button>
-                )}
+            </header>
+
+            {/* 2. Top Context Area (Non-interactive) */}
+            <div className="px-6 pt-4 pb-8 z-10 shrink-0 flex flex-col justify-center h-[20vh] opacity-80">
+                <p className="text-4xl font-light text-foreground/90 tracking-tight">
+                    Gallery
+                </p>
+                <p className="text-muted-foreground text-lg font-medium mt-1">
+                    {isArtist ? "Showcase your best work" : "Discover new styles"}
+                </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                {portfolioItems?.map((item) => (
-                    <div key={item.id} className="relative group aspect-square rounded-2xl overflow-hidden bg-muted">
-                        <img
-                            src={item.imageUrl}
-                            alt={item.description || "Portfolio item"}
-                            className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                            {isArtist ? (
-                                <Button size="icon" variant="destructive" className="rounded-full h-9 w-9">
-                                    <Trash2 className="w-4 h-4" />
-                                </Button>
-                            ) : (
-                                <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className={`rounded-full h-9 w-9 bg-white/10 hover:bg-white/20 ${item.isLiked ? 'text-red-500' : 'text-white'}`}
-                                >
-                                    <Heart className={`w-5 h-5 ${item.isLiked ? 'fill-current' : ''}`} />
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-                ))}
+            {/* 3. Sheet Container */}
+            <div className="flex-1 z-20 flex flex-col bg-white/5 backdrop-blur-2xl rounded-t-[2.5rem] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] overflow-hidden relative">
 
-                {portfolioItems?.length === 0 && (
-                    <div className="col-span-2 py-10 text-center text-muted-foreground">
-                        {isArtist ? "No images yet. Upload some work!" : "No portfolio items found."}
+                {/* Top Edge Highlight */}
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-white/20 to-transparent opacity-50 pointer-events-none" />
+
+                {/* Optional Sheet Header / Actions Area */}
+                <div className="shrink-0 pt-6 pb-2 px-6 border-b border-white/5 flex justify-end">
+                    {isArtist && (
+                        <Button size="sm" variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground">
+                            <Upload className="w-4 h-4" />
+                            Quick Upload
+                        </Button>
+                    )}
+                </div>
+
+                {/* Scrollable Content */}
+                <div className="flex-1 w-full h-full px-4 pt-4 overflow-y-auto mobile-scroll touch-pan-y">
+                    <div className="grid grid-cols-2 gap-4 pb-32 max-w-lg mx-auto">
+                        {portfolioItems?.map((item) => (
+                            <div key={item.id} className="relative group aspect-square rounded-2xl overflow-hidden bg-muted">
+                                <img
+                                    src={item.imageUrl}
+                                    alt={item.description || "Portfolio item"}
+                                    className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                                    {isArtist ? (
+                                        <Button size="icon" variant="destructive" className="rounded-full h-9 w-9">
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            className={`rounded-full h-9 w-9 bg-white/10 hover:bg-white/20 ${item.isLiked ? 'text-red-500' : 'text-white'}`}
+                                        >
+                                            <Heart className={`w-5 h-5 ${item.isLiked ? 'fill-current' : ''}`} />
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+
+                        {portfolioItems?.length === 0 && (
+                            <div className="col-span-2 py-10 text-center text-muted-foreground">
+                                {isArtist ? "No images yet. Upload some work!" : "No portfolio items found."}
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );
