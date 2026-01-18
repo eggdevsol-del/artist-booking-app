@@ -122,8 +122,8 @@ export default function Dashboard() {
     return (
         // FIX 1 & 2: Use fixed positioning to guarantee viewport height and no scrolling.
         // Removed 'bg-black' to allow body gradient (SSOT) to show through.
-        // Added 'pb-20' to account for fixed bottom nav.
-        <div className="fixed inset-0 w-full h-[100dvh] flex flex-col overflow-hidden pb-20">
+        // Removed 'pb-20' to allow sheet to extend underneath the bottom nav (Overlay behavior).
+        <div className="fixed inset-0 w-full h-[100dvh] flex flex-col overflow-hidden">
 
             {/* 1. Page Header (Fixed) */}
             <header className="px-4 py-4 z-10 shrink-0">
@@ -209,7 +209,8 @@ export default function Dashboard() {
                             className="absolute top-0 left-0 w-full h-full px-4 pt-4 overflow-y-auto mobile-scroll touch-pan-y"
                         >
                             {/* Add padding at bottom to avoid content being cut off by rounded corners or strict clipping */}
-                            <div className="space-y-3 pb-8 max-w-lg mx-auto">
+                            {/* Increased to pb-32 to fully clear the Bottom Navigation overlay */}
+                            <div className="space-y-3 pb-32 max-w-lg mx-auto">
                                 {tasks.length > 0 ? (
                                     tasks.map(task => (
                                         <TaskCard key={task.id} task={task} />
