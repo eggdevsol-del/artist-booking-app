@@ -182,54 +182,48 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
                             {/* STEP: SERVICE */}
                             {step === 'service' && (
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                     {artistServices.map(service => (
-                                        <Card
+                                        <div
                                             key={service.id}
                                             className={cn(
-                                                "group relative p-4 pr-6 cursor-pointer border-0 rounded-2xl transition-all duration-300",
+                                                "p-4 border rounded-xl transition-all duration-300 cursor-pointer flex items-center justify-between group",
                                                 selectedService?.id === service.id
-                                                    ? "bg-primary/20 hover:bg-primary/20"
-                                                    : "bg-white/5 hover:bg-white/10"
+                                                    ? "bg-primary/10 border-primary/50"
+                                                    : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
                                             )}
                                             onClick={() => {
                                                 setSelectedService(service);
-                                                // Auto-advance
                                                 setTimeout(() => setStep('frequency'), 200);
                                             }}
                                         >
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <h4 className="font-bold text-lg text-foreground mb-1 group-hover:text-primary transition-colors">
-                                                        {service.name}
-                                                    </h4>
-                                                    <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
-                                                        <span className="flex items-center gap-1">
-                                                            <Clock className="w-3.5 h-3.5" />
-                                                            {service.duration}m
-                                                        </span>
-                                                        <span className="flex items-center gap-1">
-                                                            <Layers className="w-3.5 h-3.5" />
-                                                            {service.sittings || 1} sitting{(service.sittings || 1) > 1 ? 's' : ''}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className="block font-bold text-lg text-primary">${service.price}</span>
+                                            <div className="flex-1">
+                                                <h3 className={cn("font-semibold text-base transition-colors", selectedService?.id === service.id ? "text-primary" : "text-foreground group-hover:text-foreground")}>
+                                                    {service.name}
+                                                </h3>
+                                                <div className="flex gap-3 mt-1 text-xs text-muted-foreground font-mono">
+                                                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {service.duration}m</span>
+                                                    <span className={cn("font-bold", selectedService?.id === service.id ? "text-primary/80" : "text-primary")}>${service.price}</span>
+                                                    <span>• {service.sittings || 1} sitting{(service.sittings || 1) > 1 ? 's' : ''}</span>
                                                 </div>
                                             </div>
 
-                                            {selectedService?.id === service.id && (
-                                                <div className="absolute inset-0 rounded-2xl border-2 border-primary pointer-events-none" />
-                                            )}
-                                        </Card>
+                                            <div className={cn(
+                                                "w-8 h-8 rounded-full flex items-center justify-center border transition-all",
+                                                selectedService?.id === service.id
+                                                    ? "bg-primary border-primary text-primary-foreground"
+                                                    : "bg-transparent border-white/20 text-transparent group-hover:border-white/40"
+                                            )}>
+                                                <Check className="w-4 h-4" />
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                             )}
 
                             {/* STEP: FREQUENCY */}
                             {step === 'frequency' && (
-                                <div className="space-y-4">
+                                <div className="space-y-6">
                                     <RadioGroup value={frequency} onValueChange={(v: any) => setFrequency(v)} className="grid grid-cols-1 gap-3">
                                         {[
                                             { id: 'consecutive', label: 'Consecutive Days', sub: 'Best for intensive projects' },
@@ -237,33 +231,33 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                             { id: 'biweekly', label: 'Bi-Weekly', sub: 'Every two weeks' },
                                             { id: 'monthly', label: 'Monthly', sub: 'Once a month' }
                                         ].map((opt) => (
-                                            <Card
+                                            <div
                                                 key={opt.id}
                                                 className={cn(
-                                                    "relative p-4 cursor-pointer border-0 rounded-2xl transition-all duration-300 flex items-center gap-4",
+                                                    "p-4 border rounded-xl transition-all duration-300 cursor-pointer flex items-center justify-between group",
                                                     frequency === opt.id
-                                                        ? "bg-primary/20"
-                                                        : "bg-white/5 hover:bg-white/10"
+                                                        ? "bg-primary/10 border-primary/50"
+                                                        : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
                                                 )}
                                                 onClick={() => setFrequency(opt.id as any)}
                                             >
-                                                <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors", frequency === opt.id ? "border-primary" : "border-white/20")}>
-                                                    {frequency === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
-                                                </div>
-                                                <div>
-                                                    <h4 className="font-bold text-foreground">{opt.label}</h4>
-                                                    <p className="text-xs text-muted-foreground">{opt.sub}</p>
+                                                <div className="flex-1">
+                                                    <h3 className={cn("font-semibold text-base transition-colors", frequency === opt.id ? "text-primary" : "text-foreground")}>{opt.label}</h3>
+                                                    <p className="text-xs text-muted-foreground mt-0.5">{opt.sub}</p>
                                                 </div>
 
-                                                {frequency === opt.id && (
-                                                    <div className="absolute inset-0 rounded-2xl border-2 border-primary pointer-events-none" />
-                                                )}
-                                            </Card>
+                                                <div className={cn(
+                                                    "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                                                    frequency === opt.id ? "border-primary" : "border-white/20 group-hover:border-white/40"
+                                                )}>
+                                                    {frequency === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                                                </div>
+                                            </div>
                                         ))}
                                     </RadioGroup>
 
                                     <Button
-                                        className="w-full h-12 rounded-full font-bold shadow-lg shadow-primary/20 mt-8"
+                                        className="w-full shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-base font-semibold"
                                         onClick={() => setStep('review')}
                                     >
                                         Find Available Dates
@@ -296,17 +290,17 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                     {availability && (
                                         <>
                                             <div className="grid grid-cols-2 gap-3">
-                                                <Card className="p-4 bg-white/5 border-0 rounded-2xl flex flex-col items-center justify-center text-center">
+                                                <div className="p-4 bg-white/5 border border-white/10 rounded-xl flex flex-col items-center justify-center text-center">
                                                     <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">TOTAL COST</span>
                                                     <span className="text-2xl font-bold text-foreground tracking-tight">${availability.totalCost}</span>
-                                                </Card>
-                                                <Card className="p-4 bg-white/5 border-0 rounded-2xl flex flex-col items-center justify-center text-center">
+                                                </div>
+                                                <div className="p-4 bg-white/5 border border-white/10 rounded-xl flex flex-col items-center justify-center text-center">
                                                     <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">SITTINGS</span>
                                                     <span className="text-2xl font-bold text-foreground tracking-tight">{selectedService?.sittings || 1}</span>
-                                                </Card>
+                                                </div>
                                             </div>
 
-                                            <Card className="bg-white/5 border-0 rounded-2xl overflow-hidden p-4">
+                                            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden p-4">
                                                 <div className="flex items-center justify-between mb-4">
                                                     <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">PROPOSED SCHEDULE</span>
                                                     <span className="text-[10px] font-bold bg-primary/20 text-primary px-2 py-0.5 rounded-full">{availability.dates.length} Dates</span>
@@ -327,10 +321,10 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                                         </div>
                                                     ))}
                                                 </div>
-                                            </Card>
+                                            </div>
 
                                             <Button
-                                                className="w-full h-12 rounded-full font-bold shadow-lg shadow-primary/20 mt-4"
+                                                className="w-full shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-base font-semibold"
                                                 onClick={handleConfirmBooking}
                                                 disabled={sendMessageMutation.isPending}
                                             >
@@ -355,7 +349,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                     </div>
                                     <Button
                                         onClick={handleClose}
-                                        className="w-full h-12 rounded-full font-bold shadow-lg shadow-primary/20 mt-4"
+                                        className="w-full shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-base font-semibold"
                                     >
                                         Return to Chat
                                     </Button>
