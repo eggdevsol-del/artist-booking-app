@@ -163,53 +163,48 @@ export function ProjectProposalModal({
 
                 {/* Content */}
                 <DialogPrimitive.Content
-                    className="fixed inset-0 z-[101] w-full h-[100dvh] outline-none flex flex-col gap-0 overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+                    className="fixed inset-0 z-[101] w-full h-[100dvh] outline-none flex flex-col justify-end overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-in-from-bottom-10 data-[state=open]:slide-in-from-bottom-0"
                 >
-                    {/* Header */}
-                    <header className="px-4 py-4 z-10 shrink-0 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <DialogTitle className="text-2xl font-bold text-foreground">Project Proposal</DialogTitle>
-                        </div>
-                        <Button variant="ghost" size="icon" className="rounded-full bg-white/5 hover:bg-white/10 text-foreground" onClick={onClose}>
-                            <X className="w-5 h-5" />
-                        </Button>
-                    </header>
-
                     {/* Sheet Container */}
-                    <div className="flex-1 z-20 flex flex-col bg-white/5 backdrop-blur-2xl rounded-t-[2.5rem] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] overflow-hidden relative mt-4">
+                    <div className="w-full h-full flex flex-col bg-white/5 backdrop-blur-2xl px-0 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] overflow-hidden relative mt-0 md:mt-4 md:rounded-t-[2.5rem]">
                         {/* Top Edge Highlight */}
                         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-white/20 to-transparent opacity-50 pointer-events-none" />
 
-                        {/* Scrollable Content */}
-                        <div className="flex-1 w-full h-full px-4 pt-8 overflow-y-auto mobile-scroll touch-pan-y">
-                            <div className="pb-32 max-w-lg mx-auto space-y-4">
+                        {/* Fixed Header (Inside Sheet) */}
+                        <div className="shrink-0 px-6 pt-12 pb-6 relative z-10 border-b border-white/5 bg-black/40 backdrop-blur-xl">
+                            <div className="absolute top-6 right-6 z-20">
+                                <Button variant="ghost" size="icon" className="rounded-full bg-white/5 hover:bg-white/10 text-foreground" onClick={onClose}>
+                                    <X className="w-5 h-5" />
+                                </Button>
+                            </div>
 
-                                {/* Unified Sheet Header */}
-                                <div className="mb-8 px-2">
-                                    <p className="text-xs font-bold text-primary uppercase tracking-wider mb-2">Review Proposal</p>
-                                    <h2 className="text-4xl font-light text-foreground tracking-tight mb-6">{serviceName}</h2>
+                            <p className="text-xs font-bold text-primary uppercase tracking-wider mb-2">Review Proposal</p>
+                            <DialogTitle className="text-4xl font-light text-foreground tracking-tight mb-6 pr-12 line-clamp-2">{serviceName}</DialogTitle>
 
-                                    <div className="flex items-center gap-6 h-8">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-2xl font-bold text-foreground tracking-tight">${totalCost}</span>
-                                            <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground self-end mb-1.5">Total</span>
-                                        </div>
-                                        <div className="w-px h-full bg-white/10" />
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-2xl font-bold text-foreground tracking-tight">
-                                                {hours}<span className="text-lg font-normal text-muted-foreground/60 ml-0.5">h</span>
-                                                {minutes > 0 && <span className="ml-1">{minutes}<span className="text-lg font-normal text-muted-foreground/60 ml-0.5">m</span></span>}
-                                            </span>
-                                            <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground self-end mb-1.5">Duration</span>
-                                        </div>
-                                        <div className="w-px h-full bg-white/10" />
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-2xl font-bold text-foreground tracking-tight">{sittings}</span>
-                                            <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground self-end mb-1.5">Sittings</span>
-                                        </div>
-                                    </div>
+                            <div className="flex items-center gap-6 h-8">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-2xl font-bold text-foreground tracking-tight">${totalCost}</span>
+                                    <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground self-end mb-1.5">Total</span>
                                 </div>
+                                <div className="w-px h-full bg-white/10" />
+                                <div className="flex items-center gap-3">
+                                    <span className="text-2xl font-bold text-foreground tracking-tight">
+                                        {hours}<span className="text-lg font-normal text-muted-foreground/60 ml-0.5">h</span>
+                                        {minutes > 0 && <span className="ml-1">{minutes}<span className="text-lg font-normal text-muted-foreground/60 ml-0.5">m</span></span>}
+                                    </span>
+                                    <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground self-end mb-1.5">Duration</span>
+                                </div>
+                                <div className="w-px h-full bg-white/10" />
+                                <div className="flex items-center gap-3">
+                                    <span className="text-2xl font-bold text-foreground tracking-tight">{sittings}</span>
+                                    <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground self-end mb-1.5">Sittings</span>
+                                </div>
+                            </div>
+                        </div>
 
+                        {/* Scrollable Content (Body Only) */}
+                        <div className="flex-1 w-full overflow-y-auto mobile-scroll touch-pan-y pt-6 px-4">
+                            <div className="pb-32 max-w-lg mx-auto space-y-4">
                                 <ProposalDatesList />
                                 <ProposalPolicies />
                                 <ProposalActions />
