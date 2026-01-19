@@ -19,15 +19,15 @@ export function GlassSheet({ children, className }: GlassSheetProps) {
         <div className={cn(
             "flex-1 z-20 flex flex-col relative overflow-hidden",
             // SSOT Rules:
-            // - Frosted glass with high blur
-            // - Internal top-down subtle gradient
-            // - Floating appearance over PageBackground
-            "backdrop-blur-[40px] rounded-t-[2.5rem] shadow-[0_-8px_40px_-12px_rgba(0,0,0,0.5)]",
-            "bg-gradient-to-b from-slate-950/50 to-slate-950/20 border-t border-white/10",
+            // - Translucent sheet (blur + rounded top corners)
+            // - Uses .liquid-glass tokens concept but adapted for a full sheet
+            "backdrop-blur-[32px] rounded-t-[2.5rem] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]",
+            // Dark glass tint matching 'Gold Standard' preference
+            "bg-slate-950/40 border-t border-white/5",
             className
         )}>
-            {/* Top Shine Highlight */}
-            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+            {/* Top Highlight Line */}
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-white/20 to-transparent opacity-50 pointer-events-none" />
             {children}
         </div>
     );
