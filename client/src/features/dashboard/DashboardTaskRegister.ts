@@ -1,21 +1,22 @@
 import { ChallengeTemplate, DashboardTask } from "./types";
 
-// Simple UUID generator fallback if package not available
+// Simple ID generator
 const generateId = () => Math.random().toString(36).substring(2, 15);
 
-export const BUSINESS_DEFAULTS: Omit<DashboardTask, 'id' | 'status' | 'dueDate'>[] = [
+// Expanded Source Data containing 'Action Payloads' for V1 Demo
+export const BUSINESS_DEFAULTS: Omit<DashboardTask, 'id' | 'status' | 'dueDate' | 'createdAt' | 'source'>[] = [
     { title: "Consult Follow-up", context: "Check pending inquiries", priority: 'high', domain: 'business', actionType: 'internal', actionPayload: '/inbox' },
     { title: "Deposit Due", context: "Verify payments", priority: 'high', domain: 'business', actionType: 'internal', actionPayload: '/finance' },
-    { title: "Upcoming Confirm", context: "Send confirmation texts", priority: 'medium', domain: 'business', actionType: 'sms', actionPayload: '' },
+    { title: "Upcoming Confirm", context: "Send confirmation texts", priority: 'medium', domain: 'business', actionType: 'sms', actionPayload: '' }, // Empty payload suggests "Use Client List" logic later, or generic
     { title: "Post-Sitting Check", context: "Ask for healed photos", priority: 'medium', domain: 'business', actionType: 'sms', actionPayload: '' },
     { title: "Supplies Check", context: "Inventory run needed?", priority: 'low', domain: 'business', actionType: 'none' }
 ];
 
-export const SOCIAL_DEFAULTS: Omit<DashboardTask, 'id' | 'status' | 'dueDate'>[] = [
+export const SOCIAL_DEFAULTS: Omit<DashboardTask, 'id' | 'status' | 'dueDate' | 'createdAt' | 'source'>[] = [
     { title: "Post Reel", context: "Showcase recent work", priority: 'high', domain: 'social', actionType: 'social', actionPayload: 'https://instagram.com' },
     { title: "Story Availability", context: "Post open slots", priority: 'medium', domain: 'social', actionType: 'social', actionPayload: 'https://instagram.com' },
     { title: "Post Healed Work", context: "Tag clients", priority: 'medium', domain: 'social', actionType: 'social', actionPayload: 'https://instagram.com' },
-    { title: "Engage 10 Mins", context: "Reply to comments/DMs", priority: 'low', domain: 'social', actionType: 'social', actionPayload: 'https://instagram.com' },
+    { title: "Engage Client Lists", context: "Reply to comments/DMs", priority: 'low', domain: 'social', actionType: 'social', actionPayload: 'https://instagram.com' },
 ];
 
 export const CHALLENGE_TEMPLATES: ChallengeTemplate[] = [
@@ -55,7 +56,9 @@ export const CHALLENGE_TEMPLATES: ChallengeTemplate[] = [
 export const DashboardTaskRegister = {
     generateDailyTasks: (domain: 'business' | 'social'): DashboardTask[] => {
         const source = domain === 'business' ? BUSINESS_DEFAULTS : SOCIAL_DEFAULTS;
-        // Randomly pick 3-4 tasks for variety in V1
+
+        // V1 Demo: Pick 3-5 random tasks to simulate variety
+        // In real app, this would be intelligent
         const shuffled = [...source].sort(() => 0.5 - Math.random());
         const selected = shuffled.slice(0, 3 + Math.floor(Math.random() * 2));
 
@@ -63,7 +66,9 @@ export const DashboardTaskRegister = {
             ...t,
             id: generateId(),
             status: 'pending',
-            dueDate: new Date().toISOString()
+            dueDate: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+            source: 'system'
         }));
     },
 
@@ -74,6 +79,8 @@ export const DashboardTaskRegister = {
             domain: 'personal',
             status: 'pending',
             dueDate: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+            source: 'template',
             actionType: 'none'
         }));
     }

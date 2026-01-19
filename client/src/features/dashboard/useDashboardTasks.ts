@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { DashboardTask, ChallengeTemplate, TaskDomain } from './types';
+import { DashboardTask, ChallengeTemplate, TaskDomain, DashboardConfig } from './types';
 import { DashboardEventLogger } from './DashboardEventLogger';
 import { DashboardTaskRegister } from './DashboardTaskRegister';
+import { DashboardConfigRegister } from './DashboardConfigRegister';
+import { CommsHandler } from './CommsHandler';
 
 const STORAGE_KEY = 'dashboard_v1_store';
 
@@ -31,71 +33,75 @@ export function useDashboardTasks() {
         }
     });
 
+    const [config, setConfig] = useState<DashboardConfig>(DashboardConfigRegister.getConfig());
+
     // Persistence
     useEffect(() => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }, [state]);
 
-    // Daily Rotation Logic
+    // Daily Rotation & Capacity Scaling
     useEffect(() => {
         const today = new Date().toISOString().split('T')[0];
 
         if (state.lastVisitDate !== today) {
-            // It's a new day!
-            // 1. Keep Snoozed tasks
-            // 2. Clear Dismissed/Completed (Log them? Already logged on action)
-            // 3. Generate New Defaults for Business/Social
-            // 4. If Challenge Active, generate next day's challenge task? V1: Just regenerate challenge tasks or keep them? 
-            //    Register generates "Daily" tasks. For V1 challenge, let's keep it simple:
-            //    If active challenge, ensure today's challenge tasks exist.
+            // New Day!
 
-            const snoozedTasks = state.tasks
-                .filter(t => t.status === 'snoozed')
-                .map(t => ({ ...t, status: 'pending' as const, dueDate: new Date().toISOString() })); // Reset to pending for today
+            // 1. Check Previous Day's Clearance for Capacity Scaling (if applicable)
+            // Simplified V1 Logic: If we are here, it's a new day. 
+            // We should check if yesterday (or rather the last active state) was fully cleared?
+            // Realistically we need to check 'yesterday' specifically to count streaks.
+            // For V1 Demo: We just rotate tasks. Scaling logic runs weekly typically.
+            // Let's implement the Capacity Check:
 
+            // Generate New Tasks
             const newBusiness = DashboardTaskRegister.generateDailyTasks('business');
             const newSocial = DashboardTaskRegister.generateDailyTasks('social');
 
-            // Personal/Challenge
+            // Restore/Regenerate Challenge Tasks
             let newPersonal: DashboardTask[] = [];
             if (state.activeChallengeId) {
-                // Find template
-                // Ideally we'd track progress index. For V1, just giving the daily set again.
-                // In a real app we'd have "Day 1 tasks", "Day 2 tasks". 
-                // The Register mocks this by just returning the same static set for now.
-                // We need to look up the template.
-                // Since `DashboardTaskRegister` doesn't export the array directly in a lookup way, 
-                // we'll assume we can find it. actually we can import CHALLENGE_TEMPLATES.
-                // But let's handle that in the next step or here.
-                // Let's import CHALLENGE_TEMPLATES in this file to look it up.
+                // Find template (Need to import templates or store template data in state. For V1 we assume standard list)
+                // In robustness, we'd store the template structure. 
+                // We'll regenerate "daily tasks" from the known template ID for now.
+                const { CHALLENGE_TEMPLATES } = require('./DashboardTaskRegister');
+                const template = CHALLENGE_TEMPLATES.find((t: ChallengeTemplate) => t.id === state.activeChallengeId);
+                if (template) {
+                    newPersonal = DashboardTaskRegister.generateChallengeTasks(template);
+                }
             }
+
+            // Snoozed Tasks (carry over)
+            const snoozedTasks = state.tasks
+                .filter(t => t.status === 'snoozed')
+                .map(t => ({ ...t, status: 'pending' as const, dueDate: new Date().toISOString() }));
+
+            setConfig(DashboardConfigRegister.getConfig()); // Refresh config
 
             setState(prev => ({
                 ...prev,
                 lastVisitDate: today,
                 tasks: [...snoozedTasks, ...newBusiness, ...newSocial, ...newPersonal]
             }));
-
-            // If we didn't generate personal tasks above (because of import scope), we handle it below or assume user manually starts.
-            // Actually, let's do a quick check if state.tasks is empty on mount too.
         }
-    }, []);
+    }, [state.lastVisitDate, state.activeChallengeId]); // Depend on lastVisitDate to trigger only once per day change roughly (in react strict mode might fire twice but state helps)
 
-    // Initial Population if Empty (First Run)
+    // Initial Load
     useEffect(() => {
         if (state.tasks.length === 0 && state.lastVisitDate === '') {
             const newBusiness = DashboardTaskRegister.generateDailyTasks('business');
             const newSocial = DashboardTaskRegister.generateDailyTasks('social');
             const today = new Date().toISOString().split('T')[0];
-
             setState(prev => ({
                 ...prev,
                 lastVisitDate: today,
                 tasks: [...newBusiness, ...newSocial]
             }));
         }
-    }, [state.tasks.length, state.lastVisitDate]);
+    }, [state.tasks.length]);
 
+
+    // --- Actions ---
 
     const markDone = useCallback((taskId: string) => {
         setState(prev => {
@@ -109,7 +115,7 @@ export function useDashboardTasks() {
             return {
                 ...prev,
                 socialStreak: newStreak,
-                tasks: prev.tasks.filter(t => t.id !== taskId) // Remove from list immediately
+                tasks: prev.tasks.filter(t => t.id !== taskId) // Remove immediately
             };
         });
     }, []);
@@ -146,15 +152,51 @@ export function useDashboardTasks() {
             ...prev,
             activeChallengeId: template.id,
             challengeStartDate: new Date().toISOString(),
-            // Remove existing personal tasks?? replace with new challenge
             tasks: [...prev.tasks.filter(t => t.domain !== 'personal'), ...tasks]
         }));
     }, []);
 
-    // Filter tasks for consumption
-    const businessTasks = state.tasks.filter(t => t.domain === 'business' && t.status !== 'snoozed').sort((a, b) => (a.priority === 'high' ? -1 : 1));
-    const socialTasks = state.tasks.filter(t => t.domain === 'social' && t.status !== 'snoozed').sort((a, b) => (a.priority === 'high' ? -1 : 1));
-    const personalTasks = state.tasks.filter(t => t.domain === 'personal' && t.status !== 'snoozed').sort((a, b) => (a.priority === 'high' ? -1 : 1));
+    const stopChallenge = useCallback(() => {
+        if (!state.activeChallengeId) return;
+        DashboardEventLogger.log('challenge_stopped', { templateId: state.activeChallengeId });
+
+        setState(prev => ({
+            ...prev,
+            activeChallengeId: null,
+            challengeStartDate: null,
+            tasks: prev.tasks.filter(t => t.domain !== 'personal') // Clear challenge tasks
+        }));
+    }, [state.activeChallengeId]);
+
+
+    // Comms wrappers
+    const handleComms = {
+        email: (payload: string) => CommsHandler.openPrefilledEmail(payload), // payload as 'to'
+        sms: (payload: string) => CommsHandler.openPrefilledSms(payload, undefined, config.comms.platform)
+    };
+
+    // Update comms pref
+    const setCommsPlatform = (platform: 'ios' | 'android' | 'desktop') => {
+        DashboardConfigRegister.updateConfig({ comms: { ...config.comms, platform } });
+        setConfig(prev => ({ ...prev, comms: { ...prev.comms, platform } }));
+    };
+
+
+    // Filter & Limitation Logic (Capacity Scaling)
+    // Business/Social obey maxVisibleTasks. Personal obeys nothing (show all).
+    const businessTasks = state.tasks
+        .filter(t => t.domain === 'business' && t.status !== 'snoozed')
+        .sort((a, b) => (a.priority === 'high' ? -1 : 1))
+        .slice(0, config.business.maxVisibleTasks);
+
+    const socialTasks = state.tasks
+        .filter(t => t.domain === 'social' && t.status !== 'snoozed')
+        .sort((a, b) => (a.priority === 'high' ? -1 : 1))
+        .slice(0, config.social.maxVisibleTasks);
+
+    const personalTasks = state.tasks
+        .filter(t => t.domain === 'personal' && t.status !== 'snoozed')
+        .sort((a, b) => (a.priority === 'high' ? -1 : 1));
 
     return {
         tasks: {
@@ -170,7 +212,11 @@ export function useDashboardTasks() {
             markDone,
             snooze,
             dismiss,
-            startChallenge
-        }
+            startChallenge,
+            stopChallenge,
+            handleComms,
+            setCommsPlatform
+        },
+        config
     };
 }

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
@@ -6,31 +5,29 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useDashboardTasks } from "@/features/dashboard/useDashboardTasks";
 import { CHALLENGE_TEMPLATES, DashboardTask } from "@/features/dashboard/DashboardTaskRegister";
-import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogTitle } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X, Check, Clock, ExternalLink, MessageSquare, Mail, Play, Plus } from "lucide-react";
+import { X, Check, Clock, ExternalLink, MessageSquare, Mail, Play, Plus, Trash2, Smartphone, Monitor } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 // --- Components ---
 
 function TaskCard({ task, onClick }: { task: DashboardTask; onClick: () => void }) {
-    const priorityGradient = {
-        high: "linear-gradient(90deg, #dc2626 0%, rgba(127, 29, 29, 0.4) 4%, rgba(127, 29, 29, 0) 25%)",
-        medium: "linear-gradient(90deg, #ea580c 0%, rgba(124, 45, 18, 0.4) 4%, rgba(124, 45, 18, 0) 25%)",
-        low: "linear-gradient(90deg, #059669 0%, rgba(6, 78, 59, 0.4) 4%, rgba(6, 78, 59, 0) 25%)"
+    // Brighter Box Shadow Logic for "Edge Glow"
+    const priorityGlow = {
+        high: "inset 3px 0 0 0 #dc2626", // Red Left Border Inset
+        medium: "inset 3px 0 0 0 #ea580c", // Orange
+        low: "inset 3px 0 0 0 #059669" // Green
     }[task.priority];
 
     return (
         <Card
             onClick={onClick}
-            className="group p-4 pr-6 relative overflow-hidden transition-all duration-300 border-white/5 active:scale-[0.98] shadow-none rounded-2xl bg-white/5 hover:bg-white/10 cursor-pointer"
+            className="group p-4 relative overflow-hidden transition-all duration-300 border-white/5 active:scale-[0.98] shadow-none rounded-2xl bg-white/5 hover:bg-white/10 cursor-pointer"
+            style={{ boxShadow: priorityGlow }}
         >
-            {/* Priority Gradient Overlay */}
-            <div
-                className="absolute inset-y-0 left-0 w-1/3 pointer-events-none select-none transition-opacity duration-500"
-                style={{ background: priorityGradient }}
-            />
-
-            <div className="flex items-center gap-4 z-10 relative pl-2">
+            <div className="flex items-center gap-4 z-10 relative">
                 <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-foreground text-lg leading-tight mb-1 group-hover:text-white transition-colors duration-300">
                         {task.title}
@@ -41,16 +38,15 @@ function TaskCard({ task, onClick }: { task: DashboardTask; onClick: () => void 
                         </p>
                     )}
                 </div>
-                {/* Visual indicator that it's actionable */}
-                {task.status === 'completed' ? (
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                        <Check className="w-5 h-5" />
-                    </div>
-                ) : (
-                    <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-muted-foreground group-hover:border-white/30 group-hover:text-foreground transition-colors">
-                        <Plus className="w-4 h-4" />
-                    </div>
-                )}
+
+                {/* Action Icon Indicator */}
+                {task.actionType === 'email' && <Mail className="w-5 h-5 text-muted-foreground/50 group-hover:text-foreground/80 transition-colors" />}
+                {task.actionType === 'sms' && <MessageSquare className="w-5 h-5 text-muted-foreground/50 group-hover:text-foreground/80 transition-colors" />}
+
+                {/* Right Arrow / Plus / Check */}
+                <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-muted-foreground group-hover:border-white/30 group-hover:text-foreground transition-colors">
+                    {task.status === 'completed' ? <Check className="w-4 h-4 text-green-500" /> : <Plus className="w-4 h-4" />}
+                </div>
             </div>
         </Card>
     );
@@ -60,16 +56,18 @@ function EmptyState({ category, onAction }: { category: string; onAction?: () =>
     return (
         <div className="flex flex-col items-center justify-center p-8 text-center h-64">
             <p className="text-muted-foreground/50 text-base font-medium">
-                All clear for {category}.
+                {category === 'Personal' && !onAction ? "You're crushing it." : `All clear for ${category}.`}
             </p>
             {category === 'Personal' && onAction && (
-                <Button variant="outline" className="mt-4 border-white/10 bg-white/5" onClick={onAction}>
-                    Start New Challenge
-                </Button>
+                <div className="mt-6">
+                    <Button size="lg" onClick={onAction} className="shadow-lg shadow-primary/20 font-bold text-lg h-14 px-8 rounded-full">
+                        Start New Challenge
+                    </Button>
+                </div>
             )}
             {category !== 'Personal' && (
                 <p className="text-muted-foreground/30 text-sm mt-1">
-                    Enjoy the calm.
+                    Relax and recharge.
                 </p>
             )}
         </div>
@@ -83,12 +81,13 @@ export default function Dashboard() {
     const selectedDate = new Date();
 
     // Feature Hook
-    const { tasks: allTasks, actions, stats } = useDashboardTasks();
+    const { tasks: allTasks, actions, stats, config } = useDashboardTasks();
 
     // UI State
     const [selectedTask, setSelectedTask] = useState<DashboardTask | null>(null);
     const [showTaskSheet, setShowTaskSheet] = useState(false);
     const [showChallengeSheet, setShowChallengeSheet] = useState(false);
+    const [showSettingsSheet, setShowSettingsSheet] = useState(false);
 
     // Derived State
     const activeCategory = TITLES[activeIndex].toLowerCase() as 'business' | 'social' | 'personal';
@@ -96,31 +95,20 @@ export default function Dashboard() {
 
     // Handlers
     const handleTaskClick = (task: DashboardTask) => {
+        // Direct Action?
+        // Spec says: clicking email Icon triggers open.
+        // But the card click opens details.
+        // Let's stick to: Card Click -> Action Sheet (Safe default).
         setSelectedTask(task);
         setShowTaskSheet(true);
     };
 
     const executeAction = (task: DashboardTask) => {
         const { actionType, actionPayload } = task;
-
-        switch (actionType) {
-            case 'sms':
-                if (actionPayload) window.location.href = `sms:${actionPayload}`;
-                else setShowTaskSheet(true); // Fallback if no number, show sheet (which we are likely already in)
-                break;
-            case 'email':
-                window.location.href = `mailto:${actionPayload || ''}`;
-                break;
-            case 'social':
-                if (actionPayload) window.open(actionPayload, '_blank');
-                break;
-            case 'internal':
-                // Placeholder router push
-                console.log("Navigating to:", actionPayload);
-                break;
-            default:
-                break;
-        }
+        if (actionType === 'email' && actionPayload) return actions.handleComms.email(actionPayload);
+        if (actionType === 'sms' && actionPayload) return actions.handleComms.sms(actionPayload);
+        if (actionType === 'social' && actionPayload) return window.open(actionPayload, '_blank');
+        if (actionPayload) console.log("Internal Nav:", actionPayload);
     };
 
     // Framer motion variants
@@ -142,18 +130,26 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="fixed inset-0 w-full h-[100dvh] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 w-full h-[100dvh] flex flex-col overflow-hidden bg-background">
+            {/* 0. Long Gradient Background (Matches other pages) */}
+            <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-purple-900/20 via-background to-background pointer-events-none" />
 
             {/* 1. Page Header */}
             <header className="px-4 py-4 z-10 shrink-0 flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-                {/* Social Streak Indicator */}
-                {stats.socialStreak > 0 && (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-xs font-mono font-bold">{stats.socialStreak}d Streak</span>
-                    </div>
-                )}
+                <div className="flex items-center gap-3">
+                    {/* Social Streak Indicator */}
+                    {stats.socialStreak > 0 && (
+                        <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10">
+                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                            <span className="text-xs font-mono font-bold">{stats.socialStreak}d Streak</span>
+                        </div>
+                    )}
+                    {/* Settings Trigger for Comms Prefs */}
+                    <Button variant="ghost" size="icon" onClick={() => setShowSettingsSheet(true)} className="text-muted-foreground hover:text-foreground">
+                        <Smartphone className="w-5 h-5" />
+                    </Button>
+                </div>
             </header>
 
             {/* 2. Top Context Area */}
@@ -170,40 +166,32 @@ export default function Dashboard() {
             <div className="flex-1 z-20 flex flex-col bg-white/5 backdrop-blur-2xl rounded-t-[2.5rem] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] overflow-hidden relative">
                 <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-white/20 to-transparent opacity-50 pointer-events-none" />
 
-                {/* Sheet Header */}
+                {/* Sheet Header Tabs */}
                 <div className="shrink-0 pt-6 pb-2 px-6 border-b border-white/5">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-6">
-                            {TITLES.map((title, index) => {
-                                const isActive = index === activeIndex;
-                                return (
-                                    <button
-                                        key={title}
-                                        onClick={() => {
-                                            const dir = index > activeIndex ? 1 : -1;
-                                            if (index !== activeIndex) {
-                                                setPage([index, dir]);
-                                                setActiveIndex(index);
-                                            }
-                                        }}
-                                        className={cn(
-                                            "text-lg font-bold tracking-tight transition-all duration-300 ease-out py-2 outline-none",
-                                            isActive
-                                                ? "text-foreground opacity-100"
-                                                : "text-muted-foreground/50 hover:text-muted-foreground/80"
-                                        )}
-                                        style={{ filter: isActive ? "none" : "blur(0.5px)" }}
-                                    >
-                                        {title}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                        {activeCategory === 'personal' && !stats.activeChallengeId && (
-                            <Button size="sm" variant="ghost" onClick={() => setShowChallengeSheet(true)} className="h-8 w-8 p-0 rounded-full bg-white/5 border border-white/10">
-                                <Plus className="w-4 h-4" />
-                            </Button>
-                        )}
+                    <div className="flex w-full items-center justify-between">
+                        {TITLES.map((title, index) => {
+                            const isActive = index === activeIndex;
+                            return (
+                                <button
+                                    key={title}
+                                    onClick={() => {
+                                        const dir = index > activeIndex ? 1 : -1;
+                                        if (index !== activeIndex) {
+                                            setPage([index, dir]);
+                                            setActiveIndex(index);
+                                        }
+                                    }}
+                                    className={cn(
+                                        "flex-1 text-center text-lg font-bold tracking-tight transition-all duration-300 ease-out py-2 outline-none",
+                                        isActive
+                                            ? "text-foreground opacity-100 scale-105"
+                                            : "text-muted-foreground opacity-40 scale-95 hover:opacity-60"
+                                    )}
+                                >
+                                    {title}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -302,6 +290,18 @@ export default function Dashboard() {
                                             Dismiss
                                         </Button>
                                     </div>
+
+                                    {/* Stop Challenge (Personal Only) */}
+                                    {selectedTask.domain === 'personal' && stats.activeChallengeId && (
+                                        <Button
+                                            variant="ghost"
+                                            className="w-full h-12 text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                                            onClick={() => { actions.stopChallenge(); setShowTaskSheet(false); }}
+                                        >
+                                            <Trash2 className="mr-2 w-4 h-4" />
+                                            Stop Challenge
+                                        </Button>
+                                    )}
                                 </div>
                             </>
                         )}
@@ -344,6 +344,42 @@ export default function Dashboard() {
                                     </div>
                                 </Card>
                             ))}
+                        </div>
+                    </DialogPrimitive.Content>
+                </DialogPrimitive.Portal>
+            </Dialog>
+
+            {/* --- SETTINGS SHEET --- */}
+            <Dialog open={showSettingsSheet} onOpenChange={setShowSettingsSheet}>
+                <DialogPrimitive.Portal>
+                    <DialogPrimitive.Overlay className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+                    <DialogPrimitive.Content className="fixed inset-x-0 bottom-0 z-[101] w-full bg-background/90 backdrop-blur-xl border-t border-white/10 rounded-t-[2rem] p-6 pb-12 shadow-2xl space-y-6 outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom duration-300">
+                        <div className="mx-auto w-12 h-1.5 rounded-full bg-white/20 mb-2" />
+                        <div className="space-y-1">
+                            <DialogTitle className="text-2xl font-bold">Preferences</DialogTitle>
+                            <p className="text-muted-foreground">Configure your dashboard experience.</p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>Device Platform (For SMS/Sharing)</Label>
+                                <Select value={config.comms.platform} onValueChange={(val: any) => actions.setCommsPlatform(val)}>
+                                    <SelectTrigger className="h-12 bg-white/5 border-white/10 rounded-xl">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="ios">
+                                            <div className="flex items-center gap-2"><Smartphone className="w-4 h-4" /> iOS (iPhone)</div>
+                                        </SelectItem>
+                                        <SelectItem value="android">
+                                            <div className="flex items-center gap-2"><Smartphone className="w-4 h-4" /> Android</div>
+                                        </SelectItem>
+                                        <SelectItem value="desktop">
+                                            <div className="flex items-center gap-2"><Monitor className="w-4 h-4" /> Desktop / Web</div>
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
                     </DialogPrimitive.Content>
                 </DialogPrimitive.Portal>
