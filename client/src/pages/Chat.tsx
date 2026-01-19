@@ -2,6 +2,9 @@ import { ModalShell } from "@/components/ui/overlays/modal-shell";
 // import { SheetShell } from "@/components/ui/overlays/sheet-shell"; // REMOVED
 import { useChatController } from "@/features/chat/useChatController";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogTitle } from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -375,54 +378,120 @@ export default function Chat() {
         overlayId="chat.booking_wizard"
       />
 
-      {/* Book Now Calendar Dialog */}
-      <ModalShell
-        isOpen={showBookingCalendar}
-        onClose={() => setShowBookingCalendar(false)}
-        title="Select Date"
-        className="max-w-md"
-        overlayName="Book Now"
-        overlayId="chat.book_now"
-      >
-        <div className="p-4">
-          <div className="flex items-center justify-between mb-4">
-            <Button variant="ghost" onClick={prevMonth}>&lt;</Button>
-            <span className="font-semibold">{format(new Date(calendarDays.find(d => d.type === 'day')?.date || new Date()), 'MMMM yyyy')}</span>
-            <Button variant="ghost" onClick={nextMonth}>&gt;</Button>
-          </div>
-          <div className="grid grid-cols-7 gap-1">
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
-              <div key={d} className="h-8 flex items-center justify-center text-xs font-medium text-muted-foreground">{d}</div>
-            ))}
-            {calendarDays.map((item, i) => (
-              <div key={item.key || i}>
-                {item.type === 'empty' || !item.date ? (
-                  <div className="h-10" />
-                ) : (
+      {/* Book Now Calendar Sheet (Gold Standard) */}
+      <Dialog open={showBookingCalendar} onOpenChange={(open) => !open && setShowBookingCalendar(false)}>
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Overlay className="fixed inset-0 z-[100] bg-black/30 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <DialogPrimitive.Content
+            className="fixed inset-0 z-[101] w-full h-[100dvh] outline-none flex flex-col gap-0 overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+          >
+            {/* Standard Header */}
+            <header className="px-4 py-4 z-10 shrink-0 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="icon" className="rounded-full bg-white/5 hover:bg-white/10 text-foreground -ml-2" onClick={() => setShowBookingCalendar(false)}>
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+                <DialogTitle className="text-2xl font-bold text-foreground">Select Date</DialogTitle>
+              </div>
+            </header>
+
+            {/* Context Area */}
+            <div className="px-6 pt-4 pb-8 z-10 shrink-0 flex flex-col justify-center h-[10vh] opacity-80 transition-all duration-300">
+              <p className="text-4xl font-light text-foreground/90 tracking-tight">Availability</p>
+              <p className="text-sm text-muted-foreground mt-1">Select a start date for this project</p>
+            </div>
+
+            {/* Sheet Container */}
+            <div className="flex-1 z-20 flex flex-col bg-white/5 backdrop-blur-2xl rounded-t-[2.5rem] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] overflow-hidden relative">
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-white/20 to-transparent opacity-50 pointer-events-none" />
+
+              {/* Scrollable Content */}
+              <div className="flex-1 w-full h-full px-4 pt-8 overflow-y-auto mobile-scroll touch-pan-y">
+                <div className="pb-32 max-w-lg mx-auto space-y-6">
+
+                  {/* Calendar Controls */}
+                  <div className="flex items-center justify-between mb-2 px-2">
+                    <Button variant="ghost" size="icon" onClick={prevMonth} className="rounded-full hover:bg-white/10">
+                      <ArrowLeft className="w-4 h-4" />
+                    </Button>
+                    <span className="font-bold text-lg">{format(new Date(calendarDays.find(d => d.type === 'day')?.date || new Date()), 'MMMM yyyy')}</span>
+                    <Button variant="ghost" size="icon" onClick={nextMonth} className="rounded-full hover:bg-white/10">
+                      <ArrowLeft className="w-4 h-4 rotate-180" />
+                    </Button>
+                  </div>
+
+                  {/* Calendar Grid */}
+                  <div className="grid grid-cols-7 gap-1">
+                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
+                      <div key={d} className="h-10 flex items-center justify-center text-xs font-bold text-muted-foreground">{d}</div>
+                    ))}
+                    {calendarDays.map((item, i) => (
+                      <div key={item.key || i} className="aspect-square">
+                        {item.type === 'empty' || !item.date ? (
+                          <div />
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            className={cn(
+                              "w-full h-full p-0 font-normal rounded-xl transition-all duration-200",
+                              projectStartDate?.toDateString() === item.date.toDateString()
+                                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-100 font-bold"
+                                : "hover:bg-white/10 hover:scale-105",
+                              item.date.toDateString() === new Date().toDateString() && projectStartDate?.toDateString() !== item.date.toDateString()
+                                ? "border border-primary/50 text-primary"
+                                : ""
+                            )}
+                            onClick={() => setProjectStartDate(item.date)}
+                          >
+                            {item.day}
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Confirm Action */}
                   <Button
-                    variant="ghost"
-                    className={`h-10 w-full p-0 font-normal ${projectStartDate?.toDateString() === item.date.toDateString()
-                      ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground"
-                      : "hover:bg-accent"
-                      } ${item.date.toDateString() === new Date().toDateString()
-                        ? "border border-primary text-primary"
-                        : ""
-                      }`}
+                    className="w-full shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-base font-semibold mt-4"
+                    disabled={!projectStartDate || sendMessageMutation.isPending}
                     onClick={() => {
-                      if (item.date) {
-                        setProjectStartDate(item.date);
-                        toast.info("Date selected: " + format(item.date, 'PPP'));
-                      }
+                      if (!projectStartDate) return;
+
+                      // SSOT Pipeline: Create Proposal 
+                      const message = `I have updated the project date to: ${format(projectStartDate, 'EEEE, MMMM do yyyy')}.\n\nPlease confirm if this works for you.`;
+
+                      const metadata = JSON.stringify({
+                        type: "project_proposal",
+                        serviceName: "Custom Session", // Fallback if no service context
+                        serviceDuration: 60,
+                        sittings: 1,
+                        price: 0, // Fallback
+                        totalCost: 0,
+                        frequency: "single",
+                        dates: [projectStartDate.toISOString()],
+                        proposedDates: [projectStartDate.toISOString()],
+                        status: 'pending',
+                        // Include policies/settings if available in context, otherwise defaults
+                      });
+
+                      sendMessageMutation.mutate({
+                        conversationId,
+                        content: message,
+                        messageType: "appointment_request",
+                        metadata: metadata
+                      });
+                      setShowBookingCalendar(false);
                     }}
                   >
-                    {item.day}
+                    {sendMessageMutation.isPending ? "Sending..." : "Confirm Date"}
                   </Button>
-                )}
+
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </ModalShell>
+            </div>
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+      </Dialog>
 
 
       {/* Client Confirm Dialog */}
