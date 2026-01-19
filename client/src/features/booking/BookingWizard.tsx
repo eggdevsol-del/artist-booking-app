@@ -245,7 +245,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                         {artistServices.map(service => (
                                             <SelectableCard
                                                 key={service.id}
-                                                selected={selectedService?.id === service.id}
+                                                selected={!!selectedService && selectedService.id === service.id}
                                                 onClick={() => {
                                                     setSelectedService(service);
                                                     setTimeout(() => setStep('frequency'), 200);
@@ -254,7 +254,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                                 subtitle={
                                                     <div className="flex gap-3 text-xs text-muted-foreground font-mono">
                                                         <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {service.duration}m</span>
-                                                        <span className={cn("font-bold", selectedService?.id === service.id ? "text-primary" : "text-muted-foreground")}>${service.price}</span>
+                                                        <span className={cn("font-bold", (selectedService && selectedService.id === service.id) ? "text-primary" : "text-muted-foreground")}>${service.price}</span>
                                                         <span>• {service.sittings || 1} sitting{(service.sittings || 1) > 1 ? 's' : ''}</span>
                                                     </div>
                                                 }
