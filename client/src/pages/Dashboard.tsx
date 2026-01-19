@@ -24,7 +24,7 @@ function EmptyState({ category, onAction }: { category: string; onAction?: () =>
     return (
         <div className="flex flex-col items-center justify-center p-8 text-center h-64">
             <p className="text-muted-foreground/50 text-base font-medium">
-                {category === 'Personal' && !onAction ? "You're crushing it." : `All clear for ${ category }.`}
+                {category === 'Personal' && !onAction ? "You're crushing it." : "All clear for " + category + "."}
             </p>
             {category === 'Personal' && onAction && (
                 <div className="mt-6">
