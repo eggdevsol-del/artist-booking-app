@@ -1,4 +1,4 @@
-```javascript
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -342,4 +342,4 @@ export default function Dashboard() {
         </PageWrapper>
     );
 }
-```
+
