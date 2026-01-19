@@ -18,10 +18,10 @@ export function SegmentedHeader({ options, activeIndex, onChange, className }: S
                         key={title}
                         onClick={() => onChange(index)}
                         className={cn(
-                            "flex-1 text-center text-lg font-bold tracking-tight transition-all duration-300 ease-out py-2 outline-none rounded-lg",
+                            "flex-1 text-center text-lg tracking-tight transition-all duration-300 ease-out py-2 outline-none",
                             isActive
-                                ? "text-foreground opacity-100 scale-105"
-                                : "text-muted-foreground opacity-50 hover:opacity-100 scale-95"
+                                ? "text-foreground font-bold opacity-100 scale-[1.02]"
+                                : "text-muted-foreground font-medium opacity-40 hover:opacity-70 scale-[0.98]"
                         )}
                         style={{
                             // Ensure font smoothing/crispness

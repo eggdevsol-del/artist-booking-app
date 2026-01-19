@@ -168,9 +168,9 @@ export default function Dashboard() {
                                             key={task.id}
                                             title={task.title}
                                             context={task.context}
-                                            priority={task.priority}
+                                            priority={task.priority as 'high' | 'medium' | 'low'}
                                             status={task.status}
-                                            actionType={task.actionType}
+                                            actionType={task.actionType as any}
                                             onClick={() => handleTaskClick(task)}
                                         />
                                     ))
