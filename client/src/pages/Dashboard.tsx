@@ -1,7 +1,6 @@
+```javascript
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useDashboardTasks } from "@/features/dashboard/useDashboardTasks";
 import { CHALLENGE_TEMPLATES, DashboardTask } from "@/features/dashboard/DashboardTaskRegister";
@@ -10,53 +9,22 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X, Check, Clock, ExternalLink, MessageSquare, Mail, Play, Plus, Trash2, Smartphone, Monitor } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card"; // For Challenges only
+
+// SSOT Components
+import { PageWrapper } from "@/components/ui/ssot/PageWrapper";
+import { GlassSheet } from "@/components/ui/ssot/GlassSheet";
+import { SheetHeader } from "@/components/ui/ssot/SheetHeader";
+import { SegmentedHeader } from "@/components/ui/ssot/SegmentedHeader";
+import { TaskCard } from "@/components/ui/ssot/TaskCard";
 
 // --- Components ---
-
-function TaskCard({ task, onClick }: { task: DashboardTask; onClick: () => void }) {
-    // Soft Edge Glow Logic (No Hard Bars)
-    const priorityShadow = {
-        high: "inset 6px 0 20px -4px rgba(220, 38, 38, 0.5), 0 0 0 1px rgba(220, 38, 38, 0.1)", // Red Glow
-        medium: "inset 6px 0 20px -4px rgba(234, 88, 12, 0.5), 0 0 0 1px rgba(234, 88, 12, 0.1)", // Orange Glow
-        low: "inset 6px 0 20px -4px rgba(16, 185, 129, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.1)" // Green Glow
-    }[task.priority];
-
-    return (
-        <Card
-            onClick={onClick}
-            className="group p-4 relative overflow-hidden transition-all duration-300 border-0 active:scale-[0.98] rounded-2xl bg-white/5 hover:bg-white/10 cursor-pointer"
-            style={{ boxShadow: priorityShadow }}
-        >
-            <div className="flex items-center gap-4 z-10 relative">
-                <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-foreground text-lg leading-tight mb-1 group-hover:text-white transition-colors duration-300">
-                        {task.title}
-                    </h3>
-                    {task.context && (
-                        <p className="text-sm text-muted-foreground leading-relaxed group-hover:text-muted-foreground/80 transition-colors duration-300">
-                            {task.context}
-                        </p>
-                    )}
-                </div>
-
-                {/* Action Icon Indicator */}
-                {task.actionType === 'email' && <Mail className="w-5 h-5 text-muted-foreground/50 group-hover:text-foreground/80 transition-colors" />}
-                {task.actionType === 'sms' && <MessageSquare className="w-5 h-5 text-muted-foreground/50 group-hover:text-foreground/80 transition-colors" />}
-
-                {/* Right Arrow / Plus / Check */}
-                <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-muted-foreground group-hover:border-white/30 group-hover:text-foreground transition-colors">
-                    {task.status === 'completed' ? <Check className="w-4 h-4 text-green-500" /> : <Plus className="w-4 h-4" />}
-                </div>
-            </div>
-        </Card>
-    );
-}
 
 function EmptyState({ category, onAction }: { category: string; onAction?: () => void }) {
     return (
         <div className="flex flex-col items-center justify-center p-8 text-center h-64">
             <p className="text-muted-foreground/50 text-base font-medium">
-                {category === 'Personal' && !onAction ? "You're crushing it." : `All clear for ${category}.`}
+                {category === 'Personal' && !onAction ? "You're crushing it." : `All clear for ${ category }.`}
             </p>
             {category === 'Personal' && onAction && (
                 <div className="mt-6">
@@ -126,7 +94,7 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="fixed inset-0 w-full h-[100dvh] flex flex-col overflow-hidden bg-background">
+        <PageWrapper>
             {/* 0. Long Gradient Background (Matches other pages) */}
             <div className="absolute top-0 left-0 right-0 h-[60vh] bg-gradient-to-b from-black/80 via-black/20 to-transparent pointer-events-none z-0" />
 
@@ -158,42 +126,20 @@ export default function Dashboard() {
                 </p>
             </div>
 
-            {/* 3. Sheet Container */}
-            <div className="flex-1 z-20 flex flex-col bg-slate-950/40 backdrop-blur-[32px] rounded-t-[2.5rem] border-t border-white/5 shadow-2xl overflow-hidden relative">
-                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-white/20 to-transparent opacity-50 pointer-events-none" />
-
-                {/* Sheet Header Tabs */}
-                {/* 
-                   Added subtle blur/bg to header itself to make it distinct as 'Glass Header' 
-                   if it is sitting on top of the sheet background.
-                */}
-                <div className="shrink-0 pt-6 pb-4 px-6 border-b border-white/5 bg-white/[0.01] backdrop-blur-md">
-                    <div className="flex w-full items-center justify-between gap-2">
-                        {TITLES.map((title, index) => {
-                            const isActive = index === activeIndex;
-                            return (
-                                <button
-                                    key={title}
-                                    onClick={() => {
-                                        const dir = index > activeIndex ? 1 : -1;
-                                        if (index !== activeIndex) {
-                                            setPage([index, dir]);
-                                            setActiveIndex(index);
-                                        }
-                                    }}
-                                    className={cn(
-                                        "flex-1 text-center text-lg font-bold tracking-tight transition-all duration-300 ease-out py-2 outline-none rounded-lg",
-                                        isActive
-                                            ? "text-foreground opacity-100 bg-white/5"
-                                            : "text-muted-foreground opacity-50 hover:opacity-100 hover:bg-white/5"
-                                    )}
-                                >
-                                    {title}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
+            {/* 3. Sheet Container (SSOT Primitive) */}
+            <GlassSheet>
+                {/* Sheet Header Tabs (SSOT Primitive) */}
+                <SheetHeader>
+                    <SegmentedHeader
+                        options={TITLES}
+                        activeIndex={activeIndex}
+                        onChange={(index) => {
+                            const dir = index > activeIndex ? 1 : -1;
+                            setPage([index, dir]);
+                            setActiveIndex(index);
+                        }}
+                    />
+                </SheetHeader>
 
                 {/* Sheet Content */}
                 <div className="flex-1 relative w-full overflow-hidden">
@@ -220,7 +166,15 @@ export default function Dashboard() {
                             <div className="space-y-3 pb-32 max-w-lg mx-auto">
                                 {currentTasks.length > 0 ? (
                                     currentTasks.map(task => (
-                                        <TaskCard key={task.id} task={task} onClick={() => handleTaskClick(task)} />
+                                        <TaskCard
+                                            key={task.id}
+                                            title={task.title}
+                                            context={task.context}
+                                            priority={task.priority}
+                                            status={task.status}
+                                            actionType={task.actionType}
+                                            onClick={() => handleTaskClick(task)}
+                                        />
                                     ))
                                 ) : (
                                     <EmptyState category={TITLES[activeIndex]} onAction={activeCategory === 'personal' ? () => setShowChallengeSheet(true) : undefined} />
@@ -229,7 +183,7 @@ export default function Dashboard() {
                         </motion.div>
                     </AnimatePresence>
                 </div>
-            </div>
+            </GlassSheet>
 
             {/* --- ACTION SHEET --- */}
             <Dialog open={showTaskSheet} onOpenChange={setShowTaskSheet}>
@@ -385,6 +339,7 @@ export default function Dashboard() {
                 </DialogPrimitive.Portal>
             </Dialog>
 
-        </div>
+        </PageWrapper>
     );
 }
+```
