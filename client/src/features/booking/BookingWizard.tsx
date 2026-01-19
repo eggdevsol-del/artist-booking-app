@@ -11,7 +11,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-type WizardStep = 'service' | 'frequency' | 'review' | 'success';
+type WizardStep = 'service' | 'frequency' | 'review' | 'manual' | 'success';
 
 interface BookingWizardProps {
     isOpen: boolean;
@@ -27,7 +27,7 @@ interface BookingWizardProps {
 export function BookingWizard({ isOpen, onClose, conversationId, artistServices, artistSettings, onBookingSuccess, overlayName, overlayId }: BookingWizardProps) {
     const [step, setStep] = useState<WizardStep>('service');
     const [selectedService, setSelectedService] = useState<any>(null);
-    const [frequency, setFrequency] = useState<"consecutive" | "weekly" | "biweekly" | "monthly">("consecutive");
+    const [frequency, setFrequency] = useState<"single" | "consecutive" | "weekly" | "biweekly" | "monthly">("consecutive");
     const [startDate] = useState(new Date());
 
     // -- Queries & Mutations --
@@ -41,7 +41,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
         conversationId,
         serviceName: selectedService?.name || '',
         serviceDuration: selectedService?.duration || 60,
-        sittings: selectedService?.sittings || 1,
+        sittings: frequency === 'single' ? 1 : (selectedService?.sittings || 1),
         price: Number(selectedService?.price) || 0,
         frequency,
         startDate,
@@ -74,15 +74,16 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
             .map((date: string | Date) => format(new Date(date), 'EEEE, MMMM do yyyy, h:mm a'))
             .join('\n');
 
-        const message = `I have found the following dates for your ${selectedService.name} project:\n\n${datesList}\n\nThis project consists of ${selectedService.sittings || 1} sittings.\nFrequency: ${frequency}\nPrice per sitting: $${selectedService.price}\n\nPlease confirm these dates.`;
+        const finalSittings = frequency === 'single' ? 1 : (selectedService.sittings || 1);
+        const message = `I have found the following dates for your ${selectedService.name} project:\n\n${datesList}\n\nThis project consists of ${finalSittings} sittings.\nFrequency: ${frequency}\nPrice per sitting: $${selectedService.price}\n\nPlease confirm these dates.`;
 
-        const totalCost = Number(selectedService.price) * (selectedService.sittings || 1);
+        const totalCost = Number(selectedService.price) * finalSittings;
 
         const metadata = JSON.stringify({
             type: "project_proposal",
             serviceName: selectedService.name,
             serviceDuration: selectedService.duration,
-            sittings: selectedService.sittings || 1,
+            sittings: finalSittings,
             price: Number(selectedService.price),
             totalCost: totalCost,
             frequency: frequency,
@@ -117,6 +118,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
     const goBack = () => {
         if (step === 'frequency') setStep('service');
         if (step === 'review') setStep('frequency');
+        if (step === 'manual') setStep('review');
     };
 
     // -- Header Titles --
@@ -125,6 +127,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
             case 'service': return "Select Service";
             case 'frequency': return "Select Frequency";
             case 'review': return "Review Proposal";
+            case 'manual': return "Select Dates";
             case 'success': return "Proposal Sent";
         }
     };
@@ -170,6 +173,12 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                             <div>
                                 <p className="text-4xl font-light text-foreground/90 tracking-tight">Summary</p>
                                 <p className="text-sm text-muted-foreground mt-1">{frequency} • {selectedService?.name}</p>
+                            </div>
+                        )}
+                        {step === 'manual' && (
+                            <div>
+                                <p className="text-4xl font-light text-foreground/90 tracking-tight">Manual Selection</p>
+                                <p className="text-sm text-muted-foreground mt-1">Choose specific dates for this project</p>
                             </div>
                         )}
                         {step === 'success' && <p className="text-4xl font-light text-foreground/90 tracking-tight">Done</p>}
@@ -230,6 +239,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                     <div className="space-y-6">
                                         <RadioGroup value={frequency} onValueChange={(v: any) => setFrequency(v)} className="grid grid-cols-1 gap-3">
                                             {[
+                                                { id: 'single', label: 'Single Sitting', sub: 'One session only' },
                                                 { id: 'consecutive', label: 'Consecutive Days', sub: 'Best for intensive projects' },
                                                 { id: 'weekly', label: 'Weekly', sub: 'Same day each week' },
                                                 { id: 'biweekly', label: 'Bi-Weekly', sub: 'Every two weeks' },
@@ -300,7 +310,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                                     </Card>
                                                     <Card className="p-4 bg-white/5 border-0 rounded-2xl flex flex-col items-center justify-center text-center">
                                                         <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">SITTINGS</span>
-                                                        <span className="text-2xl font-bold text-foreground tracking-tight">{selectedService?.sittings || 1}</span>
+                                                        <span className="text-2xl font-bold text-foreground tracking-tight">{frequency === 'single' ? 1 : (selectedService?.sittings || 1)}</span>
                                                     </Card>
                                                 </div>
 
@@ -327,15 +337,35 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                                     </div>
                                                 </Card>
 
-                                                <Button
-                                                    className="w-full shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-base font-semibold"
-                                                    onClick={handleConfirmBooking}
-                                                    disabled={sendMessageMutation.isPending}
-                                                >
-                                                    {sendMessageMutation.isPending ? "Sending..." : "Send Proposal"}
-                                                </Button>
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        variant="secondary"
+                                                        className="flex-1 h-12 text-base font-semibold"
+                                                        onClick={() => setStep('manual')}
+                                                    >
+                                                        Choose Manually
+                                                    </Button>
+                                                    <Button
+                                                        className="flex-[2] shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-base font-semibold"
+                                                        onClick={handleConfirmBooking}
+                                                        disabled={sendMessageMutation.isPending}
+                                                    >
+                                                        {sendMessageMutation.isPending ? "Sending..." : "Send Proposal"}
+                                                    </Button>
+                                                </div>
                                             </>
                                         )}
+                                    </div>
+                                )}
+
+                                {/* STEP: MANUAL */}
+                                {step === 'manual' && (
+                                    <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                                        <Calendar className="w-16 h-16 text-muted-foreground/30" />
+                                        <div className="text-center">
+                                            <h3 className="text-lg font-semibold text-foreground">Manual Date Selection</h3>
+                                            <p className="text-sm text-muted-foreground mt-1">This feature is coming soon.</p>
+                                        </div>
                                     </div>
                                 )}
 

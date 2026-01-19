@@ -12,7 +12,7 @@ export const bookingRouter = router({
             serviceDuration: z.number(),
             sittings: z.number(),
             price: z.number(),
-            frequency: z.enum(["consecutive", "weekly", "biweekly", "monthly"]),
+            frequency: z.enum(["single", "consecutive", "weekly", "biweekly", "monthly"]),
             startDate: z.date(),
             timeZone: z.string(),
         }))

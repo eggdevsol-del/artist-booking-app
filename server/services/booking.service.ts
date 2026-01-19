@@ -18,7 +18,7 @@ export interface AppointmentInterval {
 export interface ProjectAvailabilityInput {
     serviceDuration: number;
     sittings: number;
-    frequency: "consecutive" | "weekly" | "biweekly" | "monthly";
+    frequency: "single" | "consecutive" | "weekly" | "biweekly" | "monthly";
     startDate: Date;
     workSchedule: any[];
     existingAppointments: AppointmentInterval[];
@@ -346,6 +346,7 @@ export function calculateProjectDates(input: ProjectAvailabilityInput): Date[] {
         // We should just add 24 hours (or 7 days) worth of milliseconds to be safe, then find next.
 
         switch (input.frequency) {
+            case "single":
             case "consecutive":
                 nextDate.setDate(nextDate.getDate() + 1);
                 break;
