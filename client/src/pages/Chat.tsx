@@ -167,42 +167,46 @@ export default function Chat() {
 
       {/* Fixed Header & Consultation Pin */}
       <div className="flex-none z-50 bg-background/80 backdrop-blur-xl border-b border-white/5 shadow-sm supports-[backdrop-filter]:bg-background/60">
-        <header className="mobile-header px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="hover:bg-primary/10 -ml-2"
-              onClick={() => setLocation("/conversations")}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center overflow-hidden flex-shrink-0 ring-2 ring-background shadow-md">
-              {conversation.otherUser?.avatar ? (
-                <img src={conversation.otherUser.avatar} alt={otherUserName} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-white font-semibold">
-                  {otherUserName.charAt(0).toUpperCase()}
-                </span>
-              )}
-            </div>
-            <div className="flex-1">
-              <h1 className="font-semibold text-base leading-tight">{otherUserName}</h1>
-              <p className="text-xs text-primary font-medium flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                Online
-              </p>
-            </div>
-            {isArtist && (
+        <header className="mobile-header px-4 py-3 pb-4">
+          <div className="flex items-center justify-between">
+
+            {/* Left Group: Back + Avatar + Name */}
+            <div className="flex items-center gap-3 flex-1 min-w-0">
               <Button
                 variant="ghost"
                 size="icon"
-                className="hover:bg-primary/10 -mr-2"
-                onClick={() => setShowClientInfo(true)}
+                className="hover:bg-primary/10 -ml-2 shrink-0"
+                onClick={() => setLocation("/conversations")}
               >
-                <User className="w-5 h-5" />
+                <ArrowLeft className="w-5 h-5" />
               </Button>
-            )}
+
+              <div
+                className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer group"
+                onClick={() => isArtist && setShowClientInfo(true)}
+              >
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center overflow-hidden flex-shrink-0 ring-2 ring-background shadow-md transition-transform group-active:scale-95">
+                  {conversation.otherUser?.avatar ? (
+                    <img src={conversation.otherUser.avatar} alt={otherUserName} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-white font-semibold">
+                      {otherUserName.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h1 className="font-bold text-xl leading-tight truncate text-foreground group-hover:text-primary transition-colors">{otherUserName}</h1>
+                  <p className="text-xs text-primary font-medium flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                    Online
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Group: Empty (Spacer for balance if needed, or just nothing) */}
+            {/* Removing all right-side icons as per strict rules */}
+            <div className="w-9" />
           </div>
         </header>
 

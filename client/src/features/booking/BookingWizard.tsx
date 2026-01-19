@@ -3,10 +3,8 @@ import { Dialog, DialogTitle } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
-import { Loader2, Calendar, AlertCircle, CheckCircle2, Clock, Layers, ChevronRight, Check, X, ArrowLeft } from "lucide-react";
+import { Loader2, Calendar, AlertCircle, CheckCircle2, Clock, Check, X, ArrowLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { RadioGroup } from "@/components/ui/radio-group";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -22,6 +20,53 @@ interface BookingWizardProps {
     onBookingSuccess: () => void;
     overlayName?: string;
     overlayId?: string;
+}
+
+// -- Canonical Components --
+
+function SelectableCard({
+    selected,
+    onClick,
+    title,
+    subtitle,
+    children,
+    rightElement
+}: {
+    selected: boolean;
+    onClick: () => void;
+    title: string;
+    subtitle?: React.ReactNode;
+    children?: React.ReactNode;
+    rightElement?: React.ReactNode;
+}) {
+    return (
+        <div
+            className={cn(
+                "p-4 border rounded-xl transition-all duration-300 cursor-pointer flex items-center justify-between group",
+                selected
+                    ? "bg-primary/10 border-primary/50"
+                    : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
+            )}
+            onClick={onClick}
+        >
+            <div className="flex-1">
+                <h3 className={cn("font-semibold text-base transition-colors", selected ? "text-primary" : "text-foreground group-hover:text-foreground")}>
+                    {title}
+                </h3>
+                {subtitle && <div className="text-xs text-muted-foreground mt-0.5">{subtitle}</div>}
+                {children}
+            </div>
+
+            <div className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center border transition-all ml-4",
+                selected
+                    ? "bg-primary border-primary text-primary-foreground"
+                    : "bg-transparent border-white/20 text-transparent group-hover:border-white/40"
+            )}>
+                {rightElement || <Check className="w-4 h-4" />}
+            </div>
+        </div>
+    );
 }
 
 export function BookingWizard({ isOpen, onClose, conversationId, artistServices, artistSettings, onBookingSuccess, overlayName, overlayId }: BookingWizardProps) {
@@ -149,12 +194,13 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                     <header className="px-4 py-4 z-10 shrink-0 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             {step !== 'service' && step !== 'success' && (
-                                <Button variant="ghost" size="icon" className="rounded-full bg-white/5 hover:bg-white/10 text-foreground" onClick={goBack}>
+                                <Button variant="ghost" size="icon" className="rounded-full bg-white/5 hover:bg-white/10 text-foreground -ml-2" onClick={goBack}>
                                     <ArrowLeft className="w-5 h-5" />
                                 </Button>
                             )}
                             <DialogTitle className="text-2xl font-bold text-foreground">{getStepTitle()}</DialogTitle>
                         </div>
+
                         <Button variant="ghost" size="icon" className="rounded-full bg-white/5 hover:bg-white/10 text-foreground" onClick={handleClose}>
                             <X className="w-5 h-5" />
                         </Button>
@@ -197,39 +243,23 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                 {step === 'service' && (
                                     <div className="space-y-3">
                                         {artistServices.map(service => (
-                                            <div
+                                            <SelectableCard
                                                 key={service.id}
-                                                className={cn(
-                                                    "p-4 border rounded-xl transition-all duration-300 cursor-pointer flex items-center justify-between group",
-                                                    selectedService?.id === service.id
-                                                        ? "bg-primary/10 border-primary/50"
-                                                        : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
-                                                )}
+                                                selected={selectedService?.id === service.id}
                                                 onClick={() => {
                                                     setSelectedService(service);
                                                     setTimeout(() => setStep('frequency'), 200);
                                                 }}
-                                            >
-                                                <div className="flex-1">
-                                                    <h3 className={cn("font-semibold text-base transition-colors", selectedService?.id === service.id ? "text-primary" : "text-foreground group-hover:text-foreground")}>
-                                                        {service.name}
-                                                    </h3>
-                                                    <div className="flex gap-3 mt-1 text-xs text-muted-foreground font-mono">
+                                                title={service.name}
+                                                subtitle={
+                                                    <div className="flex gap-3 text-xs text-muted-foreground font-mono">
                                                         <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {service.duration}m</span>
                                                         <span className={cn("font-bold", selectedService?.id === service.id ? "text-primary/80" : "text-primary")}>${service.price}</span>
                                                         <span>• {service.sittings || 1} sitting{(service.sittings || 1) > 1 ? 's' : ''}</span>
                                                     </div>
-                                                </div>
-
-                                                <div className={cn(
-                                                    "w-8 h-8 rounded-full flex items-center justify-center border transition-all",
-                                                    selectedService?.id === service.id
-                                                        ? "bg-primary border-primary text-primary-foreground"
-                                                        : "bg-transparent border-white/20 text-transparent group-hover:border-white/40"
-                                                )}>
-                                                    <Check className="w-4 h-4" />
-                                                </div>
-                                            </div>
+                                                }
+                                                rightElement={<Check className="w-4 h-4" />}
+                                            />
                                         ))}
                                     </div>
                                 )}
@@ -237,7 +267,7 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                 {/* STEP: FREQUENCY */}
                                 {step === 'frequency' && (
                                     <div className="space-y-6">
-                                        <RadioGroup value={frequency} onValueChange={(v: any) => setFrequency(v)} className="grid grid-cols-1 gap-3">
+                                        <div className="grid grid-cols-1 gap-3">
                                             {[
                                                 { id: 'single', label: 'Single Sitting', sub: 'One session only' },
                                                 { id: 'consecutive', label: 'Consecutive Days', sub: 'Best for intensive projects' },
@@ -245,30 +275,16 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
                                                 { id: 'biweekly', label: 'Bi-Weekly', sub: 'Every two weeks' },
                                                 { id: 'monthly', label: 'Monthly', sub: 'Once a month' }
                                             ].map((opt) => (
-                                                <div
+                                                <SelectableCard
                                                     key={opt.id}
-                                                    className={cn(
-                                                        "p-4 border rounded-xl transition-all duration-300 cursor-pointer flex items-center justify-between group",
-                                                        frequency === opt.id
-                                                            ? "bg-primary/10 border-primary/50"
-                                                            : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
-                                                    )}
+                                                    selected={frequency === opt.id}
                                                     onClick={() => setFrequency(opt.id as any)}
-                                                >
-                                                    <div className="flex-1">
-                                                        <h3 className={cn("font-semibold text-base transition-colors", frequency === opt.id ? "text-primary" : "text-foreground")}>{opt.label}</h3>
-                                                        <p className="text-xs text-muted-foreground mt-0.5">{opt.sub}</p>
-                                                    </div>
-
-                                                    <div className={cn(
-                                                        "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
-                                                        frequency === opt.id ? "border-primary" : "border-white/20 group-hover:border-white/40"
-                                                    )}>
-                                                        {frequency === opt.id && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
-                                                    </div>
-                                                </div>
+                                                    title={opt.label}
+                                                    subtitle={opt.sub}
+                                                    rightElement={frequency === opt.id ? <div className="w-2.5 h-2.5 rounded-full bg-primary" /> : <div />}
+                                                />
                                             ))}
-                                        </RadioGroup>
+                                        </div>
 
                                         <Button
                                             className="w-full shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-base font-semibold"
@@ -303,15 +319,24 @@ export function BookingWizard({ isOpen, onClose, conversationId, artistServices,
 
                                         {availability && (
                                             <>
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <Card className="p-4 bg-white/5 border-0 rounded-2xl flex flex-col items-center justify-center text-center">
-                                                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">TOTAL COST</span>
-                                                        <span className="text-2xl font-bold text-foreground tracking-tight">${availability.totalCost}</span>
-                                                    </Card>
-                                                    <Card className="p-4 bg-white/5 border-0 rounded-2xl flex flex-col items-center justify-center text-center">
-                                                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">SITTINGS</span>
-                                                        <span className="text-2xl font-bold text-foreground tracking-tight">{frequency === 'single' ? 1 : (selectedService?.sittings || 1)}</span>
-                                                    </Card>
+                                                {/* Unified Sheet Header for Metrics */}
+                                                <div className="p-0">
+                                                    <div className="flex items-center justify-between mb-4 px-2">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Total Cost</span>
+                                                            <span className="text-2xl font-bold text-foreground tracking-tight">${availability.totalCost}</span>
+                                                        </div>
+                                                        <div className="h-8 w-px bg-white/10 mx-4" />
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Sittings</span>
+                                                            <span className="text-2xl font-bold text-foreground tracking-tight">{frequency === 'single' ? 1 : (selectedService?.sittings || 1)}</span>
+                                                        </div>
+                                                        <div className="h-8 w-px bg-white/10 mx-4" />
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Duration</span>
+                                                            <span className="text-2xl font-bold text-foreground tracking-tight">{selectedService?.duration}m</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
 
                                                 <Card className="bg-white/5 border-0 rounded-2xl overflow-hidden p-4">
