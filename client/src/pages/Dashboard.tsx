@@ -14,18 +14,18 @@ import { Label } from "@/components/ui/label";
 // --- Components ---
 
 function TaskCard({ task, onClick }: { task: DashboardTask; onClick: () => void }) {
-    // Brighter Box Shadow Logic for "Edge Glow"
-    const priorityGlow = {
-        high: "inset 3px 0 0 0 #dc2626", // Red Left Border Inset
-        medium: "inset 3px 0 0 0 #ea580c", // Orange
-        low: "inset 3px 0 0 0 #059669" // Green
+    // Soft Edge Glow Logic (No Hard Bars)
+    const priorityShadow = {
+        high: "inset 6px 0 20px -4px rgba(220, 38, 38, 0.5), 0 0 0 1px rgba(220, 38, 38, 0.1)", // Red Glow
+        medium: "inset 6px 0 20px -4px rgba(234, 88, 12, 0.5), 0 0 0 1px rgba(234, 88, 12, 0.1)", // Orange Glow
+        low: "inset 6px 0 20px -4px rgba(16, 185, 129, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.1)" // Green Glow
     }[task.priority];
 
     return (
         <Card
             onClick={onClick}
-            className="group p-4 relative overflow-hidden transition-all duration-300 border-white/5 active:scale-[0.98] shadow-none rounded-2xl bg-white/5 hover:bg-white/10 cursor-pointer"
-            style={{ boxShadow: priorityGlow }}
+            className="group p-4 relative overflow-hidden transition-all duration-300 border-0 active:scale-[0.98] rounded-2xl bg-white/5 hover:bg-white/10 cursor-pointer"
+            style={{ boxShadow: priorityShadow }}
         >
             <div className="flex items-center gap-4 z-10 relative">
                 <div className="flex-1 min-w-0">
@@ -95,10 +95,6 @@ export default function Dashboard() {
 
     // Handlers
     const handleTaskClick = (task: DashboardTask) => {
-        // Direct Action?
-        // Spec says: clicking email Icon triggers open.
-        // But the card click opens details.
-        // Let's stick to: Card Click -> Action Sheet (Safe default).
         setSelectedTask(task);
         setShowTaskSheet(true);
     };
@@ -132,10 +128,10 @@ export default function Dashboard() {
     return (
         <div className="fixed inset-0 w-full h-[100dvh] flex flex-col overflow-hidden bg-background">
             {/* 0. Long Gradient Background (Matches other pages) */}
-            <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-purple-900/20 via-background to-background pointer-events-none" />
+            <div className="absolute top-0 left-0 right-0 h-[60vh] bg-gradient-to-b from-black/80 via-black/20 to-transparent pointer-events-none z-0" />
 
             {/* 1. Page Header */}
-            <header className="px-4 py-4 z-10 shrink-0 flex justify-between items-center">
+            <header className="px-4 py-4 z-10 shrink-0 flex justify-between items-center relative">
                 <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
                 <div className="flex items-center gap-3">
                     {/* Social Streak Indicator */}
@@ -153,7 +149,7 @@ export default function Dashboard() {
             </header>
 
             {/* 2. Top Context Area */}
-            <div className="px-6 pt-4 pb-8 z-10 shrink-0 flex flex-col justify-center h-[20vh] opacity-80">
+            <div className="px-6 pt-4 pb-8 z-10 shrink-0 flex flex-col justify-center h-[20vh] opacity-80 relative">
                 <p className="text-4xl font-light text-foreground/90 tracking-tight">
                     {selectedDate.toLocaleDateString("en-US", { weekday: "long" })}
                 </p>
@@ -163,12 +159,16 @@ export default function Dashboard() {
             </div>
 
             {/* 3. Sheet Container */}
-            <div className="flex-1 z-20 flex flex-col bg-white/5 backdrop-blur-2xl rounded-t-[2.5rem] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] overflow-hidden relative">
+            <div className="flex-1 z-20 flex flex-col bg-slate-950/40 backdrop-blur-[32px] rounded-t-[2.5rem] border-t border-white/5 shadow-2xl overflow-hidden relative">
                 <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-white/20 to-transparent opacity-50 pointer-events-none" />
 
                 {/* Sheet Header Tabs */}
-                <div className="shrink-0 pt-6 pb-2 px-6 border-b border-white/5">
-                    <div className="flex w-full items-center justify-between">
+                {/* 
+                   Added subtle blur/bg to header itself to make it distinct as 'Glass Header' 
+                   if it is sitting on top of the sheet background.
+                */}
+                <div className="shrink-0 pt-6 pb-4 px-6 border-b border-white/5 bg-white/[0.01] backdrop-blur-md">
+                    <div className="flex w-full items-center justify-between gap-2">
                         {TITLES.map((title, index) => {
                             const isActive = index === activeIndex;
                             return (
@@ -182,10 +182,10 @@ export default function Dashboard() {
                                         }
                                     }}
                                     className={cn(
-                                        "flex-1 text-center text-lg font-bold tracking-tight transition-all duration-300 ease-out py-2 outline-none",
+                                        "flex-1 text-center text-lg font-bold tracking-tight transition-all duration-300 ease-out py-2 outline-none rounded-lg",
                                         isActive
-                                            ? "text-foreground opacity-100 scale-105"
-                                            : "text-muted-foreground opacity-40 scale-95 hover:opacity-60"
+                                            ? "text-foreground opacity-100 bg-white/5"
+                                            : "text-muted-foreground opacity-50 hover:opacity-100 hover:bg-white/5"
                                     )}
                                 >
                                     {title}
