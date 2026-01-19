@@ -20,12 +20,12 @@ export function SegmentedHeader({ options, activeIndex, onChange, className }: S
                         className={cn(
                             "flex-1 text-center text-lg font-bold tracking-tight transition-all duration-300 ease-out py-2 outline-none rounded-lg",
                             isActive
-                                ? "text-foreground opacity-100 bg-white/5 shadow-sm"
-                                : "text-muted-foreground opacity-50 hover:opacity-100 hover:bg-white/5"
+                                ? "text-foreground opacity-100 scale-105"
+                                : "text-muted-foreground opacity-50 hover:opacity-100 scale-95"
                         )}
                         style={{
                             // Ensure font smoothing/crispness
-                            textShadow: isActive ? "0 0 20px rgba(255,255,255,0.2)" : "none"
+                            textShadow: isActive ? "0 0 20px rgba(255,255,255,0.3)" : "none"
                         }}
                     >
                         {title}

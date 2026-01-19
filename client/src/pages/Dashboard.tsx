@@ -95,8 +95,6 @@ export default function Dashboard() {
 
     return (
         <PageWrapper>
-            {/* 0. Long Gradient Background (Matches other pages) */}
-            <div className="absolute top-0 left-0 right-0 h-[60vh] bg-gradient-to-b from-black/80 via-black/20 to-transparent pointer-events-none z-0" />
 
             {/* 1. Page Header */}
             <header className="px-4 py-4 z-10 shrink-0 flex justify-between items-center relative">
