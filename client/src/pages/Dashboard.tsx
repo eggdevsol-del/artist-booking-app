@@ -94,32 +94,25 @@ export default function Dashboard() {
     };
 
     return (
-        <PageWrapper>
+        <PageWrapper className="bg-[radial-gradient(circle_at_top_right,rgba(88,28,135,0.4),rgba(2,6,23,1)_60%)]">
 
             {/* 1. Page Header */}
-            <header className="px-4 py-4 z-10 shrink-0 flex justify-between items-center relative">
-                <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+            <header className="px-6 py-4 z-10 shrink-0 flex justify-between items-center relative mt-2">
+                <h1 className="text-xl font-bold text-white tracking-wide">Dashboard</h1>
                 <div className="flex items-center gap-3">
-                    {/* Social Streak Indicator */}
-                    {stats.socialStreak > 0 && (
-                        <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10">
-                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            <span className="text-xs font-mono font-bold">{stats.socialStreak}d Streak</span>
-                        </div>
-                    )}
-                    {/* Settings Trigger for Comms Prefs */}
-                    <Button variant="ghost" size="icon" onClick={() => setShowSettingsSheet(true)} className="text-muted-foreground hover:text-foreground">
+                    {/* Settings Trigger - Matching reference right icon */}
+                    <Button variant="ghost" size="icon" onClick={() => setShowSettingsSheet(true)} className="text-white/50 hover:text-white">
                         <Smartphone className="w-5 h-5" />
                     </Button>
                 </div>
             </header>
 
-            {/* 2. Top Context Area */}
-            <div className="px-6 pt-4 pb-8 z-10 shrink-0 flex flex-col justify-center h-[20vh] opacity-80 relative">
-                <p className="text-4xl font-light text-foreground/90 tracking-tight">
+            {/* 2. Top Context Area (Date) */}
+            <div className="px-8 pt-6 pb-8 z-10 shrink-0 flex flex-col justify-start h-[25vh] relative text-left">
+                <p className="text-6xl font-extralight text-white/90 tracking-tight leading-none mb-1">
                     {selectedDate.toLocaleDateString("en-US", { weekday: "long" })}
                 </p>
-                <p className="text-muted-foreground text-lg font-medium mt-1">
+                <p className="text-white/50 text-lg font-light tracking-wide pl-1">
                     {selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric" })}
                 </p>
             </div>
