@@ -12,10 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card"; // For Challenges only
 
 // SSOT Components
-// SSOT Components
-// PageWrapper, GlassSheet, SheetHeader removed (using Calendar.tsx primitives directly)
 import { SegmentedHeader } from "@/components/ui/ssot/SegmentedHeader";
-import { TaskCard } from "@/components/ui/ssot/TaskCard";
 import { TaskCard } from "@/components/ui/ssot/TaskCard";
 
 // --- Components ---
@@ -93,7 +90,6 @@ export default function Dashboard() {
         setActiveIndex(newIndex);
     };
 
-    return (
     return (
         <div className="fixed inset-0 w-full h-[100dvh] flex flex-col overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(88,28,135,0.4),rgba(2,6,23,1)_60%)]">
 
@@ -336,7 +332,7 @@ export default function Dashboard() {
                 </DialogPrimitive.Portal>
             </Dialog>
 
-        </PageWrapper>
+        </div>
     );
 }
 
