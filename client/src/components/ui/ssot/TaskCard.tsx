@@ -24,10 +24,10 @@ export function TaskCard({ title, context, priority, status, actionType, onClick
     // - Red = urgent, Orange = time-sensitive, Green = maintenance
     // - Neutral translucent background
 
-    const priorityShadow = {
-        high: "inset 6px 0 20px -4px rgba(220, 38, 38, 0.5), 0 0 0 1px rgba(220, 38, 38, 0.1)", // Red Glow
-        medium: "inset 6px 0 20px -4px rgba(234, 88, 12, 0.5), 0 0 0 1px rgba(234, 88, 12, 0.1)", // Orange Glow
-        low: "inset 6px 0 20px -4px rgba(16, 185, 129, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.1)" // Green Glow
+    const priorityConfig = {
+        high: { color: "bg-red-600", gradient: "from-red-600/20" },
+        medium: { color: "bg-orange-500", gradient: "from-orange-500/20" },
+        low: { color: "bg-emerald-500", gradient: "from-emerald-500/20" }
     }[priority];
 
     return (
@@ -38,8 +38,12 @@ export function TaskCard({ title, context, priority, status, actionType, onClick
                 "border-0 active:scale-[0.98] rounded-2xl cursor-pointer",
                 "bg-white/5 hover:bg-white/10" // Neutral translucent
             )}
-            style={{ boxShadow: priorityShadow }}
         >
+            {/* Priority Indicator: Left Edge Line */}
+            <div className={cn("absolute left-0 top-0 bottom-0 w-[3px]", priorityConfig.color)} />
+
+            {/* Priority Indicator: Soft Gradient Swath (20%) */}
+            <div className={cn("absolute left-0 top-0 bottom-0 w-[20%] bg-gradient-to-r to-transparent pointer-events-none", priorityConfig.gradient)} />
             <div className="flex items-center gap-4 z-10 relative">
                 <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-foreground text-lg leading-tight mb-1 group-hover:text-white transition-colors duration-300">

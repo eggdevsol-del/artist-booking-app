@@ -12,10 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card"; // For Challenges only
 
 // SSOT Components
-import { PageWrapper } from "@/components/ui/ssot/PageWrapper";
-import { GlassSheet } from "@/components/ui/ssot/GlassSheet";
-import { SheetHeader } from "@/components/ui/ssot/SheetHeader";
+// SSOT Components
+// PageWrapper, GlassSheet, SheetHeader removed (using Calendar.tsx primitives directly)
 import { SegmentedHeader } from "@/components/ui/ssot/SegmentedHeader";
+import { TaskCard } from "@/components/ui/ssot/TaskCard";
 import { TaskCard } from "@/components/ui/ssot/TaskCard";
 
 // --- Components ---
@@ -94,7 +94,8 @@ export default function Dashboard() {
     };
 
     return (
-        <PageWrapper className="bg-[radial-gradient(circle_at_top_right,rgba(88,28,135,0.4),rgba(2,6,23,1)_60%)]">
+    return (
+        <div className="fixed inset-0 w-full h-[100dvh] flex flex-col overflow-hidden bg-[radial-gradient(circle_at_top_right,rgba(88,28,135,0.4),rgba(2,6,23,1)_60%)]">
 
             {/* 1. Page Header */}
             <header className="px-6 py-4 z-10 shrink-0 flex justify-between items-center relative mt-2">
@@ -117,10 +118,14 @@ export default function Dashboard() {
                 </p>
             </div>
 
-            {/* 3. Sheet Container (SSOT Primitive) */}
-            <GlassSheet>
-                {/* Sheet Header Tabs (SSOT Primitive) */}
-                <SheetHeader>
+            {/* 3. Sheet Container (Matched to Calendar.tsx) */}
+            <div className="flex-1 z-20 flex flex-col bg-white/5 backdrop-blur-2xl rounded-t-[2.5rem] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)] overflow-hidden relative">
+
+                {/* Top Edge Highlight */}
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-white/20 to-transparent opacity-50 pointer-events-none" />
+
+                {/* Sheet Header Tabs */}
+                <div className="shrink-0 pt-6 pb-2 px-6 border-b border-white/5">
                     <SegmentedHeader
                         options={TITLES}
                         activeIndex={activeIndex}
@@ -130,7 +135,7 @@ export default function Dashboard() {
                             setActiveIndex(index);
                         }}
                     />
-                </SheetHeader>
+                </div>
 
                 {/* Sheet Content */}
                 <div className="flex-1 relative w-full overflow-hidden">
@@ -174,7 +179,8 @@ export default function Dashboard() {
                         </motion.div>
                     </AnimatePresence>
                 </div>
-            </GlassSheet>
+            </div>
+
 
             {/* --- ACTION SHEET --- */}
             <Dialog open={showTaskSheet} onOpenChange={setShowTaskSheet}>
