@@ -19,7 +19,7 @@ export default function BottomNav() {
     };
 
     return (
-        <nav className="fixed bottom-0 inset-x-0 z-[50] h-[88px] bg-slate-950/80 backdrop-blur-2xl border-t border-white/5 pb-5">
+        <nav className="fixed bottom-0 inset-x-0 z-[50] h-[88px] bg-slate-950/40 backdrop-blur-[32px] border-t border-white/5 pb-5 transition-all duration-300">
             <div className="w-full h-full overflow-x-auto snap-x snap-mandatory flex items-center no-scrollbar overscroll-x-contain">
                 {/* 
                    Render all items in a single swipeable row.

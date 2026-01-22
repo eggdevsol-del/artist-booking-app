@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DashboardTask, ChallengeTemplate, TaskDomain, DashboardConfig } from './types';
 import { DashboardEventLogger } from './DashboardEventLogger';
-import { DashboardTaskRegister } from './DashboardTaskRegister';
+import { DashboardTaskRegister, CHALLENGE_TEMPLATES } from './DashboardTaskRegister';
 import { DashboardConfigRegister } from './DashboardConfigRegister';
 import { CommsHandler } from './CommsHandler';
 
@@ -64,7 +64,6 @@ export function useDashboardTasks() {
                 // Find template (Need to import templates or store template data in state. For V1 we assume standard list)
                 // In robustness, we'd store the template structure. 
                 // We'll regenerate "daily tasks" from the known template ID for now.
-                const { CHALLENGE_TEMPLATES } = require('./DashboardTaskRegister');
                 const template = CHALLENGE_TEMPLATES.find((t: ChallengeTemplate) => t.id === state.activeChallengeId);
                 if (template) {
                     newPersonal = DashboardTaskRegister.generateChallengeTasks(template);
