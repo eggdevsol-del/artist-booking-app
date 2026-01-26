@@ -1,4 +1,4 @@
-import { Card } from "@/components/ui";
+import { Card } from "../card";
 /**
  * UI SINGLE SOURCE OF TRUTH (SSOT)
  * -------------------------------

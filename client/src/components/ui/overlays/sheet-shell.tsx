@@ -1,5 +1,6 @@
 import React from "react";
-import { Badge, Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui";
+import { Badge } from "../badge";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "../sheet";
 import { cn } from "@/lib/utils";
 import { useUIDebug } from "@/_core/contexts/UIDebugContext";
 

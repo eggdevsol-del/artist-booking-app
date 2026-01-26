@@ -1,6 +1,9 @@
 "use client";
 
-import { Button, Input, Separator, Skeleton } from "@/components/ui";
+import { Button } from "./button";
+import { Input } from "./input";
+import { Separator } from "./separator";
+import { Skeleton } from "./skeleton";
 import {
   Sheet,
   SheetContent,

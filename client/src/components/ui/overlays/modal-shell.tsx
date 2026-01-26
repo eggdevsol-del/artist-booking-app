@@ -1,5 +1,6 @@
 import React from "react";
-import { Badge, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui";
+import { Badge } from "../badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../dialog";
 import { cn } from "@/lib/utils";
 import { useUIDebug } from "@/_core/contexts/UIDebugContext";
 
