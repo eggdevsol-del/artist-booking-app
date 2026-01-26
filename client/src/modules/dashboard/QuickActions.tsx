@@ -1,5 +1,5 @@
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui";
 import { Plus, Coffee, Link as LinkIcon, FileText } from "lucide-react";
 import { Link } from "wouter";
 

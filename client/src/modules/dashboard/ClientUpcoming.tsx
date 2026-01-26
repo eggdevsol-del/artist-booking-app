@@ -1,7 +1,5 @@
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage, Button, Card, CardContent } from "@/components/ui";
 import { Calendar, Clock, MapPin } from "lucide-react";
 import { format } from "date-fns";
 

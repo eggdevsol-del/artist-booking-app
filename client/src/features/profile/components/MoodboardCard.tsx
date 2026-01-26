@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, ArrowLeft, Image as ImageIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, Input } from "@/components/ui";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"; // Assuming standard Shadcn dialog
-import { Input } from "@/components/ui/input";
 
 interface Board {
     id: number;

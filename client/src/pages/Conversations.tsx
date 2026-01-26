@@ -1,9 +1,7 @@
 
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button, Card, Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
 import { trpc } from "@/lib/trpc";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Calendar, ChevronDown, ChevronRight, MessageCircle, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";

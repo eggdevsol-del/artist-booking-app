@@ -1,5 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button, Card } from "@/components/ui";
 import { Calendar, MessageCircle, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 

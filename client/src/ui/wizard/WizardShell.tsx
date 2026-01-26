@@ -1,7 +1,6 @@
-import { Button } from "@/components/ui/button";
+import { Button, ModalShell } from "@/components/ui";
 import { Loader2 } from "lucide-react";
 import React from "react";
-import { ModalShell } from "@/components/ui/overlays/modal-shell";
 
 export interface WizardStepConfig {
     id: string;

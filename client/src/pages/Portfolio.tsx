@@ -3,9 +3,8 @@ import { useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useRegisterBottomNavRow } from "@/contexts/BottomNavContext";
 import { BottomNavRow } from "@/components/BottomNavRow";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button, Card, CardContent } from "@/components/ui";
 import { Heart, Trash2, Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export default function Portfolio() {
     const { user } = useAuth();

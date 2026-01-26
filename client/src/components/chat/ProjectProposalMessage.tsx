@@ -1,7 +1,6 @@
 import { format } from "date-fns";
 import { Check, X, Calendar as CalendarIcon, DollarSign, Clock, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button, Card, CardContent } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 interface ProposedDate {

@@ -1,19 +1,14 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { Button, Dialog, DialogTitle, Label, SegmentedHeader, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, TaskCard } from "@/components/ui";
 import { useDashboardTasks } from "@/features/dashboard/useDashboardTasks";
 import { CHALLENGE_TEMPLATES, DashboardTask } from "@/features/dashboard/DashboardTaskRegister";
-import { Dialog, DialogTitle } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X, Check, Clock, ExternalLink, MessageSquare, Mail, Play, Plus, Trash2, Smartphone, Monitor } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card"; // For Challenges only
 
 // SSOT Components
-import { SegmentedHeader } from "@/components/ui/ssot/SegmentedHeader";
-import { TaskCard } from "@/components/ui/ssot/TaskCard";
 
 // --- Components ---
 

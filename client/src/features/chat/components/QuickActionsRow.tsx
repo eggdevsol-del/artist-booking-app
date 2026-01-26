@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui";
 import { BottomNavRow } from "@/components/BottomNavRow";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";

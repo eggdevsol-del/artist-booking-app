@@ -1,6 +1,4 @@
-import { SheetShell } from "@/components/ui/overlays/sheet-shell";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, SheetShell, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
 import { User, Mail, Phone, Cake, BadgeCheck } from "lucide-react";
 import { format } from "date-fns";
 

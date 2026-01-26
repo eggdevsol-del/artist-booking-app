@@ -1,10 +1,8 @@
 import { useState } from "react";
-import { Dialog, DialogTitle } from "@/components/ui/dialog";
+import { Button, Card, Dialog, DialogTitle } from "@/components/ui";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { Loader2, Calendar, AlertCircle, CheckCircle2, Clock, Check, X, ArrowLeft } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";

@@ -1,5 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Card } from "@/components/ui/card";
+import { Card } from "@/components/ui";
 
 export default function Wallet() {
     const { user } = useAuth();

@@ -1,5 +1,5 @@
 
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
 

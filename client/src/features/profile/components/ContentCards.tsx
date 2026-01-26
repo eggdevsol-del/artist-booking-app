@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { Bookmark, Clock, Grid, Image as ImageIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui";
 
 // ============================================================================
 // Photos Card

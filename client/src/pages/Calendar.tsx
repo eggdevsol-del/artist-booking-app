@@ -1,11 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ModalShell } from "@/components/ui/overlays/modal-shell";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Button, Card, Dialog, DialogTitle, Input, Label, ModalShell, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from "@/components/ui";
 import { trpc } from "@/lib/trpc";
 import {
   ChevronLeft,
@@ -17,7 +11,6 @@ import {
   ArrowLeft,
   Clock
 } from "lucide-react";
-import { Dialog, DialogTitle } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 
 import { useEffect, useState } from "react";

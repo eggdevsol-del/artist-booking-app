@@ -1,11 +1,8 @@
 import { format } from "date-fns";
 import { Check, Calendar as CalendarIcon, DollarSign, Clock, AlertCircle, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, Button, Card, Dialog, DialogTitle } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogTitle } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Card } from "@/components/ui/card";
 
 interface ProposalMetadata {
     type: "project_proposal";
